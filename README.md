@@ -1,5 +1,5 @@
 
-YAMLib dependency
+How to add YAMLib as a dependency
 
 ```xml
 <dependency>
@@ -7,7 +7,8 @@ YAMLib dependency
     <artifactId>YAMLib</artifactId>
     <version>1.0</version>
 </dependency>
-
+```
+```xml
 <plugin>
     <groupId>org.apache.maven.plugins</groupId>
     <artifactId>maven-shade-plugin</artifactId>
@@ -29,5 +30,6 @@ YAMLib dependency
             </relocations>
     </configuration>
 </plugin>
+```
 
 
