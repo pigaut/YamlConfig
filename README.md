@@ -16,7 +16,7 @@ SpigotYAMLib dependency
     <version>1.0</version>
 </dependency>
 ```
----
+___
 Shade and relocate
 ```xml
 <plugin>
