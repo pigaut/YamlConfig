@@ -1,0 +1,6 @@
+main: io.github.pigaut.yamlib.YAMLibPlugin
+name: YAMLib
+author: pigaut
+version: 1.0
+description: A library to read and write configuration files in yaml format
+api-version: 1.13
