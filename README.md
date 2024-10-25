@@ -9,6 +9,15 @@ YAMLib dependency
 </dependency>
 ```
 
+SpigotYAMLib dependency
+```xml
+<dependency>
+    <groupId>io.github.pigaut.yamlib</groupId>
+    <artifactId>SpigotYAMLib</artifactId>
+    <version>1.0</version>
+</dependency>
+```
+
 Shade and relocate
 ```xml
 <plugin>
