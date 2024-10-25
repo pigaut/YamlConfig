@@ -7,6 +7,7 @@ YAMLib dependency
     <version>1.0</version>
 </dependency>
 ```
+---
 SpigotYAMLib dependency
 ```xml
 <dependency>
@@ -15,6 +16,7 @@ SpigotYAMLib dependency
     <version>1.0</version>
 </dependency>
 ```
+---
 Shade and relocate
 ```xml
 <plugin>
