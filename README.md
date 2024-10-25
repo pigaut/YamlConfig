@@ -1,3 +1,4 @@
+Javadocs: https://www.javadoc.io/doc/io.github.pigaut.yamlib/YAMLib/latest/index.html
 
 YAMLib dependency
 ```xml
