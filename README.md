@@ -1,5 +1,5 @@
 
-How to add YAMLib as a dependency
+YAMLib dependency
 
 ```xml
 <dependency>
@@ -8,6 +8,8 @@ How to add YAMLib as a dependency
     <version>1.0</version>
 </dependency>
 ```
+
+Shade and relocate
 ```xml
 <plugin>
     <groupId>org.apache.maven.plugins</groupId>
@@ -15,10 +17,10 @@ How to add YAMLib as a dependency
     <version>3.6.0</version>
     <executions>
         <execution>
-              <phase>package</phase>
-              <goals>
-                  <goal>shade</goal>
-              </goals>
+            <phase>package</phase>
+            <goals>
+                <goal>shade</goal>
+            </goals>
         </execution>
     </executions>
         <configuration>
