@@ -1,6 +1,7 @@
 
 YAMLib dependency
 
+```xml
 <dependency>
     <groupId>io.github.pigaut.yamlib</groupId>
     <artifactId>YAMLib</artifactId>
