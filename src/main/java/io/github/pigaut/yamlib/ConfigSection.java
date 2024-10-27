@@ -66,6 +66,13 @@ public interface ConfigSection {
     Set<String> getKeys();
 
     /**
+     * Returns the set of fields present in this section.
+     *
+     * @return a set of strings representing the fields
+     */
+    Set<Object> getFields();
+
+    /**
      * Checks if the section contains a field at the specified path.
      *
      * @param path the path to check
@@ -120,20 +127,6 @@ public interface ConfigSection {
      * @param keyless true if this section should be keyless (Deletes all current key data), false otherwise
      */
     void setKeyless(boolean keyless);
-
-    /**
-     * Ensures that this section is a list.
-     *
-     * @throws InvalidConfigurationException if this section is not a list
-     */
-    void isKeylessOrThrow() throws InvalidConfigurationException;
-
-    /**
-     * Ensures that this section is not a list.
-     *
-     * @throws InvalidConfigurationException if this section is a list
-     */
-    void isKeyedOrThrow() throws InvalidConfigurationException;
 
     /**
      * Retrieves the current flow style for this section.
@@ -467,9 +460,18 @@ public interface ConfigSection {
      * @param path the path of the list
      * @param type the class of the object to retrieve
      * @return a list of values of the specified type
-     * @throws InvalidConfigurationException if the list cannot be retrieved or cast to the specified type
+     * @throws InvalidConfigurationException if the list cannot be retrieved or parsed to the specified type
      */
     <T> List<@NotNull T> getList(@NotNull String path, @NotNull Class<T> type) throws InvalidConfigurationException;
+
+    /**
+     * Retrieves a list of strings and attempts to parse each value to the specified type
+     *
+     * @param type the class of the object to retrieve
+     * @return a list of values of the specified type
+     * @throws InvalidConfigurationException if the list cannot be retrieved or parsed to the specified type
+     */
+    <T> List<@NotNull T> getList(@NotNull Class<T> type) throws InvalidConfigurationException;
 
     /**
      * Retrieves the field at the specified path. (Boolean, Character, String, ConfigSection, Numbers)

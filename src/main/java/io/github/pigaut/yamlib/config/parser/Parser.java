@@ -30,19 +30,15 @@ public class Parser implements Serializer<Object> {
         return serializerByType.get(classType);
     }
 
-    public <T> Serializer<T> getExactSerializer(Class<T> classType) {
-        return (Serializer<T>) serializerByType.get(classType);
-    }
-
     public <T> void registerSerializer(Class<T> classType, Serializer<T> parser) {
         serializerByType.put(classType, parser);
     }
 
     @NotNull
-    public <T> T deserializeOrThrow(Class<T> type, @NotNull String string) throws IllegalArgumentException, DeserializationException {
+    public <T> T deserialize(Class<T> type, @NotNull String string) throws IllegalArgumentException, DeserializationException {
         Preconditions.checkNotNull(type, "Type cannot be null");
         Preconditions.checkNotNull(string, "String cannot be null");
-        Deserializer<T> deserializer = getExactDeserializer(type);
+        Deserializer<T> deserializer = getDeserializer(type);
 
         if (deserializer == null) {
             throw new IllegalArgumentException("No deserializer found for class " + type.getSimpleName());
@@ -51,23 +47,15 @@ public class Parser implements Serializer<Object> {
         return deserializer.deserialize(string);
     }
 
-    @Nullable
-    public <T> T deserialize(Class<T> type, @NotNull String string) throws IllegalArgumentException {
+    public <T> Optional<T> deserializeOptional(Class<T> type, @NotNull String string) throws IllegalArgumentException {
         try {
-            return deserializeOrThrow(type, string);
+            return Optional.of(deserialize(type, string));
         } catch (DeserializationException e) {
-            return null;
+            return Optional.empty();
         }
     }
 
-    public Deserializer getDeserializer(Class<?> classType) {
-        if (classType.isEnum()) {
-            return Deserializer.enumDeserializer((Class<? extends Enum>) classType);
-        }
-        return deserializerByType.get(classType);
-    }
-
-    public <T> Deserializer<T> getExactDeserializer(Class<T> classType) {
+    public <T> Deserializer<T> getDeserializer(Class<T> classType) {
         if (classType.isEnum()) {
             return Deserializer.enumDeserializer((Class<? extends Enum>) classType);
         }

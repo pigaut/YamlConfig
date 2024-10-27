@@ -49,6 +49,11 @@ public abstract class SectionNode implements ConfigSection {
     }
 
     @Override
+    public Set<Object> getFields() {
+        return new HashSet<>(children.values());
+    }
+
+    @Override
     public boolean contains(@NotNull String path) {
         return getOptionalField(path).isPresent();
     }
@@ -122,20 +127,6 @@ public abstract class SectionNode implements ConfigSection {
     }
 
     @Override
-    public void isKeylessOrThrow() throws InvalidConfigurationException {
-        if (!keyless) {
-            throw new InvalidConfigurationException(this, "is not a list");
-        }
-    }
-
-    @Override
-    public void isKeyedOrThrow() throws InvalidConfigurationException {
-        if (keyless) {
-            throw new InvalidConfigurationException(this, "is not a section");
-        }
-    }
-
-    @Override
     public @NotNull FlowStyle getFlowStyle() {
         return flowStyle;
     }
@@ -160,7 +151,7 @@ public abstract class SectionNode implements ConfigSection {
 
     @Override
     public <T> @NotNull T load(@NotNull Class<T> type) throws InvalidConfigurationException {
-        return getRoot().getConfigurator().loadOrThrow(type, this);
+        return getRoot().getConfigurator().load(type, this);
     }
 
     @Override
@@ -171,7 +162,7 @@ public abstract class SectionNode implements ConfigSection {
     @Override
     public <T> @NotNull T get(@NotNull String path, @NotNull Class<T> type) throws InvalidConfigurationException {
         try {
-            return getRoot().getParser().deserializeOrThrow(type, getString(path));
+            return getRoot().getParser().deserialize(type, getString(path));
         } catch (DeserializationException e) {
             throw new InvalidConfigurationException(this, path, e.getMessage());
         }
@@ -187,7 +178,7 @@ public abstract class SectionNode implements ConfigSection {
 
     @Override
     public <T> @NotNull Optional<T> loadOptional(@NotNull Class<T> type) {
-        return getRoot().getConfigurator().load(type, this);
+        return getRoot().getConfigurator().loadOptional(type, this);
     }
 
     @Override
@@ -198,7 +189,7 @@ public abstract class SectionNode implements ConfigSection {
 
     @Override
     public <T> Optional<T> getOptional(@NotNull String path, @NotNull Class<T> type) {
-        return getOptionalScalar(path).map(scalar -> getRoot().getParser().deserialize(type, scalar.toString()));
+        return getOptionalScalar(path).flatMap(scalar -> getRoot().getParser().deserializeOptional(type, scalar.toString()));
     }
 
     @Override
@@ -316,8 +307,10 @@ public abstract class SectionNode implements ConfigSection {
         ConfigSection section = getOptionalSection(path).orElse(null);
 
         if (section != null) {
-            section.isKeylessOrThrow();
-            return section.getNestedFields().values().stream().toList();
+            if (!section.isKeyless()) {
+                throw new InvalidConfigurationException(section, "is not a list");
+            }
+            return new ArrayList<>(section.getFields());
         }
 
         return List.of();
@@ -422,32 +415,40 @@ public abstract class SectionNode implements ConfigSection {
     }
 
     public <T> List<T> getList(@NotNull String path, @NotNull Class<T> type) {
-        List<Object> fields = getFieldList(path);
+        Optional<ConfigSection> sectionField = getOptionalSection(path);
+        return sectionField.map(section -> section.getList(type)).orElse(List.of());
+    }
 
-        ConfigLoader<T> loader = getRoot().getConfigurator().getExactLoader(type);
-        Deserializer<T> deserializer = getRoot().getParser().getExactDeserializer(type);
-
-        if (loader == null && deserializer == null) {
-            throw new IllegalArgumentException("No deserializer or loader exists for class: " + type.getSimpleName());
+    @Override
+    public <T> List<@NotNull T> getList(@NotNull Class<T> type) throws InvalidConfigurationException {
+        if (!isKeyless()) {
+            throw new InvalidConfigurationException(this, "is not a list");
         }
+
+        final Set<Object> fields = getFields();
+        if (fields.isEmpty()) {
+            return List.of();
+        }
+
+        final Configurator configurator = getRoot().getConfigurator();
+        final Parser parser = getRoot().getParser();
 
         List<T> list = new ArrayList<>();
         for (Object field : fields) {
+            T value;
+
             if (field instanceof ConfigSection section) {
-                if (loader == null) {
-                    throw new InvalidConfigurationException(this, path, "is not a list of " + type.getSimpleName());
-                }
-                list.add(loader.load(section));
-            } else {
-                if (deserializer == null) {
-                    throw new InvalidConfigurationException(this, path, "is not a list of " + type.getSimpleName());
-                }
+                value = configurator.load(type, section);
+            }
+            else {
                 try {
-                    list.add(deserializer.deserialize(field.toString()));
+                    value = parser.deserialize(type, field.toString());
                 } catch (DeserializationException e) {
-                    throw new InvalidConfigurationException(this, path, e.getMessage());
+                    throw new InvalidConfigurationException(this, "(Invalid list) " + e.getMessage());
                 }
             }
+
+            list.add(value);
         }
 
         return list;
@@ -539,7 +540,7 @@ public abstract class SectionNode implements ConfigSection {
         final Parser parser = getRoot().getParser();
         for (int i = 0; i < types.length; i++) {
             try {
-                splitString[i] = parser.deserializeOrThrow(types[i], elements[i]);
+                splitString[i] = parser.deserialize(types[i], elements[i]);
             } catch (DeserializationException e) {
                 throw new InvalidConfigurationException(this, path,
                         "(Invalid split string) " + e.getMessage());
@@ -757,7 +758,7 @@ public abstract class SectionNode implements ConfigSection {
                 Object element = matrix[row][column];
 
                 if (!(element instanceof Character character)) {
-                    throw new InvalidConfigurationException(this, path, String.format("Invalid matrix: Element at row %d and column %d is not a character", row + 1, column + 1));
+                    throw new InvalidConfigurationException(this, path, String.format("(Invalid matrix) element at row %d and column %d is not a character", row + 1, column + 1));
                 }
 
                 charMatrix[row][column] = character;
@@ -777,7 +778,7 @@ public abstract class SectionNode implements ConfigSection {
                 Object element = matrix[row][column];
 
                 if (!(element instanceof Integer intNum)) {
-                    throw new InvalidConfigurationException(this, path, String.format("Invalid matrix. Element at row %d and column %d is not an integer", row + 1, column + 1));
+                    throw new InvalidConfigurationException(this, path, String.format("(Invalid matrix) element at row %d and column %d is not an integer", row + 1, column + 1));
                 }
 
                 intMatrix[row][column] = intNum;
@@ -797,7 +798,7 @@ public abstract class SectionNode implements ConfigSection {
                 Object element = matrix[row][column];
 
                 if (!(element instanceof Boolean bool)) {
-                    throw new InvalidConfigurationException(this, path, String.format("Invalid matrix. Element at row %d and column %d is not a boolean", row + 1, column + 1));
+                    throw new InvalidConfigurationException(this, path, String.format("(Invalid matrix) element at row %d and column %d is not a boolean", row + 1, column + 1));
                 }
 
                 booleanMatrix[row][column] = bool;
@@ -817,7 +818,7 @@ public abstract class SectionNode implements ConfigSection {
                 Object element = matrix[row][column];
 
                 if (!(element instanceof Double doubleNum)) {
-                    throw new InvalidConfigurationException(this, path, String.format("Invalid matrix. Element at row %d and column %d is not a double", row + 1, column + 1));
+                    throw new InvalidConfigurationException(this, path, String.format("(Invalid matrix) element at row %d and column %d is not a double", row + 1, column + 1));
                 }
 
                 doubleMatrix[row][column] = doubleNum;
@@ -837,7 +838,7 @@ public abstract class SectionNode implements ConfigSection {
                 Object element = matrix[row][column];
 
                 if (!(element instanceof Long longNum)) {
-                    throw new InvalidConfigurationException(this, path, String.format("Invalid matrix. Element at row %d and column %d is not a long", row + 1, column + 1));
+                    throw new InvalidConfigurationException(this, path, String.format("(Invalid matrix) element at row %d and column %d is not a long", row + 1, column + 1));
                 }
 
                 longMatrix[row][column] = longNum;
@@ -857,7 +858,7 @@ public abstract class SectionNode implements ConfigSection {
                 Object element = matrix[row][column];
 
                 if (!(element instanceof Float floatNum)) {
-                    throw new InvalidConfigurationException(this, path, String.format("Invalid matrix. Element at row %d and column %d is not a float", row + 1, column + 1));
+                    throw new InvalidConfigurationException(this, path, String.format("(Invalid matrix) element at row %d and column %d is not a float", row + 1, column + 1));
                 }
 
                 floatMatrix[row][column] = floatNum;
@@ -873,7 +874,7 @@ public abstract class SectionNode implements ConfigSection {
         String[][] stringMatrix = getStringMatrix(path, rowCount, columnCount);
         T[][] matrix = (T[][]) Array.newInstance(type, rowCount, columnCount);
 
-        Deserializer<T> deserializer = getRoot().getParser().getExactDeserializer(type);
+        Deserializer<T> deserializer = getRoot().getParser().getDeserializer(type);
         if (deserializer == null) {
             throw new IllegalArgumentException("No deserializer found for class " + type.getSimpleName());
         }
@@ -885,7 +886,7 @@ public abstract class SectionNode implements ConfigSection {
                 try {
                     matrix[row][column] = deserializer.deserialize(value);
                 } catch (DeserializationException e) {
-                    throw new InvalidConfigurationException(this, path, String.format("Invalid matrix. Element at row %d and column %d %s", row + 1, column + 1, e.getMessage()));
+                    throw new InvalidConfigurationException(this, path, String.format("(Invalid matrix) element at row %d and column %d %s", row + 1, column + 1, e.getMessage()));
                 }
             }
         }
@@ -918,21 +919,6 @@ public abstract class SectionNode implements ConfigSection {
 
     private <T> Optional<T> getOptionalScalar(@NotNull String path, Class<T> type) {
         return getOptionalScalar(path).filter(type::isInstance).map(type::cast);
-    }
-
-    private void setScalar(String path, Object value) {
-        String formattedPath = path.replace("][", ".").replace("[", ".").replace("]", "");
-
-        SectionNode section = this;
-        String key = formattedPath;
-
-        int lastKeyIndex = formattedPath.lastIndexOf(".");
-        if (lastKeyIndex != -1) {
-            section = getSectionOrCreate(formattedPath.substring(0, lastKeyIndex));
-            key = formattedPath.substring(lastKeyIndex + 1);
-        }
-
-        section.children.put(key, value != null ? value : "");
     }
 
     @Override

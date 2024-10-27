@@ -6,7 +6,7 @@
 
     <groupId>io.github.pigaut.yamlib</groupId>
     <artifactId>SpigotYAMLib</artifactId>
-    <version>1.0</version>
+    <version>1.3</version>
     <packaging>jar</packaging>
     <description>A library to read and write configuration files in yaml format, uses snakeyaml engine.</description>
     <url>https://github.com/pigaut/YAMLib</url>
@@ -133,7 +133,7 @@
         <dependency>
             <groupId>io.github.pigaut.yamlib</groupId>
             <artifactId>YAMLib</artifactId>
-            <version>1.0</version>
+            <version>1.3</version>
         </dependency>
         <dependency>
             <groupId>de.tr7zw</groupId>

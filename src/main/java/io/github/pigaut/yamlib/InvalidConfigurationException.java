@@ -11,8 +11,8 @@ public class InvalidConfigurationException extends RuntimeException {
         this(section.getRoot(), section.getPath(), message);
     }
 
-    public InvalidConfigurationException(ConfigSection section, String path, String message) {
-        this(section.getRoot(), section.isRoot() ? path : String.join(".", section.getPath(), path), message);
+    public InvalidConfigurationException(ConfigSection section, String key, String message) {
+        this(section.getRoot(), section.isRoot() ? key : String.join(".", section.getPath(), key), message);
     }
 
     public InvalidConfigurationException(Config config, String path, String message) {
