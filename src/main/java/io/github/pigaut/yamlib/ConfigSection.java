@@ -5,7 +5,6 @@ import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.common.*;
 
 import java.io.*;
-import java.math.*;
 import java.net.*;
 import java.time.*;
 import java.util.*;
@@ -70,7 +69,7 @@ public interface ConfigSection {
      *
      * @return a set of strings representing the fields
      */
-    Set<Object> getFields();
+    Set<Object> getValues();
 
     /**
      * Checks if the section contains a field at the specified path.
@@ -80,20 +79,24 @@ public interface ConfigSection {
      */
     boolean contains(@NotNull String path);
 
+    boolean isSet(@NotNull String path);
+
+    boolean isSection(@NotNull String path);
+
     /**
      * Sets a value at the specified path.
      *
      * @param path the path where the value will be set
      * @param value the value to set
      */
-    void set(@NotNull String path, Object value);
+    <T> void set(@NotNull String path, @Nullable T value);
 
     /**
      * Adds a value to the section.
      *
      * @param value the value to add
      */
-    void add(Object value);
+    <T> void add(@NotNull T value);
 
     /**
      * Maps the specified value to this section.
@@ -107,26 +110,7 @@ public interface ConfigSection {
      */
     void clear();
 
-    /**
-     * Adds a new nested section.
-     *
-     * @return the new {@link ConfigSection}
-     */
-    ConfigSection addSection();
-
-    /**
-     * Checks if this section is keyless.
-     *
-     * @return true if this section is a list, false otherwise
-     */
-    boolean isKeyless();
-
-    /**
-     * Sets whether this section should be treated as a list.
-     *
-     * @param keyless true if this section should be keyless (Deletes all current key data), false otherwise
-     */
-    void setKeyless(boolean keyless);
+    void formatKeys(StringFormatter formatter);
 
     /**
      * Retrieves the current flow style for this section.
@@ -265,6 +249,14 @@ public interface ConfigSection {
      * @throws InvalidConfigurationException if the path contains non-section elements or if any object fails to load
      */
     <T> Stream<@NotNull T> loadAllOrThrow(@NotNull String path, @NotNull Class<T> type) throws InvalidConfigurationException;
+
+    <T> Stream<@NotNull T> getAll(@NotNull String path, @NotNull Class<T> type);
+
+    <T> Stream<@NotNull T> getAllOrThrow(@NotNull String path, @NotNull Class<T> type) throws InvalidConfigurationException;
+
+    <T> Stream<@NotNull T> getOrLoadAll(@NotNull String path, @NotNull Class<T> type);
+
+    <T> Stream<@NotNull T> getOrLoadAllOrThrow(@NotNull String path, @NotNull Class<T> type) throws InvalidConfigurationException ;
 
     /**
      * Retrieves a nested section at the specified path;
@@ -437,24 +429,6 @@ public interface ConfigSection {
     List<@NotNull Double> getDoubleList(@NotNull String path) throws InvalidConfigurationException;
 
     /**
-     * Retrieves a list of BigInteger values at the specified path.
-     *
-     * @param path the path of the BigInteger list
-     * @return a list of {@link BigInteger} values
-     * @throws InvalidConfigurationException if the list cannot be retrieved
-     */
-    List<@NotNull BigInteger> getBigIntegerList(@NotNull String path) throws InvalidConfigurationException;
-
-    /**
-     * Retrieves a list of BigDecimal values at the specified path.
-     *
-     * @param path the path of the BigDecimal list
-     * @return a list of {@link BigDecimal} values
-     * @throws InvalidConfigurationException if the list cannot be retrieved
-     */
-    List<@NotNull BigDecimal> getBigDecimalList(@NotNull String path) throws InvalidConfigurationException;
-
-    /**
      * Retrieves a list of strings and attempts to parse each value to the specified type
      *
      * @param path the path of the list
@@ -558,21 +532,6 @@ public interface ConfigSection {
      */
     Optional<String> getOptionalString(@NotNull String path);
 
-
-    /**
-     * Splits a string based on the specified regular expression and attempts to parse each resulting part
-     * to the provided types in the {@code elementTypes} array.
-     *
-     * @param path         the path of the string to split
-     * @param regex        the regular expression to use for splitting the input string.
-     * @param elementTypes the types that each split element should be cast to. Each type corresponds to the
-     *                     respective split part in the resulting array.
-     * @return an array of objects where each element is a part of the split string, parsed as the specified types.
-     * @throws InvalidConfigurationException if the number of parts after splitting does not match the number of
-     *                                  specified types, or if a split element cannot be parsed as the specified type.
-     */
-    Object[] getSplitString(String path, String regex, Class<?>... elementTypes) throws InvalidConfigurationException;
-
     /**
      * Retrieves the scalar value at the specified path and turns it into a formatted string
      *
@@ -659,40 +618,6 @@ public interface ConfigSection {
      * @return an {@link Optional} containing the double value if present, or empty if not found
      */
     Optional<Double> getOptionalDouble(@NotNull String path);
-
-    /**
-     * Retrieves a BigInteger value at the specified path.
-     *
-     * @param path the path of the BigInteger value
-     * @return the BigInteger value
-     * @throws InvalidConfigurationException if the BigInteger value does not exist or cannot be retrieved
-     */
-    @NotNull BigInteger getBigInteger(@NotNull String path) throws InvalidConfigurationException;
-
-    /**
-     * Attempts to retrieve a BigInteger value at the specified path.
-     *
-     * @param path the path of the BigInteger value
-     * @return an {@link Optional} containing the BigInteger value if present, or empty if not found
-     */
-    Optional<BigInteger> getOptionalBigInteger(@NotNull String path);
-
-    /**
-     * Retrieves a BigDecimal value at the specified path.
-     *
-     * @param path the path of the BigDecimal value
-     * @return the BigDecimal value
-     * @throws InvalidConfigurationException if the BigDecimal value does not exist or cannot be retrieved
-     */
-    @NotNull BigDecimal getBigDecimal(@NotNull String path) throws InvalidConfigurationException;
-
-    /**
-     * Attempts to retrieve a BigDecimal value at the specified path.
-     *
-     * @param path the path of the BigDecimal value
-     * @return an {@link Optional} containing the BigDecimal value if present, or empty if not found
-     */
-    Optional<BigDecimal> getOptionalBigDecimal(@NotNull String path);
 
     /**
      * Retrieves a string at the specified path and parses it as a {@link LocalDate}.
@@ -817,39 +742,6 @@ public interface ConfigSection {
     Object[][] getMatrix(@NotNull String path, int rows, int columns) throws InvalidConfigurationException;
 
     /**
-     * Retrieves a 2D array of strings at the specified path.
-     *
-     * @param path the path of the matrix
-     * @param rows the number of rows in the matrix
-     * @param columns the number of columns in the matrix
-     * @return a 2D array of strings
-     * @throws InvalidConfigurationException if the matrix cannot be retrieved
-     */
-    String[][] getStringMatrix(@NotNull String path, int rows, int columns) throws InvalidConfigurationException;
-
-    /**
-     * Retrieves a 2D array of characters at the specified path.
-     *
-     * @param path the path of the matrix
-     * @param rows the number of rows in the matrix
-     * @param columns the number of columns in the matrix
-     * @return a 2D array of characters
-     * @throws InvalidConfigurationException if the matrix cannot be retrieved
-     */
-    char[][] getCharMatrix(@NotNull String path, int rows, int columns) throws InvalidConfigurationException;
-
-    /**
-     * Retrieves a 2D array of integers at the specified path.
-     *
-     * @param path the path of the matrix
-     * @param rows the number of rows in the matrix
-     * @param columns the number of columns in the matrix
-     * @return a 2D array of integers
-     * @throws InvalidConfigurationException if the matrix cannot be retrieved
-     */
-    int[][] getIntegerMatrix(@NotNull String path, int rows, int columns) throws InvalidConfigurationException;
-
-    /**
      * Retrieves a 2D array of booleans at the specified path.
      *
      * @param path the path of the matrix
@@ -861,15 +753,37 @@ public interface ConfigSection {
     boolean[][] getBooleanMatrix(@NotNull String path, int rows, int columns) throws InvalidConfigurationException;
 
     /**
-     * Retrieves a 2D array of doubles at the specified path.
+     * Retrieves a 2D array of characters at the specified path.
      *
      * @param path the path of the matrix
      * @param rows the number of rows in the matrix
      * @param columns the number of columns in the matrix
-     * @return a 2D array of doubles
+     * @return a 2D array of characters
      * @throws InvalidConfigurationException if the matrix cannot be retrieved
      */
-    double[][] getDoubleMatrix(@NotNull String path, int rows, int columns) throws InvalidConfigurationException;
+    char[][] getCharacterMatrix(@NotNull String path, int rows, int columns) throws InvalidConfigurationException;
+
+    /**
+     * Retrieves a 2D array of strings at the specified path.
+     *
+     * @param path the path of the matrix
+     * @param rows the number of rows in the matrix
+     * @param columns the number of columns in the matrix
+     * @return a 2D array of strings
+     * @throws InvalidConfigurationException if the matrix cannot be retrieved
+     */
+    String[][] getStringMatrix(@NotNull String path, int rows, int columns) throws InvalidConfigurationException;
+
+    /**
+     * Retrieves a 2D array of integers at the specified path.
+     *
+     * @param path the path of the matrix
+     * @param rows the number of rows in the matrix
+     * @param columns the number of columns in the matrix
+     * @return a 2D array of integers
+     * @throws InvalidConfigurationException if the matrix cannot be retrieved
+     */
+    int[][] getIntegerMatrix(@NotNull String path, int rows, int columns) throws InvalidConfigurationException;
 
     /**
      * Retrieves a 2D array of longs at the specified path.
@@ -894,17 +808,15 @@ public interface ConfigSection {
     float[][] getFloatMatrix(@NotNull String path, int rows, int columns) throws InvalidConfigurationException;
 
     /**
-     * Retrieves a 2D array of the specified type at the given path.
+     * Retrieves a 2D array of doubles at the specified path.
      *
      * @param path the path of the matrix
-     * @param type the class of the elements in the matrix
-     * @param rowCount the number of rows in the matrix
-     * @param columnCount the number of columns in the matrix
-     * @param <T> the type of the elements in the matrix
-     * @return a 2D array of the specified type
+     * @param rows the number of rows in the matrix
+     * @param columns the number of columns in the matrix
+     * @return a 2D array of doubles
      * @throws InvalidConfigurationException if the matrix cannot be retrieved
      */
-    @NotNull <T> T[][] getMatrix(@NotNull String path, @NotNull Class<T> type, int rowCount, int columnCount) throws InvalidConfigurationException;
+    double[][] getDoubleMatrix(@NotNull String path, int rows, int columns) throws InvalidConfigurationException;
 
     /**
      * Converts this section into a list of its contained fields.

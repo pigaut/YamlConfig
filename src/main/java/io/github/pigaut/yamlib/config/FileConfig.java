@@ -1,9 +1,9 @@
 package io.github.pigaut.yamlib.config;
 
 import io.github.pigaut.yamlib.*;
-import io.github.pigaut.yamlib.config.configurator.*;
 import io.github.pigaut.yamlib.config.node.*;
-import io.github.pigaut.yamlib.config.parser.*;
+import io.github.pigaut.yamlib.configurator.*;
+import io.github.pigaut.yamlib.parser.*;
 import io.github.pigaut.yamlib.util.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.api.*;
@@ -15,28 +15,17 @@ public class FileConfig extends RootSection implements Config {
     private final File file;
     private final String name;
     private Configurator configurator;
-    private Parser parser;
 
     public FileConfig(File file) {
-        this(file, new StandardConfigurator(), new StandardParser());
+        this(file, new StandardConfigurator());
     }
 
     public FileConfig(File file, Configurator configurator) {
-        this(file, configurator, new StandardParser());
-    }
-
-    public FileConfig(File file, Parser parser) {
-        this(file, new StandardConfigurator(), parser);
-    }
-
-    public FileConfig(File file, Configurator configurator, Parser parser) {
         Preconditions.checkNotNull(file, "File cannot be null");
         Preconditions.checkNotNull(configurator, "Configurator cannot be null");
-        Preconditions.checkNotNull(parser, "Parser cannot be null");
         this.file = file;
         this.name = YAMLib.getFileName(file.getName());
         this.configurator = configurator;
-        this.parser = parser;
     }
 
     @Override
@@ -57,16 +46,6 @@ public class FileConfig extends RootSection implements Config {
     @Override
     public void setConfigurator(@NotNull Configurator configurator) {
         this.configurator = configurator;
-    }
-
-    @Override
-    public @NotNull Parser getParser() {
-        return parser;
-    }
-
-    @Override
-    public void setParser(@NotNull Parser parser) {
-        this.parser = parser;
     }
 
     @Override

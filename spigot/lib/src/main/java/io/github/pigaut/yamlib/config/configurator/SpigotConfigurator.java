@@ -2,8 +2,13 @@ package io.github.pigaut.yamlib.config.configurator;
 
 import io.github.pigaut.yamlib.config.configurator.itemstack.*;
 import io.github.pigaut.yamlib.config.configurator.location.*;
+import io.github.pigaut.yamlib.config.configurator.world.*;
+import io.github.pigaut.yamlib.configurator.StandardConfigurator;
+import io.github.pigaut.yamlib.configurator.field.*;
+import io.github.pigaut.yamlib.parser.*;
 import org.bukkit.*;
 import org.bukkit.inventory.*;
+import org.jetbrains.annotations.*;
 
 public class SpigotConfigurator extends StandardConfigurator {
 
@@ -16,11 +21,14 @@ public class SpigotConfigurator extends StandardConfigurator {
     }
 
     public SpigotConfigurator(boolean compact, World defaultWorld) {
-        registerMapper(ItemStack.class, new ItemStackMapper(compact));
-        registerMapper(Location.class, new LocationMapper(compact));
+        addMapper(ItemStack.class, new ItemStackMapper(compact));
+        addMapper(Location.class, new LocationMapper(compact));
 
-        registerLoader(ItemStack.class, new ItemStackLoader());
-        registerLoader(Location.class, new LocationLoader(defaultWorld));
+        addLoader(ItemStack.class, new ItemStackLoader());
+        addLoader(Location.class, new LocationLoader(defaultWorld));
+
+        addDeserializer(World.class, new WorldDeserializer());
+        addSerializer(World.class, World::getName);
     }
 
 }

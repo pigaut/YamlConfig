@@ -150,7 +150,6 @@ public class ConfigRepresenter extends BaseRepresenter {
         @Override
         public Node representData(Object data) {
             ConfigSection section = (ConfigSection) data;
-
             return section.isKeyless() ? representSequence(getTag(data.getClass(), Tag.SEQ), section.toList(), section.getFlowStyle()) :
                     representMapping(getTag(data.getClass(), Tag.MAP), section.getNestedFields(), section.getFlowStyle());
         }

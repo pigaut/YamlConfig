@@ -1,4 +1,4 @@
-package io.github.pigaut.yamlib;
+package io.github.pigaut.yamlib.parser;
 
 public class DeserializationException extends Exception {
 

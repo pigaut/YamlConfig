@@ -1,7 +1,7 @@
 package io.github.pigaut.yamlib;
 
-import io.github.pigaut.yamlib.config.configurator.*;
-import io.github.pigaut.yamlib.config.parser.*;
+import io.github.pigaut.yamlib.configurator.*;
+import io.github.pigaut.yamlib.parser.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
@@ -37,23 +37,6 @@ public interface Config extends ConfigSection {
      * @param configurator The {@link Configurator} to associate with this configuration; cannot be {@code null}.
      */
     void setConfigurator(@NotNull Configurator configurator);
-
-    /**
-     * Retrieves the parser for this configuration.
-     * The parser serializes/deserializes objects to/from strings.
-     *
-     * @return The {@link Parser} for this configuration, never {@code null}.
-     */
-    @NotNull
-    Parser getParser();
-
-    /**
-     * Sets the parser for this configuration.
-     * The parser serializes/deserializes objects to/from strings.
-     *
-     * @param parser The {@link Parser} to associate with this configuration; cannot be {@code null}.
-     */
-    void setParser(@NotNull Parser parser);
 
     /**
      * Loads the configuration from the associated file.

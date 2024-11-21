@@ -12,7 +12,7 @@ public class ChildSection extends SectionNode {
     private final SectionNode parent;
     private final String key;
 
-    public ChildSection(@NotNull SectionNode parent, @NotNull String key, @Nullable FlowStyle flowStyle) {
+    private ChildSection(@NotNull SectionNode parent, @NotNull String key, @Nullable FlowStyle flowStyle) {
         Preconditions.checkNotNull(parent, "parent section cannot be null");
         Preconditions.checkNotNull(key, "key cannot be null");
         this.parent = parent;
@@ -20,7 +20,12 @@ public class ChildSection extends SectionNode {
         if (flowStyle != null) {
             setFlowStyle(flowStyle);
         }
-        this.parent.children.put(key, this);
+    }
+
+    public static ChildSection ofSection(@NotNull SectionNode parent, @NotNull String key) {
+        final ChildSection section = new ChildSection(parent, key, parent.getDefaultFlowStyle());
+        parent.children.put(key, section);
+        return section;
     }
 
     @Override

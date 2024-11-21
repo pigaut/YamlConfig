@@ -1,4 +1,4 @@
-package io.github.pigaut.yamlib.config.configurator;
+package io.github.pigaut.yamlib.configurator.section;
 
 import io.github.pigaut.yamlib.*;
 import org.jetbrains.annotations.*;

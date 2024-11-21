@@ -1,7 +1,7 @@
 package io.github.pigaut.yamlib.config.configurator.location;
 
 import io.github.pigaut.yamlib.*;
-import io.github.pigaut.yamlib.config.configurator.*;
+import io.github.pigaut.yamlib.configurator.section.ConfigLoader;
 import org.bukkit.*;
 import org.jetbrains.annotations.*;
 

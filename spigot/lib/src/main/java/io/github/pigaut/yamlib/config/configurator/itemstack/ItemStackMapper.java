@@ -3,7 +3,7 @@ package io.github.pigaut.yamlib.config.configurator.itemstack;
 import de.tr7zw.changeme.nbtapi.*;
 import de.tr7zw.changeme.nbtapi.iface.*;
 import io.github.pigaut.yamlib.*;
-import io.github.pigaut.yamlib.config.configurator.*;
+import io.github.pigaut.yamlib.configurator.section.ConfigMapper;
 import io.github.pigaut.yamlib.snakeyaml.engine.v2.common.*;
 import org.bukkit.*;
 import org.bukkit.inventory.*;

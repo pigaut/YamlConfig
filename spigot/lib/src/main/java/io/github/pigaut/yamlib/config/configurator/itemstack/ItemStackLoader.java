@@ -3,7 +3,7 @@ package io.github.pigaut.yamlib.config.configurator.itemstack;
 import de.tr7zw.changeme.nbtapi.*;
 import de.tr7zw.changeme.nbtapi.iface.*;
 import io.github.pigaut.yamlib.*;
-import io.github.pigaut.yamlib.config.configurator.*;
+import io.github.pigaut.yamlib.configurator.section.ConfigLoader;
 import io.github.pigaut.yamlib.util.*;
 import org.bukkit.*;
 import org.bukkit.enchantments.*;
@@ -102,13 +102,12 @@ public class ItemStackLoader implements ConfigLoader<ItemStack> {
     }
 
     protected void loadEnchants(ConfigSection enchantsConfig, ReadWriteNBT itemNBT) {
-        enchantsConfig.isKeyedOrThrow();
         ReadWriteNBTCompoundList enchantmentCompounds = itemNBT.getCompoundList("Enchantments");
         for (String key : enchantsConfig.getKeys()) {
             int level = enchantsConfig.getInteger(key);
             ReadWriteNBT enchantmentCompound = enchantmentCompounds.addCompound();
 
-            enchantmentCompound.setString("id", StringFormatter.NAMESPACE.format(key));
+            enchantmentCompound.setString("id", StringFormatter.KEBAB.format(key));
             enchantmentCompound.setShort("lvl", (short) level);
         }
     }

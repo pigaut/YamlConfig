@@ -1,28 +1,23 @@
 package io.github.pigaut.yamlib.config.node;
 
 import io.github.pigaut.yamlib.*;
-import io.github.pigaut.yamlib.config.configurator.*;
-import io.github.pigaut.yamlib.config.parser.*;
+import io.github.pigaut.yamlib.config.path.*;
+import io.github.pigaut.yamlib.configurator.*;
+import io.github.pigaut.yamlib.configurator.field.*;
+import io.github.pigaut.yamlib.configurator.section.*;
 import io.github.pigaut.yamlib.util.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.common.*;
 
 import java.io.*;
-import java.lang.reflect.*;
-import java.math.*;
 import java.net.*;
 import java.time.*;
 import java.util.*;
-import java.util.regex.*;
 import java.util.stream.*;
 
 public abstract class SectionNode implements ConfigSection {
 
-    public static final List<Class<?>> SCALAR_TYPES = List.of(Boolean.class, Character.class, String.class, Byte.class, Short.class, Integer.class, Long.class,
-            Float.class, Double.class, BigInteger.class, BigDecimal.class);
-
     protected final Map<String, @NotNull Object> children = new LinkedHashMap<>();
-    private boolean keyless = false;
     private FlowStyle flowStyle = FlowStyle.BLOCK;
     private FlowStyle defaultFlowStyle = null;
 
@@ -45,12 +40,12 @@ public abstract class SectionNode implements ConfigSection {
 
     @Override
     public Set<String> getKeys() {
-        return new HashSet<>(children.keySet());
+        return new LinkedHashSet<>(children.keySet());
     }
 
     @Override
-    public Set<Object> getFields() {
-        return new HashSet<>(children.values());
+    public Set<Object> getValues() {
+        return new LinkedHashSet<>(children.values());
     }
 
     @Override
@@ -59,44 +54,86 @@ public abstract class SectionNode implements ConfigSection {
     }
 
     @Override
-    public void set(@NotNull String path, Object value) {
-        Preconditions.checkNotNull(path, "Path cannot be null.");
-        Preconditions.checkArgument(!path.isBlank(), "Path cannot be empty.");
+    public boolean isSet(@NotNull String path) {
+        return getOptionalScalar(path).isPresent();
+    }
 
-        PathIterator pathIterator = new PathIterator(this, path);
+    @Override
+    public boolean isSection(@NotNull String path) {
+        return getOptionalSection(path).isPresent();
+    }
 
-        if (value instanceof Optional<?> optional) {
-            value = optional.orElse(null);
-        }
-
-        if (value == null || SCALAR_TYPES.contains(value.getClass())) {
-            pathIterator.setScalar(value);
+    @Override
+    public <T> void set(@NotNull String path, @Nullable T value) {
+        if (value == null) {
+            ConfigUtil.setScalar(this, path, null);
             return;
         }
 
-        Class<?> classType = value.getClass();
-        Serializer serializer = getRoot().getParser().getSerializer(classType);
-        if (serializer != null) {
-            pathIterator.setScalar(serializer.serialize(value));
+        final Class<?> classType = value.getClass();
+        if (YAMLib.SCALARS.contains(classType)) {
+            ConfigUtil.setScalar(this, path, value);
             return;
         }
 
-        ConfigMapper mapper = getRoot().getConfigurator().getMapper(classType);
+        final Configurator configurator = getRoot().getConfigurator();
+        @SuppressWarnings("unchecked")
+        final ConfigSetter<? super T> setter = (ConfigSetter<? super T>) configurator.getConfigSetter(classType);
+        if (setter != null) {
+            set(path, setter.generateValue(value));
+            return;
+        }
+
+        @SuppressWarnings("unchecked")
+        final ConfigMapper<? super T> mapper = (ConfigMapper<? super T>) configurator.getConfigMapper(classType);
         if (mapper != null) {
-            mapper.map(getSectionOrCreate(path), value);
+            final ConfigSection sectionToMap = getSectionOrCreate(path);
+            configurator.map(sectionToMap, value);
             return;
         }
 
-        throw new IllegalArgumentException("No serializer or mapper found for value of type " + classType.getSimpleName());
+        throw new IllegalArgumentException("No setter or mapper found for value of class type: " + classType.getSimpleName());
     }
 
     @Override
-    public void add(Object value) {
-        set("[" + children.size() + "]", value);
+    public <T> void add(@NotNull T value) {
+        Preconditions.checkNotNull(value, "Value cannot be null");
+
+        final Class<?> classType = value.getClass();
+        if (YAMLib.SCALARS.contains(classType)) {
+            ConfigUtil.addScalar(this, value);
+            return;
+        }
+
+        final Configurator configurator = getRoot().getConfigurator();
+        @SuppressWarnings("unchecked")
+        final ConfigSetter<? super T> setter = (ConfigSetter<? super T>) configurator.getConfigSetter(classType);
+        if (setter != null) {
+            final Object generatedValue = setter.generateValue(value);
+            String generatedKey = setter.generateKey(value);
+            if (generatedKey == null) {
+                generatedKey = addKey();
+            }
+
+            set(generatedKey, generatedValue);
+            return;
+        }
+
+        @SuppressWarnings("unchecked")
+        final ConfigMapper<? super T> mapper = (ConfigMapper<? super T>) configurator.getConfigMapper(classType);
+        if (mapper != null) {
+            final String generatedKey = mapper.generateKey(value);
+            final ConfigSection sectionToMap = generatedKey != null ? getSectionOrCreate(generatedKey) : addSection();
+
+            mapper.map(sectionToMap, value);
+            return;
+        }
+
+        throw new IllegalArgumentException("No config setter or mapper found for class: " + classType.getSimpleName());
     }
 
     @Override
-    public void map(@NotNull Object value) throws IllegalArgumentException {
+    public void map(@NotNull Object value) {
         getRoot().getConfigurator().map(this, value);
     }
 
@@ -106,24 +143,10 @@ public abstract class SectionNode implements ConfigSection {
     }
 
     @Override
-    public ConfigSection addSection() {
-        return getSectionOrCreate("[" + size() + "]");
-    }
-
-    @Override
-    public boolean isKeyless() {
-        return keyless;
-    }
-
-    @Override
-    public void setKeyless(boolean keyless) {
-        if (!isRoot()) {
-            ConfigSection parent = getParent();
-            FlowStyle defaultFlowStyle = parent.getDefaultFlowStyle();
-            this.flowStyle = defaultFlowStyle != null ? defaultFlowStyle : parent.isKeyless() && keyless ? FlowStyle.FLOW : FlowStyle.BLOCK;
-        }
-
-        this.keyless = keyless;
+    public void formatKeys(StringFormatter formatter) {
+        Map<String, Object> children = getNestedFields();
+        this.children.clear();
+        children.forEach((key, value) -> this.children.put(formatter.format(key), value));
     }
 
     @Override
@@ -151,21 +174,19 @@ public abstract class SectionNode implements ConfigSection {
 
     @Override
     public <T> @NotNull T load(@NotNull Class<T> type) throws InvalidConfigurationException {
-        return getRoot().getConfigurator().load(type, this);
+        final Configurator configurator = getRoot().getConfigurator();
+        return configurator.load(type, this);
     }
 
     @Override
     public <T> @NotNull T load(@NotNull String path, @NotNull Class<T> type) throws InvalidConfigurationException {
-        return getSection(path).load(type);
+        final ConfigSection section = getSection(path);
+        return section.load(type);
     }
 
     @Override
     public <T> @NotNull T get(@NotNull String path, @NotNull Class<T> type) throws InvalidConfigurationException {
-        try {
-            return getRoot().getParser().deserialize(type, getString(path));
-        } catch (DeserializationException e) {
-            throw new InvalidConfigurationException(this, path, e.getMessage());
-        }
+        return ConfigUtil.get(this, path, type);
     }
 
     @Override
@@ -178,26 +199,23 @@ public abstract class SectionNode implements ConfigSection {
 
     @Override
     public <T> @NotNull Optional<T> loadOptional(@NotNull Class<T> type) {
-        return getRoot().getConfigurator().loadOptional(type, this);
+        final Configurator configurator = getRoot().getConfigurator();
+        return ConfigUtil.getOptional(() -> configurator.load(type, this));
     }
 
     @Override
     public <T> Optional<T> loadOptional(@NotNull String path, @NotNull Class<T> type) {
-        Optional<ConfigSection> sectionField = getOptionalSection(path);
-        return sectionField.flatMap(section -> section.loadOptional(type));
+        return ConfigUtil.getOptional(() -> load(path, type));
     }
 
     @Override
     public <T> Optional<T> getOptional(@NotNull String path, @NotNull Class<T> type) {
-        return getOptionalScalar(path).flatMap(scalar -> getRoot().getParser().deserializeOptional(type, scalar.toString()));
+        return ConfigUtil.getOptional(() -> get(path, type));
     }
 
     @Override
     public <T> Optional<T> getOrLoadOptional(@NotNull String path, @NotNull Class<T> type) throws IllegalArgumentException {
-        if (getField(path) instanceof ConfigSection sectionToLoad) {
-            return sectionToLoad.loadOptional(type);
-        }
-        return getOptional(path, type);
+        return ConfigUtil.getOptional(() -> getOrLoad(path, type));
     }
 
     @Override
@@ -223,33 +241,68 @@ public abstract class SectionNode implements ConfigSection {
     }
 
     @Override
+    public <T> Stream<@NotNull T> getAll(@NotNull String path, @NotNull Class<T> type) {
+        Optional<ConfigSection> sectionField = getOptionalSection(path);
+        return sectionField.map(section -> section.getKeys().stream().flatMap(key -> section.getOptional(key, type).stream()))
+                .orElse(Stream.empty());
+    }
+
+    @Override
+    public <T> Stream<@NotNull T> getAllOrThrow(@NotNull String path, @NotNull Class<T> type) throws InvalidConfigurationException {
+        Optional<ConfigSection> sectionField = getOptionalSection(path);
+        return sectionField.map(section -> section.getKeys().stream().map(key -> section.get(key, type))).orElse(Stream.empty());
+    }
+
+    @Override
+    public <T> Stream<@NotNull T> getOrLoadAll(@NotNull String path, @NotNull Class<T> type) {
+        Optional<ConfigSection> sectionField = getOptionalSection(path);
+        return sectionField.map(section -> section.getKeys().stream().flatMap(key -> section.getOrLoadOptional(key, type).stream()))
+                .orElse(Stream.empty());
+    }
+
+    @Override
+    public <T> Stream<@NotNull T> getOrLoadAllOrThrow(@NotNull String path, @NotNull Class<T> type) throws InvalidConfigurationException {
+        Optional<ConfigSection> sectionField = getOptionalSection(path);
+        return sectionField.map(section -> section.getKeys().stream().map(key -> section.getOrLoad(key, type))).orElse(Stream.empty());
+    }
+
+    @Override
     public @NotNull ConfigSection getSection(@NotNull String path) throws InvalidConfigurationException {
-        Object field = getField(path);
-
-        if (!(field instanceof ConfigSection section)) {
-            throw new InvalidConfigurationException(this, path, "is not a section");
-        }
-
-        return section;
+        return ConfigUtil.getSection(this, path);
     }
 
     @Override
     public @NotNull SectionNode getSectionOrCreate(@NotNull String path) {
-        PathIterator pathIterator = new PathIterator(this, path);
+        return ConfigUtil.getSectionOrCreate(this, path, false);
+    }
 
-        SectionNode section = null;
-        while (pathIterator.hasNext()) {
-            section = pathIterator.nextSectionOrCreate();
+    @Override
+    public Optional<ConfigSection> getOptionalSection(@NotNull String path) {
+        return ConfigUtil.getOptional(() -> getSection(path));
+    }
+
+    @Override
+    public @NotNull ConfigSection getSection(@NotNull String path, boolean keyless) throws InvalidConfigurationException {
+        final ConfigSection section = getSection(path);
+
+        if (section.isKeyless() && !keyless) {
+            throw new InvalidConfigurationException(this, path, "is not a section");
+        }
+        else if (!section.isKeyless() && keyless) {
+            throw new InvalidConfigurationException(this, path, "is not a list");
         }
 
         return section;
     }
 
     @Override
-    public Optional<ConfigSection> getOptionalSection(@NotNull String path) {
-        return getOptionalField(path)
-                .filter(ConfigSection.class::isInstance)
-                .map(ConfigSection.class::cast);
+    public @NotNull ConfigSection getSectionOrCreate(@NotNull String path, boolean keyless) {
+        return ConfigUtil.getSectionOrCreate(this, path, keyless);
+    }
+
+    @Override
+    public Optional<ConfigSection> getOptionalSection(@NotNull String path, boolean keyless) {
+        return ConfigUtil.getOptional(() -> getSection(path, keyless));
     }
 
     @Override
@@ -259,7 +312,7 @@ public abstract class SectionNode implements ConfigSection {
 
     @Override
     public Map<String, Object> getNestedScalars() {
-        Map<String, Object> scalars = new HashMap<>();
+        Map<String, Object> scalars = new LinkedHashMap<>();
 
         children.forEach((key, value) -> {
             if (!(value instanceof ConfigSection)) {
@@ -272,7 +325,7 @@ public abstract class SectionNode implements ConfigSection {
 
     @Override
     public Set<ConfigSection> getNestedSections() {
-        Set<ConfigSection> sections = new HashSet<>();
+        Set<ConfigSection> sections = new LinkedHashSet<>();
 
         children.forEach((key, value) -> {
             if (value instanceof ConfigSection section) {
@@ -310,7 +363,7 @@ public abstract class SectionNode implements ConfigSection {
             if (!section.isKeyless()) {
                 throw new InvalidConfigurationException(section, "is not a list");
             }
-            return new ArrayList<>(section.getFields());
+            return new ArrayList<>(section.getValues());
         }
 
         return List.of();
@@ -384,36 +437,6 @@ public abstract class SectionNode implements ConfigSection {
         return getListOrThrow(path, Number.class, "is not a list of doubles").map(Number::doubleValue).toList();
     }
 
-    @Override
-    public List<BigInteger> getBigIntegerList(@NotNull String path) {
-        List<BigInteger> bigIntegers = new ArrayList<>();
-
-        for (Number number : getListOrThrow(path, Number.class, "is not a list of big integers").toList()) {
-            if (number instanceof BigInteger bigInteger) {
-                bigIntegers.add(bigInteger);
-                continue;
-            }
-            bigIntegers.add(BigInteger.valueOf(number.longValue()));
-        }
-
-        return bigIntegers;
-    }
-
-    @Override
-    public List<BigDecimal> getBigDecimalList(@NotNull String path) {
-        List<BigDecimal> bigDecimals = new ArrayList<>();
-
-        for (Number number : getListOrThrow(path, Number.class, "is not a list of big decimals").toList()) {
-            if (number instanceof BigDecimal bigDecimal) {
-                bigDecimals.add(bigDecimal);
-                continue;
-            }
-            bigDecimals.add(BigDecimal.valueOf(number.doubleValue()));
-        }
-
-        return bigDecimals;
-    }
-
     public <T> List<T> getList(@NotNull String path, @NotNull Class<T> type) {
         Optional<ConfigSection> sectionField = getOptionalSection(path);
         return sectionField.map(section -> section.getList(type)).orElse(List.of());
@@ -425,130 +448,92 @@ public abstract class SectionNode implements ConfigSection {
             throw new InvalidConfigurationException(this, "is not a list");
         }
 
-        final Set<Object> fields = getFields();
-        if (fields.isEmpty()) {
+        if (size() == 0) {
             return List.of();
         }
 
-        final Configurator configurator = getRoot().getConfigurator();
-        final Parser parser = getRoot().getParser();
-
         List<T> list = new ArrayList<>();
-        for (Object field : fields) {
-            T value;
-
-            if (field instanceof ConfigSection section) {
-                value = configurator.load(type, section);
-            }
-            else {
-                try {
-                    value = parser.deserialize(type, field.toString());
-                } catch (DeserializationException e) {
-                    throw new InvalidConfigurationException(this, "(Invalid list) " + e.getMessage());
-                }
-            }
-
-            list.add(value);
+        for (String key : getKeys()) {
+            list.add(getOrLoad(key, type));
         }
 
         return list;
     }
 
     public @NotNull Object getField(@NotNull String path) throws InvalidConfigurationException {
-        PathIterator pathIterator = new PathIterator(this, path);
-
-        Object node = null;
-        while (pathIterator.hasNext()) {
-            node = pathIterator.next();
-        }
-
-        if (node == null) {
-            throw new InvalidConfigurationException(this, path, "is not set");
-        }
-
-        return node;
+        return ConfigUtil.getField(this, path);
     }
 
     @Override
     public Optional<Object> getOptionalField(@NotNull String path) {
-        PathIterator pathIterator = new PathIterator(this, path);
-
-        Object node = null;
-        while (pathIterator.hasNext()) {
-            node = pathIterator.next();
-        }
-
-        return Optional.ofNullable(node);
+        return ConfigUtil.getOptional(() -> getField(path));
     }
 
     @Override
     public @NotNull Object getScalar(@NotNull String path) throws InvalidConfigurationException {
-        Object field = getField(path);
-        if (field instanceof ConfigSection) {
-            throw new InvalidConfigurationException(this, path, "is not a scalar value");
-        }
-        return field;
+        return ConfigUtil.getScalar(this, path);
     }
 
     @Override
     public Optional<Object> getOptionalScalar(@NotNull String path) {
-        return getOptionalField(path).filter(field -> !(field instanceof ConfigSection));
+        return ConfigUtil.getOptional(() -> getScalar(path));
     }
 
     @Override
     public boolean getBoolean(@NotNull String path) throws InvalidConfigurationException {
-        return getScalarOrThrow(path, Boolean.class, "is not a boolean");
+        return ConfigUtil.getScalarOrThrow(this, path, Boolean.class, "is not a boolean");
     }
 
     @Override
     public Optional<Boolean> getOptionalBoolean(@NotNull String path) {
-        return getOptionalScalar(path, Boolean.class);
+        return ConfigUtil.getOptional(() -> getBoolean(path));
     }
 
     @Override
     public char getCharacter(@NotNull String path) throws InvalidConfigurationException {
-        return getScalarOrThrow(path, Character.class, "is not a character");
+        return ConfigUtil.getScalarOrThrow(this, path, Character.class, "is not a character");
     }
 
     @Override
     public Optional<Character> getOptionalCharacter(@NotNull String path) {
-        return getOptionalScalar(path, Character.class);
+        return ConfigUtil.getOptional(() -> getCharacter(path));
     }
 
     @Override
     public @NotNull String getString(@NotNull String path) throws InvalidConfigurationException {
-        return getScalar(path).toString();
+        return ConfigUtil.getScalar(this, path).toString();
     }
 
     @Override
     public Optional<String> getOptionalString(@NotNull String path) {
-        return getOptionalScalar(path).map(Object::toString);
+        return ConfigUtil.getOptional(() -> getString(path));
     }
 
-    @Override
-    public Object[] getSplitString(String path, String regex, Class<?>... types) {
-        final int length = types.length;
-        final String[] elements = getString(path).split(regex);
-
-        if (elements.length != length) {
-            throw new InvalidConfigurationException(this, path,
-                    "(Invalid split string) expected " + types.length + " elements, but got " + elements.length);
-        }
-
-        Object[] splitString = new Object[types.length];
-
-        final Parser parser = getRoot().getParser();
-        for (int i = 0; i < types.length; i++) {
-            try {
-                splitString[i] = parser.deserialize(types[i], elements[i]);
-            } catch (DeserializationException e) {
-                throw new InvalidConfigurationException(this, path,
-                        "(Invalid split string) " + e.getMessage());
-            }
-        }
-
-        return splitString;
-    }
+//    @Override
+//    public Object[] getSplitString(String path, String regex, Class<?>... types) {
+//        Preconditions.checkArgument(types.length > 1, "Types must have at least two elements.");
+//        final int length = types.length;
+//        final String[] elements = getString(path).split(regex);
+//
+//        if (elements.length != length) {
+//            throw new InvalidConfigurationException(this, path,
+//                    "(Invalid split string) expected " + types.length + " elements, but got " + elements.length);
+//        }
+//
+//        Object[] splitString = new Object[types.length];
+//
+//        final Parser parser = getRoot().getParser();
+//        for (int i = 0; i < types.length; i++) {
+//            try {
+//                splitString[i] = parser.deserialize(types[i], elements[i]);
+//            } catch (DeserializationException e) {
+//                throw new InvalidConfigurationException(this, path,
+//                        "(Invalid split string) " + e.getMessage());
+//            }
+//        }
+//
+//        return splitString;
+//    }
 
     @Override
     public @NotNull String getString(@NotNull String path, @NotNull StringFormatter formatter) throws InvalidConfigurationException {
@@ -562,72 +547,42 @@ public abstract class SectionNode implements ConfigSection {
 
     @Override
     public int getInteger(@NotNull String path) throws InvalidConfigurationException {
-        return getScalarOrThrow(path, Integer.class, "is not an integer");
+        return ConfigUtil.getScalarOrThrow(this, path, Integer.class, "is not an integer");
     }
 
     @Override
     public Optional<Integer> getOptionalInteger(@NotNull String path) {
-        return getOptionalScalar(path, Integer.class);
+        return ConfigUtil.getOptional(() -> getInteger(path));
     }
 
     @Override
     public long getLong(@NotNull String path) throws InvalidConfigurationException {
-        return getScalarOrThrow(path, Number.class, "is not a long").longValue();
+        return ConfigUtil.getScalarOrThrow(this, path, Number.class, "is not a long").longValue();
     }
 
     @Override
     public Optional<Long> getOptionalLong(@NotNull String path) {
-        return getOptionalScalar(path, Number.class).map(Number::longValue);
+        return ConfigUtil.getOptional(() -> getLong(path));
     }
 
     @Override
     public float getFloat(@NotNull String path) throws InvalidConfigurationException {
-        return getScalarOrThrow(path, Number.class, "is not a float").floatValue();
+        return ConfigUtil.getScalarOrThrow(this, path, Number.class, "is not a float").floatValue();
     }
 
     @Override
     public Optional<Float> getOptionalFloat(@NotNull String path) {
-        return getOptionalScalar(path, Number.class).map(Number::floatValue);
+        return ConfigUtil.getOptional(() -> getFloat(path));
     }
 
     @Override
     public double getDouble(@NotNull String path) throws InvalidConfigurationException {
-        return getScalarOrThrow(path, Number.class, "is not a double").doubleValue();
+        return ConfigUtil.getScalarOrThrow(this, path, Number.class, "is not a double").doubleValue();
     }
 
     @Override
     public Optional<Double> getOptionalDouble(@NotNull String path) {
-        return getOptionalScalar(path, Number.class).map(Number::doubleValue);
-    }
-
-    @Override
-    public @NotNull BigInteger getBigInteger(@NotNull String path) throws InvalidConfigurationException {
-        Number number = getScalarOrThrow(path, Number.class, "is not a big integer");
-        return number instanceof BigInteger bigInteger ? bigInteger : BigInteger.valueOf(number.longValue());
-    }
-
-    @Override
-    public Optional<BigInteger> getOptionalBigInteger(@NotNull String path) {
-        try {
-            return Optional.of(getBigInteger(path));
-        } catch (InvalidConfigurationException e) {
-            return Optional.empty();
-        }
-    }
-
-    @Override
-    public @NotNull BigDecimal getBigDecimal(@NotNull String path) throws InvalidConfigurationException {
-        Number number = getScalarOrThrow(path, Number.class, "is not a big decimal");
-        return number instanceof BigDecimal bigDecimal ? bigDecimal : BigDecimal.valueOf(number.doubleValue());
-    }
-
-    @Override
-    public Optional<BigDecimal> getOptionalBigDecimal(@NotNull String path) {
-        try {
-            return Optional.of(getBigDecimal(path));
-        } catch (InvalidConfigurationException e) {
-            return Optional.empty();
-        }
+        return ConfigUtil.getOptional(() -> getDouble(path));
     }
 
     @Override
@@ -749,7 +704,7 @@ public abstract class SectionNode implements ConfigSection {
     }
 
     @Override
-    public char[][] getCharMatrix(String path, int rowCount, int columnCount) throws InvalidConfigurationException {
+    public char[][] getCharacterMatrix(String path, int rowCount, int columnCount) throws InvalidConfigurationException {
         Object[][] matrix = getMatrix(path, rowCount, columnCount);
         char[][] charMatrix = new char[rowCount][columnCount];
 
@@ -869,333 +824,13 @@ public abstract class SectionNode implements ConfigSection {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public <T> T[][] getMatrix(String path, Class<T> type, int rowCount, int columnCount) {
-        String[][] stringMatrix = getStringMatrix(path, rowCount, columnCount);
-        T[][] matrix = (T[][]) Array.newInstance(type, rowCount, columnCount);
-
-        Deserializer<T> deserializer = getRoot().getParser().getDeserializer(type);
-        if (deserializer == null) {
-            throw new IllegalArgumentException("No deserializer found for class " + type.getSimpleName());
-        }
-
-        for (int row = 0; row < rowCount; row++) {
-            for (int column = 0; column < columnCount; column++) {
-                String value = stringMatrix[row][column];
-
-                try {
-                    matrix[row][column] = deserializer.deserialize(value);
-                } catch (DeserializationException e) {
-                    throw new InvalidConfigurationException(this, path, String.format("(Invalid matrix) element at row %d and column %d %s", row + 1, column + 1, e.getMessage()));
-                }
-            }
-        }
-
-        return matrix;
-    }
-
-    @Override
     public List<Object> toList() {
         return new ArrayList<>(children.values());
-    }
-
-    private void reindexFields() {
-        Map<String, Object> indexedMap = new LinkedHashMap<>();
-        int index = 0;
-        for (Map.Entry<String, Object> entry : children.entrySet()) {
-            indexedMap.put(Integer.toString(index++), entry.getValue());
-        }
-        children.clear();
-        children.putAll(indexedMap);
-    }
-
-    private <T> T getScalarOrThrow(@NotNull String path, Class<T> type, String error) {
-        Object node = getScalar(path);
-        if (!type.isInstance(node)) {
-            throw new InvalidConfigurationException(this, path, error);
-        }
-        return type.cast(node);
-    }
-
-    private <T> Optional<T> getOptionalScalar(@NotNull String path, Class<T> type) {
-        return getOptionalScalar(path).filter(type::isInstance).map(type::cast);
     }
 
     @Override
     public String toString() {
         return getNestedFields().toString();
-    }
-
-    // Navigates nodes, creates section nodes, and scalar nodes
-    protected class PathIterator implements Iterator<Object> {
-        private static final Pattern INDEX_PATTERN = Pattern.compile("\\[(\\d+)]");
-
-        private final SectionNode root;
-        private final List<NodeKey> keys = new ArrayList<>();
-        private SectionNode currentSection;
-        private int pointer = 0;
-
-        public PathIterator(SectionNode root, String path) {
-            this.root = root;
-            this.currentSection = root;
-            loadKeys(path.toLowerCase());
-        }
-
-        public boolean hasNext() {
-            return pointer < keys.size();
-        }
-
-        @Nullable
-        public Object next() {
-            if (!hasNext()) {
-                throw new NoSuchElementException("No more keys in the path.");
-            }
-
-            if (currentSection == null) {
-                return null;
-            }
-
-            Object node = keys.get(pointer++).getNode(currentSection);
-            if (!hasNext()) {
-                return node;
-            }
-
-            currentSection = (node instanceof SectionNode section) ? section : null;
-            return node;
-        }
-
-        public boolean isLast() {
-            return pointer + 1 >= keys.size();
-        }
-
-        @NotNull
-        public SectionNode nextSectionOrCreate() {
-            if (!hasNext()) {
-                throw new NoSuchElementException("No more keys in the path.");
-            }
-
-            if (currentSection == null) {
-                throw new IllegalStateException("Current section is null.");
-            }
-
-            NodeKey key = keys.get(pointer++);
-            Object node = key.getNode(currentSection);
-
-            currentSection = (node instanceof SectionNode section) ? section : key.createSection(currentSection);
-
-            return currentSection;
-        }
-
-        public void setScalar(Object scalar) {
-            while (hasNext()) {
-                if (isLast()) {
-                    setNext(scalar);
-                    break;
-                }
-                nextSectionOrCreate();
-            }
-        }
-
-        private void setNext(Object scalar) {
-            if (!hasNext()) {
-                throw new NoSuchElementException("No more keys in the path.");
-            }
-
-            if (currentSection == null) {
-                throw new IllegalStateException("Current section is null.");
-            }
-
-            NodeKey key = keys.get(pointer++);
-            key.setScalar(currentSection, scalar);
-        }
-
-        public void reset() {
-            pointer = 0;
-            currentSection = root;
-        }
-
-        private void loadKeys(String path) {
-            final String[] keys = path.split("\\.");
-            for (String key : keys) {
-                Matcher indicesMatcher = INDEX_PATTERN.matcher(key);
-                if (indicesMatcher.matches()) {
-                    int index;
-                    try {
-                        index = Integer.parseInt(indicesMatcher.group(1));
-                    } catch (NumberFormatException e) {
-                        throw new RuntimeException(e);
-                    }
-                    this.keys.add(new IndexKey(index));
-                    continue;
-                }
-
-                String keyWithoutIndices = indicesMatcher.replaceAll("");
-
-                String[] aliases = keyWithoutIndices.split("\\|");
-                this.keys.add(aliases.length > 1 ? new MultiKey(aliases) : new SimpleKey(keyWithoutIndices));
-
-                indicesMatcher.reset();
-                while (indicesMatcher.find()) {
-                    int index;
-                    try {
-                        index = Integer.parseInt(indicesMatcher.group(1));
-                    } catch (NumberFormatException e) {
-                        throw new RuntimeException(e);
-                    }
-                    this.keys.add(new IndexKey(index));
-                }
-            }
-        }
-
-        private interface NodeKey {
-            Object getNode(SectionNode parent);
-
-            SectionNode createSection(SectionNode parent);
-
-            void setScalar(SectionNode parent, Object scalar);
-        }
-
-        private class SimpleKey implements NodeKey {
-            private final String key;
-
-            private SimpleKey(String key) {
-                this.key = key;
-            }
-
-            @Override
-            public Object getNode(SectionNode parent) {
-                return parent.children.get(key);
-            }
-
-            @Override
-            public SectionNode createSection(SectionNode parent) {
-                parent.setKeyless(false);
-
-                Object node = getNode(parent);
-                if (node instanceof SectionNode foundSection) {
-                    return foundSection;
-                }
-
-                return new ChildSection(parent, key, defaultFlowStyle);
-            }
-
-            @Override
-            public void setScalar(SectionNode parent, Object scalar) {
-                parent.setKeyless(false);
-
-                if (scalar == null) {
-                    parent.children.remove(key);
-                    return;
-                }
-
-                parent.children.put(key, scalar);
-            }
-        }
-
-        private class IndexKey implements NodeKey {
-            private final int index;
-
-            private IndexKey(int index) {
-                this.index = index;
-            }
-
-            @Override
-            public Object getNode(SectionNode parent) {
-                int count = 0;
-                for (Object field : parent.children.values()) {
-                    if (index == count++) {
-                        return field;
-                    }
-                }
-                return null;
-            }
-
-            @Override
-            public SectionNode createSection(SectionNode parent) {
-                parent.setKeyless(true);
-
-                Object node = getNode(parent);
-                if (node instanceof SectionNode foundSection) {
-                    return foundSection;
-                }
-
-                SectionNode currentSection = null;
-                int size;
-                while ((size = parent.size()) <= index) {
-                    currentSection = new ChildSection(parent, Integer.toString(size), defaultFlowStyle);
-                }
-
-                return currentSection;
-            }
-
-            @Override
-            public void setScalar(SectionNode parent, Object scalar) {
-                parent.setKeyless(true);
-
-                Map<String, Object> fields = parent.children;
-                String key = Integer.toString(index);
-
-                if (scalar == null) {
-                    fields.remove(key);
-                    return;
-                }
-
-                int size;
-                while ((size = parent.size()) < index) {
-                    fields.put(Integer.toString(size), "");
-                }
-
-                fields.put(key, scalar);
-            }
-
-        }
-
-        private class MultiKey implements NodeKey {
-            private final String[] keys;
-
-            private MultiKey(String[] keys) {
-                Preconditions.checkArgument(keys.length > 0, "Keys cannot be empty");
-                this.keys = keys;
-            }
-
-            @Override
-            public Object getNode(SectionNode parent) {
-                for (String key : keys) {
-                    Object node = parent.children.get(key);
-                    if (node != null) {
-                        return node;
-                    }
-                }
-                return null;
-            }
-
-            @Override
-            public SectionNode createSection(SectionNode parent) {
-                parent.setKeyless(false);
-
-                Object node = getNode(parent);
-                if (node instanceof SectionNode foundSection) {
-                    return foundSection;
-                }
-
-                return new ChildSection(parent, keys[0], defaultFlowStyle);
-            }
-
-            @Override
-            public void setScalar(SectionNode parent, Object scalar) {
-                parent.setKeyless(false);
-
-                Map<String, Object> fields = parent.children;
-                for (String key : keys) {
-                    if (fields.containsKey(key)) {
-                        parent.children.put(key, scalar);
-                        return;
-                    }
-                }
-                fields.put(keys[0], scalar);
-            }
-        }
-
     }
 
 }

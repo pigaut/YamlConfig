@@ -1,11 +1,10 @@
 package io.github.pigaut.yamlib;
 
-import java.util.regex.*;
+import io.github.pigaut.yamlib.util.*;
 
 public class InvalidConfigurationException extends RuntimeException {
 
     public static boolean DEBUG = true;
-    private static final Pattern ALIAS_PATTERN = Pattern.compile("(\\|[a-zA-Z0-9-_]+)");
 
     public InvalidConfigurationException(ConfigSection section, String message) {
         this(section.getRoot(), section.getPath(), message);
@@ -20,15 +19,10 @@ public class InvalidConfigurationException extends RuntimeException {
     }
 
     public InvalidConfigurationException(String filePath, String path, String message) {
-        super("Error found in \"" + filePath + "\" -> '" + getSimplePath(path) + "' " + message + ".",
+        super("Error found in \"" + filePath + "\" -> '" + PathFormatter.getPathWithoutAliases(path) + "' " + message + ".",
                 null,
                 false,
                 DEBUG);
-    }
-
-    private static String getSimplePath(String path) {
-        Matcher matcher = ALIAS_PATTERN.matcher(path);
-        return matcher.replaceAll("");
     }
 
 }
