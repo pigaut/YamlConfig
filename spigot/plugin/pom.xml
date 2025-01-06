@@ -27,7 +27,7 @@
         <dependency>
             <groupId>io.github.pigaut.yaml</groupId>
             <artifactId>SpigotYamlConfig</artifactId>
-            <version>1.0</version>
+            <version>2.0</version>
         </dependency>
     </dependencies>
 
