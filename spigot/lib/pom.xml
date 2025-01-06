@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.github.pigaut.yamlib</groupId>
-    <artifactId>SpigotYAMLib</artifactId>
-    <version>1.3</version>
+    <groupId>io.github.pigaut.yaml</groupId>
+    <artifactId>SpigotYamlConfig</artifactId>
+    <version>2.0</version>
     <packaging>jar</packaging>
     <description>A library to read and write configuration files in yaml format, uses snakeyaml engine.</description>
     <url>https://github.com/pigaut/YAMLib</url>
@@ -101,7 +101,7 @@
                     <relocations>
                         <relocation>
                             <pattern>de.tr7zw.changeme.nbtapi</pattern>
-                            <shadedPattern>io.github.pigaut.yamlib.nbtapi</shadedPattern>
+                            <shadedPattern>io.github.pigaut.yaml.nbtapi</shadedPattern>
                         </relocation>
                     </relocations>
                 </configuration>
@@ -127,13 +127,13 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.8.8-R0.1-SNAPSHOT</version>
+            <version>1.14.4-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>io.github.pigaut.yamlib</groupId>
-            <artifactId>YAMLib</artifactId>
-            <version>1.3</version>
+            <groupId>io.github.pigaut.yaml</groupId>
+            <artifactId>YamlConfig</artifactId>
+            <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>de.tr7zw</groupId>

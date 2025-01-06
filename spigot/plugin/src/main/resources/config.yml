@@ -5,7 +5,7 @@ item:
   lore:
     - monkey
     - mono
-  custom-model: 10001
+  model-data: 10001
   damage: 100
   repair-cost: 100
   flags:
@@ -33,15 +33,3 @@ locations:
   - {x: 100, y: 100, z: 100, yaw: 10, pitch: 10}
   - {world: world, x: 100, y: 100, z: 100}
   - {x: 100, y: 100, z: 100}
-
-split-string: 'monkey:1:true'
-
-list:
-  - 1
-  - 2
-  - 3
-
-set:
-  SEND_STRING: monkey
-  SEND_NUMBER: 100
-  SEND_MATERIAL: dirt

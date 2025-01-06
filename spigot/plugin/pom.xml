@@ -4,24 +4,30 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.github.pigaut.yamlib</groupId>
-    <artifactId>YAMLibPlugin</artifactId>
-    <version>1.3</version>
+    <groupId>io.github.pigaut.yaml</groupId>
+    <artifactId>YamlConfigPlugin</artifactId>
+    <version>2.0</version>
     <packaging>jar</packaging>
     <description>A library to read and write configuration files in yaml format, uses snakeyaml engine.</description>
     <url>https://github.com/pigaut/YAMLib</url>
 
     <dependencies>
         <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot-api</artifactId>
-            <version>1.8.8-R0.1-SNAPSHOT</version>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>24.1.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>io.github.pigaut.yamlib</groupId>
-            <artifactId>SpigotYAMLib</artifactId>
-            <version>1.3</version>
+            <groupId>org.spigotmc</groupId>
+            <artifactId>spigot-api</artifactId>
+            <version>1.14.4-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.pigaut.yaml</groupId>
+            <artifactId>SpigotYamlConfig</artifactId>
+            <version>1.0</version>
         </dependency>
     </dependencies>
 
@@ -40,7 +46,7 @@
                         </goals>
                         <configuration>
                             <outputDirectory>D:\files\Development\java\spigot\servers\1.20.4-paper\plugins</outputDirectory>
-                            <finalName>YAMLib-${project.version}</finalName>
+                            <finalName>YamlConfig-${project.version}</finalName>
                         </configuration>
                     </execution>
                 </executions>

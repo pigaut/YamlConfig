@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.github.pigaut.yamlib</groupId>
-    <artifactId>YAMLib</artifactId>
-    <version>1.3</version>
+    <groupId>io.github.pigaut.yaml</groupId>
+    <artifactId>YamlConfig</artifactId>
+    <version>2.0</version>
     <packaging>jar</packaging>
     <description>A library to read and write configuration files in yaml format, uses snakeyaml engine.</description>
     <url>https://github.com/pigaut/YAMLib</url>
@@ -101,7 +101,7 @@
                     <relocations>
                         <relocation>
                             <pattern>org.snakeyaml</pattern>
-                            <shadedPattern>io.github.pigaut.yamlib.snakeyaml</shadedPattern>
+                            <shadedPattern>io.github.pigaut.yaml.snakeyaml</shadedPattern>
                         </relocation>
                     </relocations>
                 </configuration>
