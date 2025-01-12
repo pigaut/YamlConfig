@@ -4,6 +4,7 @@ import de.tr7zw.changeme.nbtapi.*;
 import de.tr7zw.changeme.nbtapi.iface.*;
 import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.configurator.loader.*;
+import io.github.pigaut.yaml.formatter.*;
 import io.github.pigaut.yaml.itemstack.attribute.*;
 import io.github.pigaut.yaml.parser.*;
 import org.bukkit.*;
@@ -32,7 +33,7 @@ public class ItemStackLoader implements SectionLoader<ItemStack> {
         {
             final ItemMeta meta = item.getItemMeta();
 
-            final Optional<String> nameField = config.getOptionalString("name|display", SpigotYamlConfig.COLOR_FORMATTER);
+            final Optional<String> nameField = config.getOptionalString("name|display", StringColor.FORMATTER);
             nameField.ifPresent(meta::setDisplayName);
 
             final Optional<Integer> repairCostField = config.getOptionalInteger("repair-cost");
@@ -42,7 +43,7 @@ public class ItemStackLoader implements SectionLoader<ItemStack> {
                 }
             });
 
-            final List<String> lore = config.getStringList("lore", SpigotYamlConfig.COLOR_FORMATTER);
+            final List<String> lore = config.getStringList("lore", StringColor.FORMATTER);
             if (!lore.isEmpty()) {
                 meta.setLore(lore);
             }

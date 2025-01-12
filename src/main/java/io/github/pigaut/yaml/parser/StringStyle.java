@@ -95,7 +95,7 @@ public enum StringStyle implements StringFormatter {
         return null;
     }
 
-    public static @NotNull String applyTagStyle(String string) {
+    public static @NotNull String translateTagStyle(String string) {
         for (StringStyle style : values()) {
             final String tag = style.getTag();
             if (string.contains(tag)) {

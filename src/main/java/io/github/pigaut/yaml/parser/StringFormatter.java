@@ -92,7 +92,9 @@ public interface StringFormatter {
                         .append(word.substring(1).toLowerCase());
             }
         }
-        camelCase.replace(0, 1, camelCase.substring(0, 1).toLowerCase());
+        if (!camelCase.isEmpty()) {
+            camelCase.replace(0, 1, camelCase.substring(0, 1).toLowerCase());
+        }
         return camelCase.toString();
     }
 
