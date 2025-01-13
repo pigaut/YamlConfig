@@ -38,7 +38,6 @@ public class StandardConfigurator extends Configurator {
 
         addMapper(Map.class, new ConfigSectionMapper());
         addMapper(Iterable.class, new ConfigSequenceMapper());
-
     }
 
     protected class ConfigSectionMapper implements SectionMapper<Map> {

@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.pigaut.yaml</groupId>
   <artifactId>YamlConfigPlugin</artifactId>
-  <version>1.0</version>
+  <version>3.0</version>
   <description>A library to read and write configuration files in yaml format, uses snakeyaml engine.</description>
   <url>https://github.com/pigaut/YAMLib</url>
   <build>
@@ -19,7 +19,7 @@
               <goal>shade</goal>
             </goals>
             <configuration>
-              <outputDirectory>D:\files\Development\java\spigot\servers\1.20.4-paper\plugins</outputDirectory>
+              <outputDirectory>D:\files\Development\java\spigot\servers\1.20.4\plugins</outputDirectory>
               <finalName>YamlConfig-${project.version}</finalName>
             </configuration>
           </execution>
@@ -37,7 +37,7 @@
     <dependency>
       <groupId>org.spigotmc</groupId>
       <artifactId>spigot-api</artifactId>
-      <version>1.8.8-R0.1-SNAPSHOT</version>
+      <version>1.14.4-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>

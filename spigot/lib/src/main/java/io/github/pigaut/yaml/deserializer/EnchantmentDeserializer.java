@@ -1,4 +1,4 @@
-package io.github.pigaut.yaml.world;
+package io.github.pigaut.yaml.deserializer;
 
 import io.github.pigaut.yaml.configurator.parser.*;
 import io.github.pigaut.yaml.parser.*;

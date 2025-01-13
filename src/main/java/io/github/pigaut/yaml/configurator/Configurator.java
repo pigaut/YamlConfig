@@ -4,7 +4,6 @@ import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.configurator.loader.*;
 import io.github.pigaut.yaml.configurator.mapper.*;
 import io.github.pigaut.yaml.configurator.parser.*;
-import io.github.pigaut.yaml.parser.*;
 import io.github.pigaut.yaml.parser.deserializer.*;
 import io.github.pigaut.yaml.parser.serializer.*;
 import org.jetbrains.annotations.*;
@@ -26,98 +25,7 @@ public class Configurator {
         return loader;
     }
 
-    public <T> @Nullable ConfigLoader<? extends T> getChildLoader(@NotNull Class<T> type, ConfigSection section) {
-        int incompatibleSchemas = 0;
-        final String key = section.getKey();
-        for (Class<?> loaderType : loadersByType.keySet()) {
-            if (type.isAssignableFrom(loaderType)) {
-                @SuppressWarnings("unchecked")
-                ConfigLoader<? extends T> childLoader = (ConfigLoader<? extends T>) loadersByType.get(loaderType);
-                if (childLoader.matchesSchema(section) || StringFormatter.match(key, childLoader.getKey())) {
-                    return childLoader;
-                }
-                incompatibleSchemas++;
-            }
-        }
-
-        if (incompatibleSchemas != 0) {
-            throw new InvalidConfigurationException(section, "The type could not be determined from the schema or key");
-        }
-
-        return null;
-    }
-
-    public <T> @Nullable ConfigLoader<? extends T> getLoader(@NotNull Class<T> type, ConfigSection section) {
-        final ConfigLoader<T> loader = getLoader(type);
-        return loader != null ? loader : getChildLoader(type, section);
-    }
-
-    public <T> @Nullable ConfigLoader<? extends T> getChildLoader(@NotNull Class<T> type, ConfigSequence sequence) {
-        int incompatibleSchemas = 0;
-        final String key = sequence.getKey();
-        for (Class<?> loaderType : loadersByType.keySet()) {
-            if (type.isAssignableFrom(loaderType)) {
-                @SuppressWarnings("unchecked")
-                ConfigLoader<? extends T> childLoader = (ConfigLoader<? extends T>) loadersByType.get(loaderType);
-                if (childLoader.matchesSchema(sequence) || StringFormatter.match(key, childLoader.getKey())) {
-                    return childLoader;
-                }
-                incompatibleSchemas++;
-            }
-        }
-
-        if (incompatibleSchemas != 0) {
-            throw new InvalidConfigurationException(sequence, "The type could not be determined from the schema or key");
-        }
-
-        return null;
-    }
-
-    public <T> @Nullable ConfigLoader<? extends T> getLoader(@NotNull Class<T> type, ConfigSequence sequence) {
-        ConfigLoader<T> loader = getLoader(type);
-        return loader != null ? loader : getChildLoader(type, sequence);
-    }
-
-    public <T> @Nullable ConfigLoader<? extends T> getChildLoader(@NotNull Class<T> type, String key) {
-        for (Class<?> loaderType : loadersByType.keySet()) {
-            if (type.isAssignableFrom(loaderType)) {
-                @SuppressWarnings("unchecked")
-                ConfigLoader<? extends T> childLoader = (ConfigLoader<? extends T>) loadersByType.get(loaderType);
-                if (StringFormatter.match(key, childLoader.getKey())) {
-                    return childLoader;
-                }
-            }
-        }
-        return null;
-    }
-
-    public <T> @Nullable ConfigLoader<? extends T> getChildLoader(@NotNull Class<T> type, ConfigScalar scalar) {
-        int incompatibleKeys = 0;
-        final String key = scalar.getKey();
-        for (Class<?> getterType : loadersByType.keySet()) {
-            if (type.isAssignableFrom(getterType)) {
-                @SuppressWarnings("unchecked")
-                ConfigLoader<? extends T> childLoader = (ConfigLoader<? extends T>) loadersByType.get(getterType);
-                if (StringFormatter.match(key, childLoader.getKey())) {
-                    return childLoader;
-                }
-                incompatibleKeys++;
-            }
-        }
-
-        if (incompatibleKeys > 0) {
-            throw new InvalidConfigurationException(scalar, "'" + key + "' is not a valid type");
-        }
-
-        return null;
-    }
-
-    public <T> @Nullable ConfigLoader<? extends T> getLoader(@NotNull Class<T> type, ConfigScalar scalar) {
-        final ConfigLoader<T> loader = getLoader(type);
-        return loader != null ? loader : getChildLoader(type, scalar);
-    }
-
-    public <T> ConfigMapper<? super T> getConfigMapper(Class<T> type) {
+    public <T> ConfigMapper<? super T> getMapper(Class<T> type) {
         if (Enum.class.isAssignableFrom(type)) {
             return (ConfigSerializer) Serializers.defaultSerializer()::serialize;
         }

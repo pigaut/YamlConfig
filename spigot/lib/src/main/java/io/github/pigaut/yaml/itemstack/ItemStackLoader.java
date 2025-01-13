@@ -3,11 +3,13 @@ package io.github.pigaut.yaml.itemstack;
 import de.tr7zw.changeme.nbtapi.*;
 import de.tr7zw.changeme.nbtapi.iface.*;
 import io.github.pigaut.yaml.*;
+import io.github.pigaut.yaml.InvalidConfigurationException;
 import io.github.pigaut.yaml.configurator.loader.*;
 import io.github.pigaut.yaml.formatter.*;
 import io.github.pigaut.yaml.itemstack.attribute.*;
 import io.github.pigaut.yaml.parser.*;
 import org.bukkit.*;
+import org.bukkit.configuration.*;
 import org.bukkit.enchantments.*;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.*;
@@ -58,6 +60,14 @@ public class ItemStackLoader implements SectionLoader<ItemStack> {
             }
 
 //            final PersistentData tata = meta.get
+//            Update ItemStackLoader to use 1.14.4 api and remove NBTAPI dependency
+//            meta.setCustomModelData(1000); // custom model
+//
+//            meta.setUnbreakable(true); // unbreakable
+//
+//            if (meta instanceof Damageable damageable) { // durability
+//                damageable.setDamage(10);
+//            }
 
             item.setItemMeta(meta);
         }

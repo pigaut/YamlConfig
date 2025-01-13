@@ -61,7 +61,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     public <T> void map(T value) {
         final Configurator configurator = getRoot().getConfigurator();
         @SuppressWarnings("unchecked")
-        ConfigMapper<? super T> mapper = (ConfigMapper<? super T>) configurator.getConfigMapper(value.getClass());
+        ConfigMapper<? super T> mapper = (ConfigMapper<? super T>) configurator.getMapper(value.getClass());
         if (mapper == null) {
             throw new IllegalArgumentException("No config mapper found for class: " + value.getClass().getSimpleName());
         }
@@ -79,7 +79,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
 
         final Configurator configurator = getRoot().getConfigurator();
 
-        @SuppressWarnings("unchecked") final ConfigMapper<? super T> mapper = (ConfigMapper<? super T>) configurator.getConfigMapper(classType);
+        @SuppressWarnings("unchecked") final ConfigMapper<? super T> mapper = (ConfigMapper<? super T>) configurator.getMapper(classType);
 
         if (mapper == null) {
             throw new IllegalArgumentException("No config mapper found for class type: " + classType.getSimpleName());
@@ -129,7 +129,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
 
         final Configurator configurator = getRoot().getConfigurator();
 
-        @SuppressWarnings("unchecked") final ConfigMapper<? super T> mapper = (ConfigMapper<? super T>) configurator.getConfigMapper(value.getClass());
+        @SuppressWarnings("unchecked") final ConfigMapper<? super T> mapper = (ConfigMapper<? super T>) configurator.getMapper(value.getClass());
 
         if (mapper == null) {
             throw new IllegalArgumentException("No config mapper found for class type: " + value.getClass().getSimpleName());
@@ -500,7 +500,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     @Override
     public <T> @NotNull T load(@NotNull Class<T> type) throws InvalidConfigurationException {
         final Configurator configurator = getRoot().getConfigurator();
-        ConfigLoader<? extends T> loader = configurator.getLoader(type, this);
+        ConfigLoader<? extends T> loader = configurator.getLoader(type);
         if (loader == null) {
             throw new IllegalArgumentException("No config loader found for class: " + type.getSimpleName());
         }

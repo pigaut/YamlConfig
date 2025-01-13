@@ -152,7 +152,7 @@ public abstract class Scalar extends Field implements ConfigScalar {
     @Override
     public <T> T load(Class<T> type) throws InvalidConfigurationException {
         final Configurator configurator = getRoot().getConfigurator();
-        final ConfigLoader<? extends T> loader = configurator.getLoader(type, this);
+        final ConfigLoader<? extends T> loader = configurator.getLoader(type);
         if (loader == null) {
             throw new IllegalArgumentException("No config loader found for class type: " + type.getSimpleName());
         }

@@ -1,6 +1,8 @@
 package io.github.pigaut.yaml.node;
 
 import io.github.pigaut.yaml.*;
+import io.github.pigaut.yaml.configurator.*;
+import io.github.pigaut.yaml.configurator.loader.*;
 import io.github.pigaut.yaml.node.sequence.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;

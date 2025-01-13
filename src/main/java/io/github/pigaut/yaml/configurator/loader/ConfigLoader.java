@@ -9,18 +9,6 @@ public interface ConfigLoader<T> {
         return "Could not load object";
     }
 
-    default @Nullable String getKey() {
-        return null;
-    }
-
-    default boolean matchesSchema(ConfigSection section) {
-        return true;
-    }
-
-    default boolean matchesSchema(ConfigSequence sequence) {
-        return true;
-    }
-
     default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigurationException {
         throw new InvalidConfigurationException(scalar, "Values are not supported here");
     }
