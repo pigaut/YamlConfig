@@ -5,7 +5,7 @@ YAMLib dependency
 <dependency>
     <groupId>io.github.pigaut.yamlib</groupId>
     <artifactId>YAMLib</artifactId>
-    <version>1.0</version>
+    <version>2.0</version>
 </dependency>
 ```
 ---
@@ -14,7 +14,7 @@ SpigotYAMLib dependency
 <dependency>
     <groupId>io.github.pigaut.yamlib</groupId>
     <artifactId>SpigotYAMLib</artifactId>
-    <version>1.0</version>
+    <version>2.0</version>
 </dependency>
 ```
 ---
