@@ -19,7 +19,7 @@ public class InvalidConfigurationException extends RuntimeException {
     }
 
     public InvalidConfigurationException(ConfigField field, int index, String cause) {
-        this(field.getRoot(), field.getProblemDescription(), field.getPath() + "At index " + index + " in the list, ", cause);
+        this(field.getRoot(), field.getProblemDescription(), field.getPath() + "[" + index + "]", cause);
     }
 
     public InvalidConfigurationException(@NotNull ConfigRoot config, @Nullable String problem, @Nullable String path, @NotNull String cause) {

@@ -13,7 +13,7 @@ public abstract class AbstractLoader<T> implements ConfigLoader<T> {
         return loadersByName.get(StringFormatter.toConstantCase(id));
     }
 
-    public void addLoader(String id, ConfigLoader<T> loader) {
+    public void addLoader(String id, ConfigLoader<? extends T> loader) {
         loadersByName.put(StringFormatter.toConstantCase(id), loader);
     }
 

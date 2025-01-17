@@ -109,6 +109,23 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     @Override
+    public @NotNull Section convertToSection() {
+        return this;
+    }
+
+    @Override
+    public @NotNull List<Object> toList() {
+        return fieldsByKey.values().stream()
+                .map(ConfigField::getValue)
+                .toList();
+    }
+
+    @Override
+    public @NotNull Map<String, Object> toMap() {
+        return new LinkedHashMap<>(fieldsByKey);
+    }
+
+    @Override
     public Set<String> getKeys() {
         return new LinkedHashSet<>(fieldsByKey.keySet());
     }
@@ -151,7 +168,7 @@ public abstract class Section extends Branch implements ConfigSection {
         }
 
         final ConfigField existingField = getOptionalField(path).orElse(null);
-        final MappingType defaultMappingType = mapper.getDefaultMappingType();
+        final FieldType defaultMappingType = mapper.getDefaultMappingType();
 
         if (existingField != null) {
             switch (existingField.getFieldType()) {
@@ -160,7 +177,7 @@ public abstract class Section extends Branch implements ConfigSection {
                         final Object scalarToSet = mapper.createScalar(value);
                         setScalar(path, scalarToSet);
                     } catch (UnsupportedOperationException e) {
-                        if (defaultMappingType == MappingType.SCALAR) {
+                        if (defaultMappingType == FieldType.SCALAR) {
                             throw new IllegalStateException(mapper.getClass() + " does not override default mapping method");
                         }
                     }
@@ -173,7 +190,7 @@ public abstract class Section extends Branch implements ConfigSection {
                         }
                         mapper.mapSection(sectionToMap, value);
                     } catch (UnsupportedOperationException e) {
-                        if (defaultMappingType == MappingType.SECTION) {
+                        if (defaultMappingType == FieldType.SECTION) {
                             throw new IllegalStateException(mapper.getClass() + " does not override default mapping method");
                         }
                     }
@@ -186,7 +203,7 @@ public abstract class Section extends Branch implements ConfigSection {
                         }
                         mapper.mapSequence(sequenceToMap, value);
                     } catch (UnsupportedOperationException e) {
-                        if (defaultMappingType == MappingType.SEQUENCE) {
+                        if (defaultMappingType == FieldType.SEQUENCE) {
                             throw new IllegalStateException(mapper.getClass() + " does not override default mapping method");
                         }
                     }
@@ -248,7 +265,8 @@ public abstract class Section extends Branch implements ConfigSection {
 
     @Override
     public <T> Optional<T> getOptional(@NotNull String path, @NotNull Class<T> type) {
-        return ConfigOptional.of(() -> get(path, type));
+        final ConfigField field = getOptionalField(path).orElse(null);
+        return field != null ? Optional.of(field.load(type)) : Optional.empty();
     }
 
     @Override
@@ -417,7 +435,7 @@ public abstract class Section extends Branch implements ConfigSection {
 
     @Override
     public @NotNull ConfigScalar getScalar(@NotNull String path) throws InvalidConfigurationException {
-        ConfigField field = getOptionalField(path).orElseThrow(() ->
+        final ConfigField field = getOptionalField(path).orElseThrow(() ->
                 new InvalidConfigurationException(this, path, "Value is not set"));
         return field.toScalar();
     }
@@ -524,6 +542,32 @@ public abstract class Section extends Branch implements ConfigSection {
         return optionalScalar.flatMap(ConfigScalar::asDouble);
     }
 
+//    @Override
+//    public Object[] getSplitString(String path, String regex, Class<?>... types) {
+//        Preconditions.checkArgument(types.length > 1, "Types must have at least two elements.");
+//        final int length = types.length;
+//        final String[] elements = getString(path).split(regex);
+//
+//        if (elements.length != length) {
+//            throw new InvalidConfigurationException(this, path,
+//                    "(Invalid split string) expected " + types.length + " elements, but got " + elements.length);
+//        }
+//
+//        Object[] splitString = new Object[types.length];
+//
+//        final Parser parser = getRoot().getParser();
+//        for (int i = 0; i < types.length; i++) {
+//            try {
+//                splitString[i] = parser.deserialize(types[i], elements[i]);
+//            } catch (DeserializationException e) {
+//                throw new InvalidConfigurationException(this, path,
+//                        "(Invalid split string) " + e.getMessage());
+//            }
+//        }
+//
+//        return splitString;
+//    }
+
     public ConfigScalar[][] getMatrix(@NotNull String path, int rowSize, int columnSize) throws InvalidConfigurationException {
         Preconditions.checkArgument(rowSize > 0 && columnSize > 0, "Matrix must have at least one row and one column.");
 
@@ -611,32 +655,6 @@ public abstract class Section extends Branch implements ConfigSection {
 
         return charMatrix;
     }
-
-//    @Override
-//    public Object[] getSplitString(String path, String regex, Class<?>... types) {
-//        Preconditions.checkArgument(types.length > 1, "Types must have at least two elements.");
-//        final int length = types.length;
-//        final String[] elements = getString(path).split(regex);
-//
-//        if (elements.length != length) {
-//            throw new InvalidConfigurationException(this, path,
-//                    "(Invalid split string) expected " + types.length + " elements, but got " + elements.length);
-//        }
-//
-//        Object[] splitString = new Object[types.length];
-//
-//        final Parser parser = getRoot().getParser();
-//        for (int i = 0; i < types.length; i++) {
-//            try {
-//                splitString[i] = parser.deserialize(types[i], elements[i]);
-//            } catch (DeserializationException e) {
-//                throw new InvalidConfigurationException(this, path,
-//                        "(Invalid split string) " + e.getMessage());
-//            }
-//        }
-//
-//        return splitString;
-//    }
 
     @Override
     public String[][] getStringMatrix(@NotNull String path, int rowCount, int columnCount) throws InvalidConfigurationException {
@@ -776,8 +794,8 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     @Override
-    public @NotNull MappingType getFieldType() {
-        return MappingType.SECTION;
+    public @NotNull FieldType getFieldType() {
+        return FieldType.SECTION;
     }
 
     @Override
@@ -788,11 +806,10 @@ public abstract class Section extends Branch implements ConfigSection {
     @Override
     public <T> @NotNull T load(@NotNull Class<T> type) throws InvalidConfigurationException {
         final Configurator configurator = getRoot().getConfigurator();
-        ConfigLoader<? extends T> loader = configurator.getLoader(type);
+        final ConfigLoader<? extends T> loader = configurator.getLoader(type);
         if (loader == null) {
             throw new IllegalArgumentException("No config loader found for class: " + type.getSimpleName());
         }
-
         this.setProblemDescription(loader.getProblemDescription());
         final T value = loader.loadFromSection(this);
         this.setProblemDescription(null);
@@ -812,23 +829,6 @@ public abstract class Section extends Branch implements ConfigSection {
     @Override
     public @NotNull ConfigSequence toSequence() throws InvalidConfigurationException {
         throw new InvalidConfigurationException(this, "Expected a list but found a section");
-    }
-
-    @Override
-    public @NotNull Section convertToSection() {
-        return this;
-    }
-
-    @Override
-    public @NotNull List<Object> toList() {
-        return fieldsByKey.values().stream()
-                .map(ConfigField::getValue)
-                .toList();
-    }
-
-    @Override
-    public @NotNull Map<String, Object> toMap() {
-        return new LinkedHashMap<>(fieldsByKey);
     }
 
     @Override

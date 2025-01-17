@@ -9,8 +9,8 @@ public interface ScalarMapper<T> extends ConfigMapper<T> {
     @NotNull Object createScalar(@NotNull T value);
 
     @Override
-    default @NotNull MappingType getDefaultMappingType() {
-        return MappingType.SCALAR;
+    default @NotNull FieldType getDefaultMappingType() {
+        return FieldType.SCALAR;
     }
 
 }

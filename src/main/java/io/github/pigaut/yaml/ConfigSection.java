@@ -2,10 +2,51 @@ package io.github.pigaut.yaml;
 
 import io.github.pigaut.yaml.parser.*;
 import org.jetbrains.annotations.*;
+import org.snakeyaml.engine.v2.common.*;
 
 import java.util.*;
+import java.util.stream.*;
 
-public interface ConfigSection extends ConfigBranch {
+public interface ConfigSection extends ConfigField, Iterable<ConfigField> {
+
+    int size();
+
+    boolean isEmpty();
+
+    @NotNull
+    FlowStyle getFlowStyle();
+
+    void setFlowStyle(@NotNull FlowStyle flowStyle);
+
+    @Nullable
+    FlowStyle getNestedFlowStyle();
+
+    void setNestedFlowStyle(@Nullable FlowStyle flowStyle);
+
+    @Nullable
+    ScalarStyle getNestedScalarStyle();
+
+    void setNestedScalarStyle(@Nullable ScalarStyle scalarStyle);
+
+    Stream<ConfigField> stream();
+
+    Set<ConfigField> getNestedFields();
+
+    Set<ConfigSection> getNestedSections() throws InvalidConfigurationException;
+
+    @NotNull
+    ConfigSection convertToSection();
+
+    @NotNull
+    ConfigSequence convertToSequence();
+
+    <T> void map(T value);
+
+    <T> void add(T value);
+
+    <T> void addAll(Collection<T> elements);
+
+    <T> List<@NotNull T> getAll(@NotNull Class<T> type) throws InvalidConfigurationException;
 
     /**
      * Returns the set of keys present in this section.
@@ -31,7 +72,7 @@ public interface ConfigSection extends ConfigBranch {
     /**
      * Sets a value at the specified path.
      *
-     * @param path the path where the value will be set
+     * @param path  the path where the value will be set
      * @param value the value to set
      */
     <T> void set(@NotNull String path, @NotNull T value);
@@ -40,7 +81,8 @@ public interface ConfigSection extends ConfigBranch {
 
     void formatKeys(StringFormatter formatter);
 
-    @NotNull <T> T get(@NotNull String path, @NotNull Class<T> type) throws InvalidConfigurationException;
+    @NotNull
+    <T> T get(@NotNull String path, @NotNull Class<T> type) throws InvalidConfigurationException;
 
     <T> Optional<T> getOptional(@NotNull String path, @NotNull Class<T> type);
 
@@ -53,7 +95,8 @@ public interface ConfigSection extends ConfigBranch {
      * @return the nested {@link ConfigSection}
      * @throws InvalidConfigurationException if the section is not found
      */
-    @NotNull ConfigSection getSection(@NotNull String path) throws InvalidConfigurationException;
+    @NotNull
+    ConfigSection getSection(@NotNull String path) throws InvalidConfigurationException;
 
     /**
      * Attempts to retrieve a nested section at the specified path.
@@ -69,7 +112,8 @@ public interface ConfigSection extends ConfigBranch {
      * @param path the path of the nested section
      * @return the existing or newly created {@link ConfigSection}
      */
-    @NotNull ConfigSection getSectionOrCreate(@NotNull String path);
+    @NotNull
+    ConfigSection getSectionOrCreate(@NotNull String path);
 
     @NotNull
     ConfigSequence getSequence(@NotNull String path) throws InvalidConfigurationException;
@@ -79,8 +123,11 @@ public interface ConfigSection extends ConfigBranch {
     @NotNull
     ConfigSequence getSequenceOrCreate(@NotNull String path);
 
-    @NotNull Set<ConfigField> getNestedFields(@NotNull String path);
-    @NotNull Set<ConfigSection> getNestedSections(@NotNull String path);
+    @NotNull
+    Set<ConfigField> getNestedFields(@NotNull String path);
+
+    @NotNull
+    Set<ConfigSection> getNestedSections(@NotNull String path);
 
     /**
      * Retrieves a list of all fields at the specified path.
@@ -139,7 +186,7 @@ public interface ConfigSection extends ConfigBranch {
     /**
      * Retrieves a list of formatted string values at the specified path.
      *
-     * @param path the path of the string list
+     * @param path      the path of the string list
      * @param formatter the formatter to apply to the strings
      * @return a list of formatted string values
      * @throws InvalidConfigurationException if the list cannot be retrieved or formatted
@@ -217,7 +264,8 @@ public interface ConfigSection extends ConfigBranch {
      * @return the scalar value
      * @throws InvalidConfigurationException if the field is not set, or if the field is not a scalar
      */
-    @NotNull ConfigScalar getScalar(@NotNull String path) throws InvalidConfigurationException;
+    @NotNull
+    ConfigScalar getScalar(@NotNull String path) throws InvalidConfigurationException;
 
     /**
      * Attempts to retrieve a scalar value at the specified path.
@@ -268,7 +316,8 @@ public interface ConfigSection extends ConfigBranch {
      * @return the string value
      * @throws InvalidConfigurationException if the field is not set or is not a scalar
      */
-    @NotNull String getString(@NotNull String path) throws InvalidConfigurationException;
+    @NotNull
+    String getString(@NotNull String path) throws InvalidConfigurationException;
 
     /**
      * Attempts to retrieve a string value at the specified path.
@@ -281,17 +330,18 @@ public interface ConfigSection extends ConfigBranch {
     /**
      * Retrieves the scalar value at the specified path and turns it into a formatted string
      *
-     * @param path the path of the string value
+     * @param path      the path of the string value
      * @param formatter the {@link StringFormatter} to apply to the string
      * @return the formatted string value
      * @throws InvalidConfigurationException if the field is not set, or if the field is not a scalar
      */
-    @NotNull String getString(@NotNull String path, @NotNull StringFormatter formatter) throws InvalidConfigurationException;
+    @NotNull
+    String getString(@NotNull String path, @NotNull StringFormatter formatter) throws InvalidConfigurationException;
 
     /**
      * Attempts to retrieve a formatted string value at the specified path.
      *
-     * @param path the path of the string value
+     * @param path      the path of the string value
      * @param formatter the {@link StringFormatter} to apply to the string
      * @return an {@link Optional} containing the formatted string value if present, or empty if not found
      */
@@ -368,8 +418,8 @@ public interface ConfigSection extends ConfigBranch {
     /**
      * Retrieves a 2D array of objects at the specified path.
      *
-     * @param path the path of the matrix
-     * @param rows the number of rows in the matrix
+     * @param path    the path of the matrix
+     * @param rows    the number of rows in the matrix
      * @param columns the number of columns in the matrix
      * @return a 2D array representing the matrix
      * @throws InvalidConfigurationException if the matrix cannot be retrieved
@@ -379,8 +429,8 @@ public interface ConfigSection extends ConfigBranch {
     /**
      * Retrieves a 2D array of booleans at the specified path.
      *
-     * @param path the path of the matrix
-     * @param rows the number of rows in the matrix
+     * @param path    the path of the matrix
+     * @param rows    the number of rows in the matrix
      * @param columns the number of columns in the matrix
      * @return a 2D array of booleans
      * @throws InvalidConfigurationException if the matrix cannot be retrieved
@@ -390,8 +440,8 @@ public interface ConfigSection extends ConfigBranch {
     /**
      * Retrieves a 2D array of characters at the specified path.
      *
-     * @param path the path of the matrix
-     * @param rows the number of rows in the matrix
+     * @param path    the path of the matrix
+     * @param rows    the number of rows in the matrix
      * @param columns the number of columns in the matrix
      * @return a 2D array of characters
      * @throws InvalidConfigurationException if the matrix cannot be retrieved
@@ -401,8 +451,8 @@ public interface ConfigSection extends ConfigBranch {
     /**
      * Retrieves a 2D array of strings at the specified path.
      *
-     * @param path the path of the matrix
-     * @param rows the number of rows in the matrix
+     * @param path    the path of the matrix
+     * @param rows    the number of rows in the matrix
      * @param columns the number of columns in the matrix
      * @return a 2D array of strings
      * @throws InvalidConfigurationException if the matrix cannot be retrieved
@@ -414,8 +464,8 @@ public interface ConfigSection extends ConfigBranch {
     /**
      * Retrieves a 2D array of integers at the specified path.
      *
-     * @param path the path of the matrix
-     * @param rows the number of rows in the matrix
+     * @param path    the path of the matrix
+     * @param rows    the number of rows in the matrix
      * @param columns the number of columns in the matrix
      * @return a 2D array of integers
      * @throws InvalidConfigurationException if the matrix cannot be retrieved
@@ -425,8 +475,8 @@ public interface ConfigSection extends ConfigBranch {
     /**
      * Retrieves a 2D array of longs at the specified path.
      *
-     * @param path the path of the matrix
-     * @param rows the number of rows in the matrix
+     * @param path    the path of the matrix
+     * @param rows    the number of rows in the matrix
      * @param columns the number of columns in the matrix
      * @return a 2D array of longs
      * @throws InvalidConfigurationException if the matrix cannot be retrieved
@@ -436,8 +486,8 @@ public interface ConfigSection extends ConfigBranch {
     /**
      * Retrieves a 2D array of floats at the specified path.
      *
-     * @param path the path of the matrix
-     * @param rows the number of rows in the matrix
+     * @param path    the path of the matrix
+     * @param rows    the number of rows in the matrix
      * @param columns the number of columns in the matrix
      * @return a 2D array of floats
      * @throws InvalidConfigurationException if the matrix cannot be retrieved
@@ -447,8 +497,8 @@ public interface ConfigSection extends ConfigBranch {
     /**
      * Retrieves a 2D array of doubles at the specified path.
      *
-     * @param path the path of the matrix
-     * @param rows the number of rows in the matrix
+     * @param path    the path of the matrix
+     * @param rows    the number of rows in the matrix
      * @param columns the number of columns in the matrix
      * @return a 2D array of doubles
      * @throws InvalidConfigurationException if the matrix cannot be retrieved

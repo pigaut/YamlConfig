@@ -15,8 +15,8 @@ public class AttributeMapper implements ConfigMapper<Attribute> {
     }
 
     @Override
-    public @NotNull MappingType getDefaultMappingType() {
-        return compact ? MappingType.SEQUENCE : MappingType.SECTION;
+    public @NotNull FieldType getDefaultMappingType() {
+        return compact ? FieldType.SEQUENCE : FieldType.SECTION;
     }
 
     @Override

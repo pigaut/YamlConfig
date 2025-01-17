@@ -1,8 +1,6 @@
 package io.github.pigaut.yaml.node;
 
 import io.github.pigaut.yaml.*;
-import io.github.pigaut.yaml.configurator.*;
-import io.github.pigaut.yaml.configurator.loader.*;
 import io.github.pigaut.yaml.node.sequence.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
@@ -11,7 +9,7 @@ import java.util.*;
 
 public abstract class Field implements ConfigField {
 
-    private @Nullable String errorCause = null;
+    private @Nullable String problemDescription = null;
 
     @NotNull
     public abstract Branch getParent() throws UnsupportedOperationException;
@@ -40,12 +38,12 @@ public abstract class Field implements ConfigField {
 
     @Override
     public @Nullable String getProblemDescription() {
-        return errorCause;
+        return problemDescription;
     }
 
     @Override
-    public void setProblemDescription(@Nullable String problem) {
-        this.errorCause = problem;
+    public void setProblemDescription(@Nullable String problemDescription) {
+        this.problemDescription = problemDescription;
     }
 
     @Override

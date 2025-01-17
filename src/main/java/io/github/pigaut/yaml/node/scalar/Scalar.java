@@ -2,6 +2,7 @@ package io.github.pigaut.yaml.node.scalar;
 
 import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.configurator.*;
+import io.github.pigaut.yaml.configurator.FieldType;
 import io.github.pigaut.yaml.configurator.loader.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.parser.*;
@@ -140,8 +141,8 @@ public abstract class Scalar extends Field implements ConfigScalar {
     }
 
     @Override
-    public @NotNull MappingType getFieldType() {
-        return MappingType.SCALAR;
+    public @NotNull FieldType getFieldType() {
+        return FieldType.SCALAR;
     }
 
     @Override

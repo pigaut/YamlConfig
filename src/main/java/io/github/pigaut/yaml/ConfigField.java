@@ -1,6 +1,6 @@
 package io.github.pigaut.yaml;
 
-import io.github.pigaut.yaml.configurator.*;
+import io.github.pigaut.yaml.configurator.FieldType;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -14,7 +14,7 @@ public interface ConfigField {
     boolean isRoot();
 
     @NotNull
-    MappingType getFieldType();
+    FieldType getFieldType();
 
     @NotNull
     ConfigRoot getRoot();

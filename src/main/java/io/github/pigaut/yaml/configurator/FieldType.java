@@ -1,6 +1,6 @@
 package io.github.pigaut.yaml.configurator;
 
-public enum MappingType {
+public enum FieldType {
 
     SCALAR,
     SECTION,

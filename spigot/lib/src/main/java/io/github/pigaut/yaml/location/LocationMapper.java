@@ -16,8 +16,8 @@ public class LocationMapper implements ConfigMapper<Location> {
     }
 
     @Override
-    public @NotNull MappingType getDefaultMappingType() {
-        return MappingType.SEQUENCE;
+    public @NotNull FieldType getDefaultMappingType() {
+        return FieldType.SEQUENCE;
     }
 
     @Override

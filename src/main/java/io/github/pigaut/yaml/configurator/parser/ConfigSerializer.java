@@ -9,8 +9,8 @@ import org.jetbrains.annotations.*;
 public interface ConfigSerializer<T> extends ConfigMapper<T>, Serializer<T> {
 
     @Override
-    default @NotNull MappingType getDefaultMappingType() {
-        return MappingType.SCALAR;
+    default @NotNull FieldType getDefaultMappingType() {
+        return FieldType.SCALAR;
     }
 
     @Override

@@ -1,13 +1,13 @@
 package io.github.pigaut.yaml.configurator.mapper;
 
 import io.github.pigaut.yaml.*;
-import io.github.pigaut.yaml.configurator.*;
+import io.github.pigaut.yaml.configurator.FieldType;
 import org.jetbrains.annotations.*;
 
 public interface ConfigMapper<T> {
 
     @NotNull
-    MappingType getDefaultMappingType();
+    FieldType getDefaultMappingType();
 
     default boolean keepExistingFields() {
         return false;

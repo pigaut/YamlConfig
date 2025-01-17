@@ -2,6 +2,7 @@ package io.github.pigaut.yaml.node.sequence;
 
 import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.configurator.*;
+import io.github.pigaut.yaml.configurator.FieldType;
 import io.github.pigaut.yaml.configurator.loader.*;
 import io.github.pigaut.yaml.configurator.mapper.*;
 import io.github.pigaut.yaml.node.*;
@@ -12,6 +13,7 @@ import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.common.*;
 
+import javax.swing.text.html.*;
 import java.util.*;
 import java.util.stream.*;
 
@@ -50,6 +52,14 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     @Override
     public boolean isEmpty() {
         return size() == 0;
+    }
+
+    @Override
+    public boolean isSet(int index) {
+        if (index < 0) {
+            throw new IllegalArgumentException("Index must be greater than 0");
+        }
+        return index < size();
     }
 
     @Override
@@ -136,7 +146,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
         }
 
         final ConfigField existingField = getField(index);
-        final MappingType defaultMappingType = mapper.getDefaultMappingType();
+        final FieldType defaultMappingType = mapper.getDefaultMappingType();
 
         if (existingField != null) {
             switch (existingField.getFieldType()) {
@@ -146,7 +156,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
                         setScalar(index, scalarToSet);
                         return;
                     } catch (UnsupportedOperationException e) {
-                        if (defaultMappingType == MappingType.SCALAR) {
+                        if (defaultMappingType == FieldType.SCALAR) {
                             throw new IllegalStateException(mapper.getClass() + " does not override default mapping method");
                         }
                     }
@@ -160,7 +170,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
                         mapper.mapSection(sectionToMap, value);
                         return;
                     } catch (UnsupportedOperationException e) {
-                        if (defaultMappingType == MappingType.SECTION) {
+                        if (defaultMappingType == FieldType.SECTION) {
                             throw new IllegalStateException(mapper.getClass() + " does not override default mapping method");
                         }
                     }
@@ -174,7 +184,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
                         mapper.mapSequence(sequenceToMap, value);
                         return;
                     } catch (UnsupportedOperationException e) {
-                        if (defaultMappingType == MappingType.SEQUENCE) {
+                        if (defaultMappingType == FieldType.SEQUENCE) {
                             throw new IllegalStateException(mapper.getClass() + " does not override default mapping method");
                         }
                     }
@@ -223,12 +233,24 @@ public abstract class Sequence extends Branch implements ConfigSequence {
 
     @Override
     public <T> Optional<T> getOptional(int index, Class<T> type) {
-        return ConfigOptional.of(() -> get(index, type));
+        final ConfigField field = getOptionalField(index).orElse(null);
+        if (field == null) {
+            return Optional.empty();
+        }
+        return Optional.of(field.load(type));
     }
 
     @Override
-    public ConfigField getField(int index) {
+    public ConfigField getField(int index) throws InvalidConfigurationException {
+        if (index >= fields.size()) {
+            throw new InvalidConfigurationException(this, index, "Field is not set");
+        }
         return fields.get(index);
+    }
+
+    @Override
+    public Optional<ConfigField> getOptionalField(int index) {
+        return isSet(index) ? Optional.of(fields.get(index)) : Optional.empty();
     }
 
     @Override
@@ -257,7 +279,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     public ConfigSection getSectionOrCreate(int index) {
         final ConfigField field = getField(index);
 
-        if (field.getFieldType() == MappingType.SECTION) {
+        if (field.getFieldType() == FieldType.SECTION) {
             return field.toSection();
         }
 
@@ -289,7 +311,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     public ConfigSequence getSequenceOrCreate(int index) {
         final ConfigField field = getField(index);
 
-        if (field.getFieldType() == MappingType.SEQUENCE) {
+        if (field.getFieldType() == FieldType.SEQUENCE) {
             return field.toSequence();
         }
 
@@ -309,43 +331,43 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     @Override
     public boolean getBoolean(int index) throws InvalidConfigurationException {
         return getOptionalBoolean(index)
-                .orElseThrow(() -> new InvalidConfigurationException(this, index, "expected a boolean but received invalid type"));
+                .orElseThrow(() -> new InvalidConfigurationException(this, index, "Expected a boolean but received another type"));
     }
 
     @Override
     public char getCharacter(int index) throws InvalidConfigurationException {
         return getOptionalCharacter(index)
-                .orElseThrow(() -> new InvalidConfigurationException(this, index, "is not a character"));
+                .orElseThrow(() -> new InvalidConfigurationException(this, index, "Expected a character but received another type"));
     }
 
     @Override
     public @NotNull String getString(int index) throws InvalidConfigurationException {
         return getOptionalString(index)
-                .orElseThrow(() -> new InvalidConfigurationException(this, index, "is not a string"));
+                .orElseThrow(() -> new InvalidConfigurationException(this, index, "Expected a string but received another type"));
     }
 
     @Override
     public int getInteger(int index) throws InvalidConfigurationException {
         return getOptionalInteger(index)
-                .orElseThrow(() -> new InvalidConfigurationException(this, index, "is not an integer"));
+                .orElseThrow(() -> new InvalidConfigurationException(this, index, "Expected an integer but received another type"));
     }
 
     @Override
     public long getLong(int index) throws InvalidConfigurationException {
         return getOptionalLong(index)
-                .orElseThrow(() -> new InvalidConfigurationException(this, index, "is not a long"));
+                .orElseThrow(() -> new InvalidConfigurationException(this, index, "Expected a long but received another type"));
     }
 
     @Override
     public float getFloat(int index) throws InvalidConfigurationException {
         return getOptionalFloat(index)
-                .orElseThrow(() -> new InvalidConfigurationException(this, index, "is not a float"));
+                .orElseThrow(() -> new InvalidConfigurationException(this, index, "Expected a float but received another type"));
     }
 
     @Override
     public double getDouble(int index) throws InvalidConfigurationException {
         return getOptionalDouble(index)
-                .orElseThrow(() -> new InvalidConfigurationException(this, index, "is not a double"));
+                .orElseThrow(() -> new InvalidConfigurationException(this, index, "Expected a double but received another type"));
     }
 
     @Override
@@ -488,8 +510,8 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     }
 
     @Override
-    public @NotNull MappingType getFieldType() {
-        return MappingType.SEQUENCE;
+    public @NotNull FieldType getFieldType() {
+        return FieldType.SEQUENCE;
     }
 
     @Override
@@ -500,7 +522,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     @Override
     public <T> @NotNull T load(@NotNull Class<T> type) throws InvalidConfigurationException {
         final Configurator configurator = getRoot().getConfigurator();
-        ConfigLoader<? extends T> loader = configurator.getLoader(type);
+        final ConfigLoader<? extends T> loader = configurator.getLoader(type);
         if (loader == null) {
             throw new IllegalArgumentException("No config loader found for class: " + type.getSimpleName());
         }

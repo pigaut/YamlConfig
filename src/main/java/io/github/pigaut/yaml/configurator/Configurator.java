@@ -13,8 +13,8 @@ import java.util.function.*;
 
 public class Configurator {
 
-    private final Map<Class<?>, ConfigLoader<?>> loadersByType = new LinkedHashMap<>();
-    private final Map<Class<?>, ConfigMapper<?>> mappersByType = new LinkedHashMap<>();
+    private final Map<Class<?>, ConfigLoader<?>> loadersByType = new HashMap<>();
+    private final Map<Class<?>, ConfigMapper<?>> mappersByType = new HashMap<>();
 
     public <T> @Nullable ConfigLoader<T> getLoader(@NotNull Class<T> type) {
         if (Enum.class.isAssignableFrom(type)) {
