@@ -6,7 +6,7 @@
 
     <groupId>io.github.pigaut.yaml</groupId>
     <artifactId>YamlConfig</artifactId>
-    <version>3.0</version>
+    <version>3.1</version>
     <packaging>jar</packaging>
     <description>A library to read and write configuration files in yaml format, uses snakeyaml engine.</description>
     <url>https://github.com/pigaut/YAMLib</url>

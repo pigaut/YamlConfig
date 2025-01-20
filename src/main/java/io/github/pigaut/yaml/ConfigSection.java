@@ -1,13 +1,28 @@
 package io.github.pigaut.yaml;
 
+import io.github.pigaut.yaml.configurator.*;
+import io.github.pigaut.yaml.node.section.*;
 import io.github.pigaut.yaml.parser.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.common.*;
 
+import java.io.*;
 import java.util.*;
 import java.util.stream.*;
 
 public interface ConfigSection extends ConfigField, Iterable<ConfigField> {
+
+    static RootSection loadConfiguration(File file) {
+        final RootSection config = new RootSection(file);
+        config.load();
+        return config;
+    }
+
+    static RootSection loadConfiguration(File file, Configurator configurator) {
+        final RootSection config = new RootSection(file, configurator);
+        config.load();
+        return config;
+    }
 
     int size();
 

@@ -1,6 +1,6 @@
 main: io.github.pigaut.yaml.YamlConfigPlugin
 name: YamlConfig
 author: pigaut
-version: 1.0
+version: 3.1
 description: A library to read and write configuration files in yaml format
-api-version: 1.13
+api-version: 1.17

@@ -1,12 +1,27 @@
 package io.github.pigaut.yaml;
 
+import io.github.pigaut.yaml.configurator.*;
+import io.github.pigaut.yaml.node.scalar.*;
 import io.github.pigaut.yaml.parser.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.common.*;
 
+import java.io.*;
 import java.util.*;
 
 public interface ConfigScalar extends ConfigField {
+
+    static RootScalar loadConfiguration(File file) {
+        final RootScalar config = new RootScalar(file);
+        config.load();
+        return config;
+    }
+
+    static RootScalar loadConfiguration(File file, Configurator configurator) {
+        final RootScalar config = new RootScalar(file, configurator);
+        config.load();
+        return config;
+    }
 
     @NotNull
     Object getValue();
