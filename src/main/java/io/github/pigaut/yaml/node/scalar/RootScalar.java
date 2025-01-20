@@ -19,12 +19,12 @@ public class RootScalar extends Scalar implements ConfigRoot {
     private boolean debug = true;
     private @NotNull String header = "";
 
-    public RootScalar(@NotNull File file, @NotNull Object value) {
-        this(file, new StandardConfigurator(), value);
+    public RootScalar(@NotNull File file) {
+        this(file, new StandardConfigurator());
     }
 
-    public RootScalar(@NotNull File file, @NotNull Configurator configurator, @NotNull Object value) {
-        super(value);
+    public RootScalar(@NotNull File file, @NotNull Configurator configurator) {
+        super("");
         this.file = file;
         this.name = YamlConfig.getFileName(file);
         this.configurator = configurator;
