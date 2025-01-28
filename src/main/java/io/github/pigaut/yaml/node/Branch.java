@@ -26,24 +26,6 @@ public abstract class Branch extends Field implements ConfigBranch {
     @Override
     public abstract boolean isEmpty();
 
-    @Override
-    public abstract Stream<ConfigField> stream();
-
-    @Override
-    public abstract <T> void map(T value);
-
-    @Override
-    public abstract <T> void add(T value);
-
-    @Override
-    public abstract <T> void addAll(Collection<T> elements);
-
-    @NotNull
-    public abstract Section convertToSection();
-
-    @NotNull
-    public abstract Sequence convertToSequence();
-
     public @NotNull FlowStyle getFlowStyle() {
         return flowStyle;
     }
@@ -83,6 +65,9 @@ public abstract class Branch extends Field implements ConfigBranch {
     }
 
     @Override
+    public abstract Stream<ConfigField> stream();
+
+    @Override
     public Set<@NotNull ConfigField> getNestedFields() {
         return this.stream()
                 .collect(Collectors.toCollection(LinkedHashSet::new));
@@ -93,6 +78,35 @@ public abstract class Branch extends Field implements ConfigBranch {
         return this.stream()
                 .map(ConfigField::toSection)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    @NotNull
+    public abstract Section convertToSection();
+
+    @NotNull
+    public abstract Sequence convertToSequence();
+
+    @Override
+    public abstract <T> void map(T value);
+
+    @Override
+    public abstract <T> void add(T value);
+
+    @Override
+    public abstract <T> void addAll(Collection<T> elements);
+
+    @Override
+    public <T> @NotNull T get(@NotNull String path, int index, @NotNull Class<T> type) throws InvalidConfigurationException {
+        if (this instanceof ConfigSection section) {
+            return section.get(path, type);
+        } else {
+            return ((ConfigSequence) this).get(index, type);
+        }
+    }
+
+    @Override
+    public <T> Optional<T> getOptional(@NotNull String path, int index, @NotNull Class<T> type) {
+        return ConfigOptional.of(() -> get(path, index, type));
     }
 
     @Override
@@ -137,8 +151,7 @@ public abstract class Branch extends Field implements ConfigBranch {
     public ConfigSection getSectionOrCreate(String path, int index) {
         if (this instanceof ConfigSection section) {
             return section.getSectionOrCreate(path);
-        }
-        else {
+        } else {
             return ((ConfigSequence) this).getSectionOrCreate(index);
         }
     }

@@ -14,27 +14,35 @@ import java.util.*;
 
 public class RootSection extends Section implements ConfigRoot {
 
-    private final File file;
+    private final @Nullable File file;
     private final String name;
     private final Load loader = new ConfigLoad();
     private final Dump dumper = new ConfigDump();
     private @NotNull Configurator configurator;
     private @Nullable String prefix = null;
-    private boolean debug = true;
+    private boolean debug = false;
     private @NotNull String header = "";
 
-    public RootSection(@NotNull File file) {
+    public RootSection() {
+        this(null, new StandardConfigurator());
+    }
+
+    public RootSection(@Nullable File file) {
         this(file, new StandardConfigurator());
     }
 
-    public RootSection(@NotNull File file, @NotNull Configurator configurator) {
+    public RootSection(@NotNull Configurator configurator) {
+        this(null, configurator);
+    }
+
+    public RootSection(@Nullable File file, @NotNull Configurator configurator) {
         super(FlowStyle.BLOCK);
         this.file = file;
         this.name = YamlConfig.getFileName(file);
         this.configurator = configurator;
     }
 
-    public RootSection(@NotNull File file, @NotNull Configurator configurator, @NotNull Map<String, @NotNull Object> mappings) {
+    public RootSection(@Nullable File file, @NotNull Configurator configurator, @NotNull Map<String, @NotNull Object> mappings) {
         this(file, configurator);
         this.map(mappings);
     }
@@ -100,7 +108,7 @@ public class RootSection extends Section implements ConfigRoot {
     }
 
     @Override
-    public @NotNull File getFile() {
+    public @Nullable File getFile() {
         return file;
     }
 
@@ -110,7 +118,7 @@ public class RootSection extends Section implements ConfigRoot {
     }
 
     @Override
-    public String getHeader() {
+    public @NotNull String getHeader() {
         return header;
     }
 
@@ -121,9 +129,12 @@ public class RootSection extends Section implements ConfigRoot {
 
     @Override
     public boolean load() throws ConfigurationLoadException {
+        if (file == null) {
+            throw new IllegalStateException("You cannot load configuration from file because file is null");
+        }
         try {
             return load(file);
-        } catch (ParserException e) {
+        } catch (ParserException | ScannerException e) {
             throw new ConfigurationLoadException(this, e);
         }
     }
@@ -172,6 +183,9 @@ public class RootSection extends Section implements ConfigRoot {
 
     @Override
     public boolean save() {
+        if (file == null) {
+            throw new IllegalStateException("You cannot save configuration to file because file is null");
+        }
         return save(file);
     }
 

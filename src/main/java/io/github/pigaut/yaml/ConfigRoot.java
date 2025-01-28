@@ -21,11 +21,11 @@ public interface ConfigRoot extends ConfigField {
 
     void setConfigurator(@NotNull Configurator configurator);
 
-    @NotNull File getFile();
+    @Nullable File getFile();
 
-    @NotNull String getName();
+    @Nullable String getName();
 
-    String getHeader();
+    @NotNull String getHeader();
 
     void setHeader(@NotNull String... lines);
 

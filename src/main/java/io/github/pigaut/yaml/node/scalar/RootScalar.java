@@ -11,22 +11,30 @@ import java.io.*;
 
 public class RootScalar extends Scalar implements ConfigRoot {
 
-    private final File file;
-    private final String name;
+    private final @Nullable File file;
+    private final @Nullable String name;
     private final Load loader = new ConfigLoad();
     private @NotNull Configurator configurator;
     private @Nullable String prefix = null;
-    private boolean debug = true;
+    private boolean debug = false;
     private @NotNull String header = "";
 
-    public RootScalar(@NotNull File file) {
+    public RootScalar() {
+        this(null, new StandardConfigurator());
+    }
+
+    public RootScalar(@Nullable File file) {
         this(file, new StandardConfigurator());
     }
 
-    public RootScalar(@NotNull File file, @NotNull Configurator configurator) {
+    public RootScalar(@NotNull Configurator configurator) {
+        this(null, configurator);
+    }
+
+    public RootScalar(@Nullable File file, @NotNull Configurator configurator) {
         super("");
         this.file = file;
-        this.name = YamlConfig.getFileName(file);
+        this.name = file != null ? YamlConfig.getFileName(file) : null;
         this.configurator = configurator;
     }
 
@@ -91,17 +99,17 @@ public class RootScalar extends Scalar implements ConfigRoot {
     }
 
     @Override
-    public @NotNull File getFile() {
+    public @Nullable File getFile() {
         return file;
     }
 
     @Override
-    public @NotNull String getName() {
+    public @Nullable String getName() {
         return name;
     }
 
     @Override
-    public @Nullable String getHeader() {
+    public @NotNull String getHeader() {
         return header;
     }
 
@@ -112,9 +120,12 @@ public class RootScalar extends Scalar implements ConfigRoot {
 
     @Override
     public boolean load() {
+        if (file == null) {
+            throw new IllegalStateException("You cannot load configuration from file because file is null");
+        }
         try {
             return load(file);
-        } catch (ParserException e) {
+        } catch (ParserException | ScannerException e) {
             throw new ConfigurationLoadException(this, e);
         }
     }
@@ -158,6 +169,9 @@ public class RootScalar extends Scalar implements ConfigRoot {
 
     @Override
     public boolean save() {
+        if (file == null) {
+            throw new IllegalStateException("You cannot save configuration to file because file is null");
+        }
         return save(file);
     }
 

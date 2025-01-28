@@ -151,8 +151,11 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     @Override
-    public <T> void set(@NotNull String path, @NotNull T value) {
-        Preconditions.checkNotNull(value, "Value cannot be null");
+    public <T> void set(@NotNull String path, @Nullable T value) {
+        if (value == null) {
+            setScalar(path, "");
+            return;
+        }
 
         final Class<?> valueClass = value.getClass();
         if (YamlConfig.isScalarType(valueClass)) {
@@ -568,204 +571,167 @@ public abstract class Section extends Branch implements ConfigSection {
 //        return splitString;
 //    }
 
-    public ConfigScalar[][] getMatrix(@NotNull String path, int rowSize, int columnSize) throws InvalidConfigurationException {
-        Preconditions.checkArgument(rowSize > 0 && columnSize > 0, "Matrix must have at least one row and one column.");
 
-        final ConfigField rowsField = getField(path);
-        if (!(rowsField instanceof ConfigSequence rowsSequence)) {
-            throw new InvalidConfigurationException(this, path, "(Invalid matrix) is not a list");
+    //matrix:
+    //  - [0, 0, 0, 0, 0]
+    //  - [0, 0, 0, 0, 0]
+    //  - [0, 0, 0, 0, 0]
+    //
+    //  x ->  y ^
+    // x is the columns or length
+    // y is the rows or height
+    //
+    // Matrix[x][y] matrix;
+    // Matrix[columns][rows] matrix;
+    // Matrix[length][height] matrix;
+    //
+    // The first list is the: rows or height or y
+    // The second list is the: columns or length or x
+    //
+    // int length = 5;
+    // int height = 3
+
+
+    public ConfigScalar[][] getMatrix(@NotNull String path, int length, int height) throws InvalidConfigurationException {
+        Preconditions.checkArgument(length > 0 && height > 0, "Matrix must have at least one row and one column.");
+        final List<ConfigField> rows = getFieldList(path);
+        if (rows.size() != height) {
+            throw new InvalidConfigurationException(this, path, "Could not load matrix", "Expected " + height + " rows, but got " + rows.size());
         }
-
-        final List<ConfigField> rows = rowsSequence.toFieldList();
-
-        final int rowCount = rows.size();
-        if (rowCount != rowSize) {
-            throw new InvalidConfigurationException(this, path,
-                    "(Invalid matrix) expected " + rowSize + " rows, but got " + rowCount);
-        }
-
-        final ConfigScalar[][] matrix = new ConfigScalar[rowSize][columnSize];
-        for (int row = 0; row < rowSize; row++) {
-            final ConfigField columnsField = rows.get(row);
-
-            if (!(columnsField instanceof ConfigSequence columnsSequence)) {
-                throw new InvalidConfigurationException(columnsField, "(Invalid matrix) is not a list");
+        final ConfigScalar[][] matrix = new ConfigScalar[length][height];
+        for (int row = 0; row < height; row++) {
+            final List<ConfigField> columns = rows.get(row).toSequence().toFieldList();
+            if (columns.size() != length) {
+                throw new InvalidConfigurationException(this, path, "Could not load matrix",
+                        "Expected " + length + " columns at row " + (row + 1) + ", but got " + columns.size());
             }
-
-            final List<ConfigField> columns = columnsSequence.toFieldList();
-
-            final int columnCount = columns.size();
-            if (columnCount != columnSize) {
-                throw new InvalidConfigurationException(this, path,
-                        "(Invalid matrix) at row " + (row + 1) + ", expected " + columnSize + " columns, but got " + columnCount);
-            }
-
-            for (int column = 0; column < columnSize; column++) {
+            for (int column = 0; column < length; column++) {
                 final ConfigField field = columns.get(column);
-
                 if (!(field instanceof ConfigScalar scalar)) {
-                    throw new InvalidConfigurationException(this, path,
-                            "(Invalid matrix) row " + (row + 1) + " and column " + (column + 1) + " is not a value");
+                    throw new InvalidConfigurationException(this, path, "Could not load matrix",
+                            "Expected a value at row " + (row + 1) + " and column " + (column + 1));
                 }
-
-                matrix[row][column] = scalar;
+                matrix[column][row] = scalar;
             }
         }
-
         return matrix;
     }
 
     @Override
-    public boolean[][] getBooleanMatrix(@NotNull String path, int rowCount, int columnCount) throws InvalidConfigurationException {
-        ConfigScalar[][] matrix = getMatrix(path, rowCount, columnCount);
-        boolean[][] booleanMatrix = new boolean[rowCount][columnCount];
-
-        for (int row = 0; row < rowCount; row++) {
-            for (int column = 0; column < columnCount; column++) {
-                final ConfigScalar scalar = matrix[row][column];
-
-                final int effectiveRow = row + 1;
-                final int effectiveColumn = column + 1;
-
-                booleanMatrix[row][column] = scalar.asBoolean().orElseThrow(() -> new InvalidConfigurationException(this, path,
-                        "(Invalid matrix) element at row " + effectiveRow + " and column " + effectiveColumn + " is not a boolean"));
+    public boolean[][] getBooleanMatrix(@NotNull String path, int length, int height) throws InvalidConfigurationException {
+        final ConfigScalar[][] matrix = getMatrix(path, length, height);
+        final boolean[][] booleanMatrix = new boolean[length][height];
+        for (int column = 0; column < length; column++) {
+            for (int row = 0; row < height; row++) {
+                final ConfigScalar scalar = matrix[column][row];
+                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load boolean matrix",
+                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not a boolean");
+                booleanMatrix[column][row] = scalar.asBoolean().orElseThrow(() -> matrixException);
             }
         }
-
         return booleanMatrix;
     }
 
+    // Matrix[x][y] matrix;
+    // Matrix[column][row] matrix;
+    // Matrix[length][height] matrix;
+
     @Override
-    public char[][] getCharacterMatrix(@NotNull String path, int rowCount, int columnCount) throws InvalidConfigurationException {
-        ConfigScalar[][] matrix = getMatrix(path, rowCount, columnCount);
-        char[][] charMatrix = new char[rowCount][columnCount];
-
-        for (int row = 0; row < rowCount; row++) {
-            for (int column = 0; column < columnCount; column++) {
-                final ConfigScalar scalar = matrix[row][column];
-
-                final int effectiveRow = row + 1;
-                final int effectiveColumn = column + 1;
-
-                charMatrix[row][column] = scalar.asCharacter().orElseThrow(() ->
-                        new InvalidConfigurationException(this, path,
-                                "(Invalid matrix) element at row " + effectiveRow + " and column " + effectiveColumn + " is not a character"));
+    public char[][] getCharacterMatrix(@NotNull String path, int length, int height) throws InvalidConfigurationException {
+        final ConfigScalar[][] matrix = getMatrix(path, length, height);
+        final char[][] charMatrix = new char[length][height];
+        for (int column = 0; column < length; column++) {
+            for (int row = 0; row < height; row++) {
+                final ConfigScalar scalar = matrix[column][row];
+                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load character matrix",
+                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not a character");
+                charMatrix[column][row] = scalar.asCharacter().orElseThrow(() -> matrixException);
             }
         }
-
         return charMatrix;
     }
 
     @Override
-    public String[][] getStringMatrix(@NotNull String path, int rowCount, int columnCount) throws InvalidConfigurationException {
-        ConfigScalar[][] matrix = getMatrix(path, rowCount, columnCount);
-        String[][] stringMatrix = new String[rowCount][columnCount];
-
-        for (int row = 0; row < rowCount; row++) {
-            for (int column = 0; column < columnCount; column++) {
-                stringMatrix[row][column] = matrix[row][column].toString();
+    public String[][] getStringMatrix(@NotNull String path, int length, int height) throws InvalidConfigurationException {
+        final ConfigScalar[][] matrix = getMatrix(path, length, height);
+        final String[][] stringMatrix = new String[length][height];
+        for (int column = 0; column < length; column++) {
+            for (int row = 0; row < height; row++) {
+                stringMatrix[column][row] = matrix[column][row].toString();
             }
         }
-
         return stringMatrix;
     }
 
     @Override
-    public String[][] getStringMatrix(@NotNull String path, int rowCount, int columnCount, StringFormatter formatter) throws InvalidConfigurationException {
-        ConfigScalar[][] matrix = getMatrix(path, rowCount, columnCount);
-        String[][] stringMatrix = new String[rowCount][columnCount];
-
-        for (int row = 0; row < rowCount; row++) {
-            for (int column = 0; column < columnCount; column++) {
-                final String string = matrix[row][column].toString();
-                stringMatrix[row][column] = formatter.format(string);
+    public String[][] getStringMatrix(@NotNull String path, int length, int height, StringFormatter formatter) throws InvalidConfigurationException {
+        final ConfigScalar[][] matrix = getMatrix(path, length, height);
+        final String[][] stringMatrix = new String[length][height];
+        for (int column = 0; column < length; column++) {
+            for (int row = 0; row < height; row++) {
+                stringMatrix[column][row] =  matrix[column][row].toString(formatter);
             }
         }
-
         return stringMatrix;
     }
 
     @Override
-    public int[][] getIntegerMatrix(@NotNull String path, int rowCount, int columnCount) throws InvalidConfigurationException {
-        ConfigScalar[][] matrix = getMatrix(path, rowCount, columnCount);
-        int[][] intMatrix = new int[rowCount][columnCount];
-
-        for (int row = 0; row < rowCount; row++) {
-            for (int column = 0; column < columnCount; column++) {
+    public int[][] getIntegerMatrix(@NotNull String path, int length, int height) throws InvalidConfigurationException {
+        final ConfigScalar[][] matrix = getMatrix(path, length, height);
+        final int[][] intMatrix = new int[length][height];
+        for (int column = 0; column < length; column++) {
+            for (int row = 0; row < height; row++) {
                 final ConfigScalar scalar = matrix[row][column];
-
-                final int effectiveRow = row + 1;
-                final int effectiveColumn = column + 1;
-
-                intMatrix[row][column] = scalar.asInteger().orElseThrow(() ->
-                        new InvalidConfigurationException(this, path,
-                                "(Invalid matrix) element at row " + effectiveRow + " and column " + effectiveColumn + " is not an integer"));
+                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load integer matrix",
+                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not an integer");
+                intMatrix[column][row] = scalar.asInteger().orElseThrow(() -> matrixException);
             }
         }
-
         return intMatrix;
     }
 
     @Override
-    public long[][] getLongMatrix(@NotNull String path, int rowCount, int columnCount) throws InvalidConfigurationException {
-        ConfigScalar[][] matrix = getMatrix(path, rowCount, columnCount);
-        long[][] longMatrix = new long[rowCount][columnCount];
-
-        for (int row = 0; row < rowCount; row++) {
-            for (int column = 0; column < columnCount; column++) {
-                final ConfigScalar scalar = matrix[row][column];
-
-                final int effectiveRow = row + 1;
-                final int effectiveColumn = column + 1;
-
-                longMatrix[row][column] = scalar.asLong().orElseThrow(() ->
-                        new InvalidConfigurationException(this, path,
-                                "(Invalid matrix) element at row " + effectiveRow + " and column " + effectiveColumn + " is not a long"));
+    public long[][] getLongMatrix(@NotNull String path, int length, int height) throws InvalidConfigurationException {
+        final ConfigScalar[][] matrix = getMatrix(path, length, height);
+        final long[][] longMatrix = new long[length][height];
+        for (int column = 0; column < length; column++) {
+            for (int row = 0; row < height; row++) {
+                final ConfigScalar scalar = matrix[column][row];
+                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load long matrix",
+                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not a long");
+                longMatrix[column][row] = scalar.asLong().orElseThrow(() -> matrixException);
             }
         }
-
         return longMatrix;
     }
 
     @Override
-    public float[][] getFloatMatrix(@NotNull String path, int rowCount, int columnCount) throws InvalidConfigurationException {
-        ConfigScalar[][] matrix = getMatrix(path, rowCount, columnCount);
-        float[][] floatMatrix = new float[rowCount][columnCount];
-
-        for (int row = 0; row < rowCount; row++) {
-            for (int column = 0; column < columnCount; column++) {
-                final ConfigScalar scalar = matrix[row][column];
-
-                final int effectiveRow = row + 1;
-                final int effectiveColumn = column + 1;
-
-                floatMatrix[row][column] = scalar.asFloat().orElseThrow(() ->
-                        new InvalidConfigurationException(this, path,
-                                "(Invalid matrix) element at row " + effectiveRow + " and column " + effectiveColumn + " is not a float"));
+    public float[][] getFloatMatrix(@NotNull String path, int length, int height) throws InvalidConfigurationException {
+        final ConfigScalar[][] matrix = getMatrix(path, length, height);
+        final float[][] floatMatrix = new float[length][height];
+        for (int column = 0; column < length; column++) {
+            for (int row = 0; row < height; row++) {
+                final ConfigScalar scalar = matrix[column][row];
+                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load float matrix",
+                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not a float");
+                floatMatrix[column][row] = scalar.asFloat().orElseThrow(() -> matrixException);
             }
         }
-
         return floatMatrix;
     }
 
     @Override
-    public double[][] getDoubleMatrix(@NotNull String path, int rowCount, int columnCount) throws InvalidConfigurationException {
-        ConfigScalar[][] matrix = getMatrix(path, rowCount, columnCount);
-        double[][] doubleMatrix = new double[rowCount][columnCount];
-
-        for (int row = 0; row < rowCount; row++) {
-            for (int column = 0; column < columnCount; column++) {
-                final ConfigScalar scalar = matrix[row][column];
-
-                final int effectiveRow = row + 1;
-                final int effectiveColumn = column + 1;
-
-                doubleMatrix[row][column] = scalar.asDouble().orElseThrow(() ->
-                        new InvalidConfigurationException(this, path,
-                                "(Invalid matrix) element at row " + effectiveRow + " and column " + effectiveColumn + " is not a double"));
+    public double[][] getDoubleMatrix(@NotNull String path, int length, int height) throws InvalidConfigurationException {
+        final ConfigScalar[][] matrix = getMatrix(path, length, height);
+        final double[][] doubleMatrix = new double[length][height];
+        for (int column = 0; column < length; column++) {
+            for (int row = 0; row < height; row++) {
+                final ConfigScalar scalar = matrix[column][row];
+                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load double matrix",
+                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not a double");
+                doubleMatrix[column][row] = scalar.asDouble().orElseThrow(() -> matrixException);
             }
         }
-
         return doubleMatrix;
     }
 

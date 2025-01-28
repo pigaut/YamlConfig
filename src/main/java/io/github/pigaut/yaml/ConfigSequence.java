@@ -66,7 +66,7 @@ public interface ConfigSequence extends ConfigField, Iterable<ConfigField> {
 
     <T> List<@NotNull T> getAll(@NotNull Class<T> type) throws InvalidConfigurationException;
 
-    <T> void set(int index, T value);
+    <T> void set(int index, @Nullable T value);
 
     void remove(int index);
 

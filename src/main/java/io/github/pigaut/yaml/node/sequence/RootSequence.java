@@ -14,28 +14,36 @@ import java.util.*;
 
 public class RootSequence extends Sequence implements ConfigRoot {
 
-    private final File file;
-    private final String name;
+    private final @Nullable File file;
+    private final @Nullable String name;
     private @NotNull Configurator configurator;
     private @Nullable String prefix = null;
-    private boolean debug = true;
+    private boolean debug = false;
     private @NotNull String header = "";
 
     private final Load loader = new ConfigLoad();
     private final Dump dumper = new ConfigDump();
 
-    public RootSequence(@NotNull File file) {
+    public RootSequence() {
+        this(null, new StandardConfigurator());
+    }
+
+    public RootSequence(@Nullable File file) {
         this(file, new StandardConfigurator());
     }
 
-    public RootSequence(@NotNull File file, @NotNull Configurator configurator) {
+    public RootSequence(@NotNull Configurator configurator) {
+        this(null, configurator);
+    }
+
+    public RootSequence(@Nullable File file, @NotNull Configurator configurator) {
         super(FlowStyle.BLOCK);
         this.file = file;
         this.name = YamlConfig.getFileName(file);
         this.configurator = configurator;
     }
 
-    public RootSequence(@NotNull File file, @NotNull Configurator configurator, @NotNull List<@NotNull Object> elements) {
+    public RootSequence(@Nullable File file, @NotNull Configurator configurator, @NotNull List<@NotNull Object> elements) {
         super(FlowStyle.BLOCK);
         this.file = file;
         this.name = YamlConfig.getFileName(file);
@@ -89,7 +97,7 @@ public class RootSequence extends Sequence implements ConfigRoot {
     }
 
     @Override
-    public @NotNull File getFile() {
+    public @Nullable File getFile() {
         return file;
     }
 
@@ -119,7 +127,7 @@ public class RootSequence extends Sequence implements ConfigRoot {
     }
 
     @Override
-    public @Nullable String getHeader() {
+    public @NotNull String getHeader() {
         return header;
     }
 
@@ -130,9 +138,12 @@ public class RootSequence extends Sequence implements ConfigRoot {
 
     @Override
     public boolean load() throws ConfigurationLoadException {
+        if (file == null) {
+            throw new IllegalStateException("You cannot load configuration from file because file is null");
+        }
         try {
             return load(file);
-        } catch (ParserException e) {
+        } catch (ParserException | ScannerException e) {
             throw new ConfigurationLoadException(this, e);
         }
     }
@@ -190,6 +201,9 @@ public class RootSequence extends Sequence implements ConfigRoot {
 
     @Override
     public boolean save() {
+        if (file == null) {
+            throw new IllegalStateException("You cannot save configuration to file because file is null");
+        }
         return save(file);
     }
 

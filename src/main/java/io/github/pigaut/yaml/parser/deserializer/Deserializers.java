@@ -377,7 +377,7 @@ public class Deserializers {
             try {
                 return Enum.valueOf(type, StringFormatter.toConstantCase(string));
             } catch (IllegalArgumentException e) {
-                throw new DeserializationException("Expected a " + StringFormatter.toSpacedLowerCase(type.getSimpleName())
+                throw new DeserializationException("Expected a " + StringFormatter.toTitleCase(StringFormatter.splitClassName(type))
                         + " but found: '" + string + "'");
             }
         };

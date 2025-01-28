@@ -45,6 +45,11 @@ public interface ConfigBranch extends ConfigField, Iterable<ConfigField> {
 
     <T> void addAll(Collection<T> elements);
 
+    @NotNull
+    <T> T get(@NotNull String path, int index, @NotNull Class<T> type) throws InvalidConfigurationException;
+
+    <T> Optional<T> getOptional(@NotNull String path, int index, @NotNull Class<T> type);
+
     <T> List<@NotNull T> getAll(@NotNull Class<T> type) throws InvalidConfigurationException;
 
     ConfigField getField(String path, int index);

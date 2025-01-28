@@ -4,6 +4,8 @@ import io.github.pigaut.yaml.configurator.parser.*;
 import io.github.pigaut.yaml.parser.*;
 import org.jetbrains.annotations.*;
 
+import javax.print.*;
+
 public class EnumDeserializer<E extends Enum<E>> implements ConfigDeserializer<E> {
 
     private final Class<E> type;
@@ -17,7 +19,7 @@ public class EnumDeserializer<E extends Enum<E>> implements ConfigDeserializer<E
         try {
             return Enum.valueOf(type, StringFormatter.toConstantCase(stringToDeserialize));
         } catch (IllegalArgumentException e) {
-            final String typeName = StringFormatter.toSpacedLowerCase(type.getSimpleName());
+            final String typeName = StringFormatter.toTitleCase(StringFormatter.splitClassName(type));
             throw new DeserializationException("Expected a " + typeName + " but found: '" + stringToDeserialize + "'");
         }
     }

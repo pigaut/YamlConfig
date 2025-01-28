@@ -127,11 +127,14 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     }
 
     @Override
-    public <T> void set(int index, T value) {
+    public <T> void set(int index, @Nullable T value) {
         if (index > 0 && index < size()) {
             throw new IndexOutOfBoundsException(index);
         }
-
+        if (value == null) {
+            setScalar(index, "");
+            return;
+        }
         if (YamlConfig.isScalar(value)) {
             setScalar(index, value);
             return;
