@@ -98,6 +98,11 @@ public interface StringFormatter {
         return camelCase.toString();
     }
 
+    static String toIdentifier(String string) {
+        String[] words = splitWords(string);
+        return String.join("", words).toLowerCase();
+    }
+
     static boolean match(@NotNull String key, @Nullable String keyToCompare) {
         if (keyToCompare == null) {
             return false;

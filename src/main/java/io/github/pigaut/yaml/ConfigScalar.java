@@ -8,6 +8,7 @@ import org.snakeyaml.engine.v2.common.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.*;
 
 public interface ConfigScalar extends ConfigField {
 
@@ -62,5 +63,9 @@ public interface ConfigScalar extends ConfigField {
     Optional<Float> asFloat();
 
     Optional<Double> asDouble();
+
+    ConfigSequence split(String regex);
+
+    ConfigSequence split(Pattern pattern);
 
 }

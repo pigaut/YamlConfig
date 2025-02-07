@@ -5,6 +5,7 @@ import io.github.pigaut.yaml.configurator.*;
 import io.github.pigaut.yaml.configurator.FieldType;
 import io.github.pigaut.yaml.configurator.loader.*;
 import io.github.pigaut.yaml.node.*;
+import io.github.pigaut.yaml.node.sequence.*;
 import io.github.pigaut.yaml.parser.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
@@ -50,12 +51,12 @@ public abstract class Scalar extends Field implements ConfigScalar {
 
     @Override
     public boolean toBoolean() throws InvalidConfigurationException {
-        return asBoolean().orElseThrow(() -> new InvalidConfigurationException(this, "Expected a boolean but found: '" + this.toString() + "'"));
+        return asBoolean().orElseThrow(() -> new InvalidConfigurationException(this, "Expected a boolean but found: " + this));
     }
 
     @Override
     public char toCharacter() throws InvalidConfigurationException {
-        return asCharacter().orElseThrow(() -> new InvalidConfigurationException(this, "Expected a character but found: '" + this.toString() + "'"));
+        return asCharacter().orElseThrow(() -> new InvalidConfigurationException(this, "Expected a character but found: " + this));
     }
 
     @Override
@@ -66,22 +67,22 @@ public abstract class Scalar extends Field implements ConfigScalar {
 
     @Override
     public int toInteger() throws InvalidConfigurationException {
-        return asInteger().orElseThrow(() -> new InvalidConfigurationException(this, "Expected an integer but found: '" + this.toString() + "'"));
+        return asInteger().orElseThrow(() -> new InvalidConfigurationException(this, "Expected an integer but found: " + this));
     }
 
     @Override
     public long toLong() throws InvalidConfigurationException {
-        return asLong().orElseThrow(() -> new InvalidConfigurationException(this, "Expected a long but found: '" + this.toString() + "'"));
+        return asLong().orElseThrow(() -> new InvalidConfigurationException(this, "Expected a long but found: " + this));
     }
 
     @Override
     public float toFloat() throws InvalidConfigurationException {
-        return asFloat().orElseThrow(() -> new InvalidConfigurationException(this, "Expected a float but found: '" + this.toString() + "'"));
+        return asFloat().orElseThrow(() -> new InvalidConfigurationException(this, "Expected a float but found: " + this));
     }
 
     @Override
     public double toDouble() throws InvalidConfigurationException {
-        return asDouble().orElseThrow(() -> new InvalidConfigurationException(this, "Expected a double but found: '" + this.toString() + "'"));
+        return asDouble().orElseThrow(() -> new InvalidConfigurationException(this, "Expected a double but found: " + this));
     }
 
     @Override
@@ -152,14 +153,16 @@ public abstract class Scalar extends Field implements ConfigScalar {
 
     @Override
     public <T> T load(Class<T> type) throws InvalidConfigurationException {
-        final Configurator configurator = getRoot().getConfigurator();
+        final ConfigRoot root = getRoot();
+        final Configurator configurator = root.getConfigurator();
         final ConfigLoader<? extends T> loader = configurator.getLoader(type);
         if (loader == null) {
             throw new IllegalArgumentException("No config loader found for class type: " + type.getSimpleName());
         }
-        this.setProblemDescription(loader.getProblemDescription());
+        final String problemDescription = loader.getProblemDescription();
+        root.addProblem(problemDescription);
         final T value = loader.loadFromScalar(this);
-        this.setProblemDescription(null);
+        root.removeProblem(problemDescription);
         return value;
     }
 

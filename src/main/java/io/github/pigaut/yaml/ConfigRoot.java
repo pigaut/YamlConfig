@@ -16,6 +16,12 @@ public interface ConfigRoot extends ConfigField {
 
     void setDebug(boolean debug);
 
+    @Nullable String getCurrentProblem();
+
+    void addProblem(@Nullable String problemDescription);
+
+    void removeProblem(@Nullable String problemDescription);
+
     @NotNull
     Configurator getConfigurator();
 

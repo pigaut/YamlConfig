@@ -8,7 +8,7 @@ public class AttributeLoader implements ConfigLoader<Attribute> {
 
     @Override
     public @NotNull String getProblemDescription() {
-        return "Could not load attribute";
+        return "invalid item attribute";
     }
 
     @Override

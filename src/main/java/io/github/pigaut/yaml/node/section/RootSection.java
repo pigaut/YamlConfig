@@ -20,8 +20,9 @@ public class RootSection extends Section implements ConfigRoot {
     private final Dump dumper = new ConfigDump();
     private @NotNull Configurator configurator;
     private @Nullable String prefix = null;
-    private boolean debug = false;
+    private boolean debug = true;
     private @NotNull String header = "";
+    private final Deque<String> problems = new LinkedList<>();
 
     public RootSection() {
         this(null, new StandardConfigurator());
@@ -38,7 +39,7 @@ public class RootSection extends Section implements ConfigRoot {
     public RootSection(@Nullable File file, @NotNull Configurator configurator) {
         super(FlowStyle.BLOCK);
         this.file = file;
-        this.name = YamlConfig.getFileName(file);
+        this.name = file != null ? YamlConfig.getFileName(file) : null;
         this.configurator = configurator;
     }
 
@@ -60,6 +61,25 @@ public class RootSection extends Section implements ConfigRoot {
     @Override
     public @NotNull RootSection getRoot() {
         return this;
+    }
+
+    @Override
+    public @Nullable String getCurrentProblem() {
+        return problems.peekLast();
+    }
+
+    @Override
+    public void addProblem(String problemDescription) {
+        if (problemDescription != null) {
+            problems.add(problemDescription);
+        }
+    }
+
+    @Override
+    public void removeProblem(String problemDescription) {
+        if (problemDescription != null) {
+            problems.remove(problemDescription);
+        }
     }
 
     @Override
@@ -154,7 +174,8 @@ public class RootSection extends Section implements ConfigRoot {
 
     @Override
     public boolean load(@NotNull InputStream inputStream) {
-        final Object data = loader.loadFromInputStream(inputStream);;
+        final Object data = loader.loadFromInputStream(inputStream);
+        ;
         this.clear();
 
         if (data instanceof Map<?, ?> map) {

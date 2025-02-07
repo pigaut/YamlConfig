@@ -3,11 +3,15 @@ package io.github.pigaut.yaml.node.scalar;
 import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.configurator.*;
 import io.github.pigaut.yaml.node.*;
+import io.github.pigaut.yaml.node.sequence.*;
+import io.github.pigaut.yaml.parser.deserializer.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.api.*;
 import org.snakeyaml.engine.v2.exceptions.*;
 
 import java.io.*;
+import java.util.*;
+import java.util.regex.*;
 
 public class RootScalar extends Scalar implements ConfigRoot {
 
@@ -16,8 +20,9 @@ public class RootScalar extends Scalar implements ConfigRoot {
     private final Load loader = new ConfigLoad();
     private @NotNull Configurator configurator;
     private @Nullable String prefix = null;
-    private boolean debug = false;
+    private boolean debug = true;
     private @NotNull String header = "";
+    private final Deque<String> problems = new LinkedList<>();
 
     public RootScalar() {
         this(null, new StandardConfigurator());
@@ -51,6 +56,25 @@ public class RootScalar extends Scalar implements ConfigRoot {
     @Override
     public @NotNull RootScalar getRoot() {
         return this;
+    }
+
+    @Override
+    public @Nullable String getCurrentProblem() {
+        return problems.peekLast();
+    }
+
+    @Override
+    public void addProblem(String problemDescription) {
+        if (problemDescription != null) {
+            problems.add(problemDescription);
+        }
+    }
+
+    @Override
+    public void removeProblem(String problemDescription) {
+        if (problemDescription != null) {
+            problems.remove(problemDescription);
+        }
     }
 
     @Override
@@ -192,6 +216,26 @@ public class RootScalar extends Scalar implements ConfigRoot {
     @Override
     public String saveToString() {
         return header + this.toString();
+    }
+
+    @Override
+    public ConfigSequence split(String regex) {
+        return new RootSequence(file, configurator, Deserializers.parseAll(this.toString().split(regex)));
+    }
+
+    @Override
+    public ConfigSequence split(Pattern pattern) {
+        Matcher matcher = pattern.matcher(this.toString());
+        List<String> parts = new ArrayList<>();
+        while (matcher.find()) {
+            for (int i = 1; i <= matcher.groupCount(); i++) {
+                if (matcher.group(i) != null) {
+                    parts.add(matcher.group(i));
+                    break;
+                }
+            }
+        }
+        return new RootSequence(file, configurator, Deserializers.parseAll(parts));
     }
 
 }

@@ -9,8 +9,6 @@ import java.util.*;
 
 public abstract class Field implements ConfigField {
 
-    private @Nullable String problemDescription = null;
-
     @NotNull
     public abstract Branch getParent() throws UnsupportedOperationException;
 
@@ -34,16 +32,6 @@ public abstract class Field implements ConfigField {
     @NotNull
     public String getPath(String key) {
         return getPath() + "." + key;
-    }
-
-    @Override
-    public @Nullable String getProblemDescription() {
-        return problemDescription;
-    }
-
-    @Override
-    public void setProblemDescription(@Nullable String problemDescription) {
-        this.problemDescription = problemDescription;
     }
 
     @Override

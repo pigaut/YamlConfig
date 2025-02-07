@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.pigaut.yaml</groupId>
   <artifactId>SpigotYamlConfig</artifactId>
-  <version>3.1</version>
+  <version>3.2</version>
   <description>A library to read and write configuration files in yaml format, uses snakeyaml engine.</description>
   <url>https://github.com/pigaut/YAMLib</url>
   <developers>
@@ -90,6 +90,10 @@
             <relocation>
               <pattern>de.tr7zw.changeme.nbtapi</pattern>
               <shadedPattern>io.github.pigaut.yaml.nbtapi</shadedPattern>
+            </relocation>
+            <relocation>
+              <pattern>com.github.cryptomorin</pattern>
+              <shadedPattern>io.github.pigaut.yaml.xseries</shadedPattern>
             </relocation>
           </relocations>
         </configuration>

@@ -34,7 +34,7 @@ public class ConfigurationLoadException extends RuntimeException {
     public String toString() {
         final String optionalPrefix = prefix != null ? (prefix + " ") : "";
         final String optionalFile = file != null ? (" File: " + file.getPath() + "\n") : "";
-        final String errorMessage = "%sConfiguration Load Error -> Unable to load yaml data\n" +
+        final String errorMessage = "%sYaml Parsing Error -> Unable to load yaml file\n" +
                 "%s" +
                 " Details: %s";
         return String.format(errorMessage, optionalPrefix, optionalFile, cause);

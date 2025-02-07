@@ -17,24 +17,27 @@ public class Configurator {
     private final Map<Class<?>, ConfigMapper<?>> mappersByType = new HashMap<>();
 
     public <T> @Nullable ConfigLoader<T> getLoader(@NotNull Class<T> type) {
-        if (Enum.class.isAssignableFrom(type)) {
-            return (ConfigDeserializer) new EnumDeserializer<>((Class) type)::deserialize;
-        }
         @SuppressWarnings("unchecked")
         ConfigLoader<T> loader = (ConfigLoader<T>) loadersByType.get(type);
-        return loader;
+        if (loader != null) {
+            return loader;
+        }
+        if (Enum.class.isAssignableFrom(type)) {
+            return new EnumDeserializer<>((Class) type);
+        }
+        return null;
     }
 
     public <T> ConfigMapper<? super T> getMapper(Class<T> type) {
-        if (Enum.class.isAssignableFrom(type)) {
-            return (ConfigSerializer) Serializers.defaultSerializer()::serialize;
-        }
-
         @SuppressWarnings("unchecked")
         ConfigMapper<T> mapper = (ConfigMapper<T>) mappersByType.get(type);
 
         if (mapper != null) {
             return mapper;
+        }
+
+        if (Enum.class.isAssignableFrom(type)) {
+            return Serializers.defaultSerializer();
         }
 
         for (Class<?> setterType : mappersByType.keySet()) {
@@ -44,7 +47,6 @@ public class Configurator {
                 return parentMapper;
             }
         }
-
         return null;
     }
 

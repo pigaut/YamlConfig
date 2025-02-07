@@ -8,11 +8,16 @@ import org.jetbrains.annotations.*;
 public class WorldDeserializer implements ConfigDeserializer<World> {
 
     @Override
+    public @Nullable String getProblemDescription() {
+        return "invalid world";
+    }
+
+    @Override
     public @NotNull World deserialize(@NotNull String worldName) throws DeserializationException {
         World world = Bukkit.getWorld(worldName);
 
         if (world == null) {
-            throw new DeserializationException(worldName + " is not a valid world");
+            throw new DeserializationException("Could not find world with name: " + worldName);
         }
 
         return world;

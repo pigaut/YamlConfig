@@ -16,13 +16,13 @@ public class RootSequence extends Sequence implements ConfigRoot {
 
     private final @Nullable File file;
     private final @Nullable String name;
-    private @NotNull Configurator configurator;
-    private @Nullable String prefix = null;
-    private boolean debug = false;
-    private @NotNull String header = "";
-
     private final Load loader = new ConfigLoad();
     private final Dump dumper = new ConfigDump();
+    private @NotNull Configurator configurator;
+    private @Nullable String prefix = null;
+    private boolean debug = true;
+    private @NotNull String header = "";
+    private final Deque<String> problems = new LinkedList<>();
 
     public RootSequence() {
         this(null, new StandardConfigurator());
@@ -39,7 +39,7 @@ public class RootSequence extends Sequence implements ConfigRoot {
     public RootSequence(@Nullable File file, @NotNull Configurator configurator) {
         super(FlowStyle.BLOCK);
         this.file = file;
-        this.name = YamlConfig.getFileName(file);
+        this.name = file != null ? YamlConfig.getFileName(file) : null;
         this.configurator = configurator;
     }
 
@@ -49,6 +49,11 @@ public class RootSequence extends Sequence implements ConfigRoot {
         this.name = YamlConfig.getFileName(file);
         this.configurator = configurator;
         this.map(elements);
+    }
+
+    @Override
+    public @NotNull String getKey() throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Root does not have a key");
     }
 
     @Override
@@ -62,8 +67,22 @@ public class RootSequence extends Sequence implements ConfigRoot {
     }
 
     @Override
-    public @NotNull String getKey() throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Root does not have a key");
+    public @Nullable String getCurrentProblem() {
+        return problems.peekLast();
+    }
+
+    @Override
+    public void addProblem(String problemDescription) {
+        if (problemDescription != null) {
+            problems.add(problemDescription);
+        }
+    }
+
+    @Override
+    public void removeProblem(String problemDescription) {
+        if (problemDescription != null) {
+            problems.remove(problemDescription);
+        }
     }
 
     @Override
@@ -92,18 +111,13 @@ public class RootSequence extends Sequence implements ConfigRoot {
     }
 
     @Override
-    public @NotNull RootSection convertToSection() {
-        return new RootSection(file, configurator, toMap());
+    public boolean isDebug() {
+        return debug;
     }
 
     @Override
-    public @Nullable File getFile() {
-        return file;
-    }
-
-    @Override
-    public @NotNull String getName() {
-        return name;
+    public void setDebug(boolean debug) {
+        this.debug = debug;
     }
 
     @Override
@@ -117,13 +131,13 @@ public class RootSequence extends Sequence implements ConfigRoot {
     }
 
     @Override
-    public boolean isDebug() {
-        return debug;
+    public @Nullable File getFile() {
+        return file;
     }
 
     @Override
-    public void setDebug(boolean debug) {
-        this.debug = debug;
+    public @NotNull String getName() {
+        return name;
     }
 
     @Override
@@ -175,6 +189,40 @@ public class RootSequence extends Sequence implements ConfigRoot {
         return loadDocuments(documents);
     }
 
+    @Override
+    public boolean save() {
+        if (file == null) {
+            throw new IllegalStateException("You cannot save configuration to file because file is null");
+        }
+        return save(file);
+    }
+
+    @Override
+    public boolean save(@NotNull File file) {
+        if (!YamlConfig.createFileIfNotExists(file))
+            return false;
+        final String yamlData = saveToString();
+        try (FileWriter writer = new FileWriter(file)) {
+            writer.write(yamlData);
+            return true;
+        } catch (IOException e) {
+            throw new InvalidConfigurationException(this, e.getMessage());
+        }
+    }
+
+    @Override
+    public String saveToString() {
+        if (this.getFlowStyle() == FlowStyle.AUTO) {
+            return header + dumper.dumpAllToString(this.iterator());
+        }
+        return header + dumper.dumpToString(this);
+    }
+
+    @Override
+    public @NotNull RootSection convertToSection() {
+        return new RootSection(file, configurator, toMap());
+    }
+
     private boolean loadDocuments(List<Object> documents) {
         this.clear();
         if (documents.isEmpty()) {
@@ -197,35 +245,6 @@ public class RootSequence extends Sequence implements ConfigRoot {
         }
         setFlowStyle(FlowStyle.AUTO);
         return true;
-    }
-
-    @Override
-    public boolean save() {
-        if (file == null) {
-            throw new IllegalStateException("You cannot save configuration to file because file is null");
-        }
-        return save(file);
-    }
-
-    @Override
-    public boolean save(@NotNull File file) {
-        if (!YamlConfig.createFileIfNotExists(file))
-            return false;
-        final String yamlData = saveToString();
-        try (FileWriter writer = new FileWriter(file)) {
-            writer.write(yamlData);
-            return true;
-        } catch (IOException e) {
-           throw new InvalidConfigurationException(this, e.getMessage());
-        }
-    }
-
-    @Override
-    public String saveToString() {
-        if (this.getFlowStyle() == FlowStyle.AUTO) {
-            return header + dumper.dumpAllToString(this.iterator());
-        }
-        return header + dumper.dumpToString(this);
     }
 
 }

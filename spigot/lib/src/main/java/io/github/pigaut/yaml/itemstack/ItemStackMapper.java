@@ -1,5 +1,6 @@
 package io.github.pigaut.yaml.itemstack;
 
+import com.cryptomorin.xseries.*;
 import de.tr7zw.changeme.nbtapi.*;
 import de.tr7zw.changeme.nbtapi.iface.*;
 import io.github.pigaut.yaml.*;
@@ -42,6 +43,18 @@ public class ItemStackMapper implements SectionMapper<ItemStack> {
                 config.set("lore", meta.getLore());
             }
 
+            if (meta instanceof Damageable damageable && damageable.hasDamage()) {
+                config.set("damage", damageable.getDamage());
+            }
+
+            if (meta.isUnbreakable()) {
+                config.set("unbreakable", true);
+            }
+
+            if (meta.hasCustomModelData()) {
+                config.set("model-data", meta.getCustomModelData());
+            }
+
             if (meta instanceof Repairable repairable) {
                 if (repairable.hasRepairCost()) {
                     config.set("repair-cost", repairable.getRepairCost());
@@ -52,33 +65,19 @@ public class ItemStackMapper implements SectionMapper<ItemStack> {
             if (!itemFlags.isEmpty()) {
                 config.set("flags", itemFlags);
             }
+
+            final ConfigSection enchantsConfig = config.getSectionOrCreate("enchants");
+            meta.getEnchants().forEach((enchant, level) -> {
+                enchantsConfig.set(XEnchantment.of(enchant).name(), level);
+            });
+
         }
 
         NBT.get(item, nbt -> {
-            mapNBTData(config, nbt);
-
-            Boolean unbreakable = nbt.getBoolean("Unbreakable");
-            if (unbreakable != null && unbreakable) {
-                config.set("unbreakable", true);
-            }
-
-            Short damage = nbt.getShort("Damage");
-            if (damage != 0) {
-                config.set("damage", damage);
-            }
-
-            Integer modelData = nbt.getInteger("CustomModelData");
-            if (modelData != 0) {
-                config.set("model-data", modelData);
-            }
-
             mapHeadTexture(config, nbt);
-            mapEnchants(config, nbt);
             mapAttributes(config, nbt);
         });
     }
-
-    protected void mapNBTData(ConfigSection config, ReadableNBT itemNBT) {}
 
     protected void mapAttributes(ConfigSection section, ReadableNBT itemNBT) {
         final ReadableNBTList<ReadWriteNBT> attributesCompound = itemNBT.getCompoundList("AttributeModifiers");
@@ -98,23 +97,6 @@ public class ItemStackMapper implements SectionMapper<ItemStack> {
 
         if (!foundAttributes.isEmpty()) {
             section.set("attributes", foundAttributes);
-        }
-    }
-
-    protected void mapEnchants(ConfigSection config, ReadableNBT itemNBT) {
-        ReadableNBTList<ReadWriteNBT> enchantsList = itemNBT.getCompoundList("Enchantments");
-
-        if (enchantsList != null) {
-            ConfigSection enchantsConfig = config.getSectionOrCreate("enchants");
-            for (ReadWriteNBT enchantCompound : enchantsList) {
-                enchantsConfig.set(
-                        enchantCompound.getString("id").replace("minecraft:", ""),
-                        enchantCompound.getShort("lvl")
-                );
-            }
-            if (enchantsConfig.isEmpty()) {
-                config.remove("enchants");
-            }
         }
     }
 

@@ -26,6 +26,9 @@ public class SpigotConfigurator extends StandardConfigurator {
 
         addDeserializer(World.class, new WorldDeserializer());
         addDeserializer(Enchantment.class, new EnchantmentDeserializer());
+        addDeserializer(Material.class, new MaterialDeserializer());
+        addDeserializer(Particle.class, new ParticleDeserializer());
+        addDeserializer(Sound.class, new SoundDeserializer());
 
         addSerializer(World.class, World::getName);
         addSerializer(Enchantment.class, enchant -> enchant.getKey().getKey());

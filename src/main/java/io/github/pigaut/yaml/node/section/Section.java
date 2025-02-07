@@ -771,14 +771,16 @@ public abstract class Section extends Branch implements ConfigSection {
 
     @Override
     public <T> @NotNull T load(@NotNull Class<T> type) throws InvalidConfigurationException {
-        final Configurator configurator = getRoot().getConfigurator();
+        final ConfigRoot root = getRoot();
+        final Configurator configurator = root.getConfigurator();
         final ConfigLoader<? extends T> loader = configurator.getLoader(type);
         if (loader == null) {
             throw new IllegalArgumentException("No config loader found for class: " + type.getSimpleName());
         }
-        this.setProblemDescription(loader.getProblemDescription());
+        final String problemDescription = loader.getProblemDescription();
+        root.addProblem(problemDescription);
         final T value = loader.loadFromSection(this);
-        this.setProblemDescription(null);
+        root.removeProblem(problemDescription);
         return value;
     }
 

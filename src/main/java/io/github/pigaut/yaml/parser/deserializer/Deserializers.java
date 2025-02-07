@@ -15,6 +15,34 @@ public class Deserializers {
 
     private Deserializers() {}
 
+    public static Object parse(String string) {
+        final Boolean bool = Deserializers.getBoolean(string);
+        if (bool != null) {
+            return bool;
+        }
+        final Double num = Deserializers.getDouble(string);
+        if (num != null) {
+            return num;
+        }
+        return string;
+    }
+
+    public static List<Object> parseAll(String... strings) {
+        final List<Object> deserializedList = new ArrayList<>();
+        for (String string : strings) {
+            deserializedList.add(parse(string));
+        }
+        return deserializedList;
+    }
+
+    public static List<Object> parseAll(List<String> stringList) {
+        final List<Object> deserializedList = new ArrayList<>();
+        for (String string : stringList) {
+            deserializedList.add(parse(string));
+        }
+        return deserializedList;
+    }
+
     public static @Nullable Boolean getBoolean(String value) {
         try {
             return deserializeBoolean(value);

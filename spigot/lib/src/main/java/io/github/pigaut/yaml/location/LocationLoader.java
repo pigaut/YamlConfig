@@ -9,7 +9,12 @@ public class LocationLoader implements ConfigLoader<Location> {
 
     @Override
     public @NotNull String getProblemDescription() {
-        return "Could not load location";
+        return "invalid location";
+    }
+
+    @Override
+    public @NotNull Location loadFromScalar(ConfigScalar scalar) throws InvalidConfigurationException {
+        return loadFromSequence(scalar.split("\\s*,\\s*"));
     }
 
     @Override

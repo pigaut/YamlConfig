@@ -13,7 +13,6 @@ import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.common.*;
 
-import javax.swing.text.html.*;
 import java.util.*;
 import java.util.stream.*;
 
@@ -333,44 +332,37 @@ public abstract class Sequence extends Branch implements ConfigSequence {
 
     @Override
     public boolean getBoolean(int index) throws InvalidConfigurationException {
-        return getOptionalBoolean(index)
-                .orElseThrow(() -> new InvalidConfigurationException(this, index, "Expected a boolean but received another type"));
+        return getScalar(index).toBoolean();
     }
 
     @Override
     public char getCharacter(int index) throws InvalidConfigurationException {
-        return getOptionalCharacter(index)
-                .orElseThrow(() -> new InvalidConfigurationException(this, index, "Expected a character but received another type"));
+        return getScalar(index).toCharacter();
     }
 
     @Override
     public @NotNull String getString(int index) throws InvalidConfigurationException {
-        return getOptionalString(index)
-                .orElseThrow(() -> new InvalidConfigurationException(this, index, "Expected a string but received another type"));
+        return getScalar(index).toString();
     }
 
     @Override
     public int getInteger(int index) throws InvalidConfigurationException {
-        return getOptionalInteger(index)
-                .orElseThrow(() -> new InvalidConfigurationException(this, index, "Expected an integer but received another type"));
+        return getScalar(index).toInteger();
     }
 
     @Override
     public long getLong(int index) throws InvalidConfigurationException {
-        return getOptionalLong(index)
-                .orElseThrow(() -> new InvalidConfigurationException(this, index, "Expected a long but received another type"));
+        return getScalar(index).toLong();
     }
 
     @Override
     public float getFloat(int index) throws InvalidConfigurationException {
-        return getOptionalFloat(index)
-                .orElseThrow(() -> new InvalidConfigurationException(this, index, "Expected a float but received another type"));
+        return getScalar(index).toFloat();
     }
 
     @Override
     public double getDouble(int index) throws InvalidConfigurationException {
-        return getOptionalDouble(index)
-                .orElseThrow(() -> new InvalidConfigurationException(this, index, "Expected a double but received another type"));
+        return getScalar(index).toDouble();
     }
 
     @Override
@@ -524,14 +516,16 @@ public abstract class Sequence extends Branch implements ConfigSequence {
 
     @Override
     public <T> @NotNull T load(@NotNull Class<T> type) throws InvalidConfigurationException {
-        final Configurator configurator = getRoot().getConfigurator();
+        final ConfigRoot root = getRoot();
+        final Configurator configurator = root.getConfigurator();
         final ConfigLoader<? extends T> loader = configurator.getLoader(type);
         if (loader == null) {
             throw new IllegalArgumentException("No config loader found for class: " + type.getSimpleName());
         }
-        this.setProblemDescription(loader.getProblemDescription());
+        final String problemDescription = loader.getProblemDescription();
+        root.addProblem(problemDescription);
         final T value = loader.loadFromSequence(this);
-        this.setProblemDescription(null);
+        root.removeProblem(problemDescription);
         return value;
     }
 

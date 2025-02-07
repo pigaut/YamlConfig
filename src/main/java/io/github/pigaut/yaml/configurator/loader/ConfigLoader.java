@@ -5,8 +5,8 @@ import org.jetbrains.annotations.*;
 
 public interface ConfigLoader<T> {
 
-    default @NotNull String getProblemDescription() {
-        return "Could not load object";
+    default @Nullable String getProblemDescription() {
+        return null;
     }
 
     default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigurationException {

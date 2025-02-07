@@ -10,15 +10,15 @@ public abstract class AbstractLoader<T> implements ConfigLoader<T> {
     private final Map<String, ConfigLoader<? extends T>> loadersByName = new HashMap<>();
 
     public @Nullable ConfigLoader<? extends T> getLoader(String id) {
-        return loadersByName.get(StringFormatter.toConstantCase(id));
+        return loadersByName.get(StringFormatter.toIdentifier(id));
     }
 
     public void addLoader(String id, ConfigLoader<? extends T> loader) {
-        loadersByName.put(StringFormatter.toConstantCase(id), loader);
+        loadersByName.put(StringFormatter.toIdentifier(id), loader);
     }
 
     public void removeLoader(String id) {
-        loadersByName.remove(StringFormatter.toConstantCase(id));
+        loadersByName.remove(StringFormatter.toIdentifier(id));
     }
 
 }

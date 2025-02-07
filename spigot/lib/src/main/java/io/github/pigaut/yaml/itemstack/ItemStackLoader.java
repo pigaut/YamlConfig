@@ -1,15 +1,16 @@
 package io.github.pigaut.yaml.itemstack;
 
+import com.cryptomorin.xseries.*;
 import de.tr7zw.changeme.nbtapi.*;
 import de.tr7zw.changeme.nbtapi.iface.*;
 import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.InvalidConfigurationException;
 import io.github.pigaut.yaml.configurator.loader.*;
+import io.github.pigaut.yaml.deserializer.*;
 import io.github.pigaut.yaml.formatter.*;
 import io.github.pigaut.yaml.itemstack.attribute.*;
 import io.github.pigaut.yaml.parser.*;
 import org.bukkit.*;
-import org.bukkit.configuration.*;
 import org.bukkit.enchantments.*;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.*;
@@ -22,9 +23,11 @@ import java.util.*;
 */
 public class ItemStackLoader implements SectionLoader<ItemStack> {
 
+    private final EnchantmentDeserializer enchantDeserializer = new EnchantmentDeserializer();
+
     @Override
     public @NotNull String getProblemDescription() {
-        return "Could not load itemstack";
+        return "invalid item";
     }
 
     @Override
@@ -55,33 +58,39 @@ public class ItemStackLoader implements SectionLoader<ItemStack> {
 
             final boolean shouldGlow = config.getOptionalBoolean("glow").orElse(false);
             if (shouldGlow) {
-                meta.addEnchant(Enchantment.OXYGEN, 0, true);
+                meta.addEnchant(XEnchantment.LUCK_OF_THE_SEA.get(), 1, true);
                 meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
             }
 
-//            final PersistentData tata = meta.get
-//            Update ItemStackLoader to use 1.14.4 api and remove NBTAPI dependency
-//            meta.setCustomModelData(1000); // custom model
-//
-//            meta.setUnbreakable(true); // unbreakable
-//
-//            if (meta instanceof Damageable damageable) { // durability
-//                damageable.setDamage(10);
-//            }
+            final Optional<Integer> optionalModelData = config.getOptionalInteger("model-data|custom-model-data");
+            optionalModelData.ifPresent(meta::setCustomModelData);
+
+            final Optional<Boolean> optionalUnbreakable = config.getOptionalBoolean("unbreakable");
+            optionalUnbreakable.ifPresent(meta::setUnbreakable);
+
+            final Optional<Integer> optionalDurability = config.getOptionalInteger("damage|durability");
+            optionalDurability.ifPresent(damage -> {
+                if (meta instanceof Damageable damageable) {
+                    damageable.setDamage(10);
+                }
+                else {
+                    throw new InvalidConfigurationException(config, "damage", "Item is not damageable");
+                }
+            });
+
+            final ConfigSection enchantsConfig = config.getSectionOrCreate("enchantments|enchants");
+            for (String key : enchantsConfig.getKeys()) {
+                try {
+                    meta.addEnchant(enchantDeserializer.deserialize(key), enchantsConfig.getInteger(key), true);
+                } catch (DeserializationException e) {
+                    throw new InvalidConfigurationException(config, "enchantments", e.getMessage());
+                }
+            }
 
             item.setItemMeta(meta);
         }
 
         NBT.modify(item, itemNBT -> {
-            final Optional<Integer> optionalModelData = config.getOptionalInteger("model-data|custom-model-data");
-            optionalModelData.ifPresent(modelData -> itemNBT.setInteger("CustomModelData", modelData));
-
-            final Optional<Integer> optionalDurability = config.getOptionalInteger("damage|durability");
-            optionalDurability.ifPresent(durability -> itemNBT.setShort("Damage", durability.shortValue()));
-
-            final Optional<Boolean> optionalUnbreakable = config.getOptionalBoolean("unbreakable");
-            optionalUnbreakable.ifPresent(unbreakable -> itemNBT.setByte("Unbreakable", (byte) (unbreakable ? 1 : 0)));
-
             final Optional<String> optionalHeadData = config.getOptionalString("head-data|head");
             optionalHeadData.ifPresent(textureValue -> {
                 final ReadWriteNBT skullOwnerCompound = itemNBT.getOrCreateCompound("SkullOwner");
@@ -90,18 +99,6 @@ public class ItemStackLoader implements SectionLoader<ItemStack> {
                         .getCompoundList("textures")
                         .addCompound()
                         .setString("Value", textureValue);
-            });
-
-            final Optional<ConfigSection> optionalEnchants = config.getOptionalSection("enchants|enchantments");
-            optionalEnchants.ifPresent(enchantsConfig -> {
-                ReadWriteNBTCompoundList enchantmentCompounds = itemNBT.getCompoundList("Enchantments");
-                for (String key : enchantsConfig.getKeys()) {
-                    int level = enchantsConfig.getInteger(key);
-                    ReadWriteNBT enchantmentCompound = enchantmentCompounds.addCompound();
-
-                    enchantmentCompound.setString("id", StringFormatter.toKebabCase(key));
-                    enchantmentCompound.setShort("lvl", (short) level);
-                }
             });
 
             final ReadWriteNBTCompoundList attributeCompounds = itemNBT.getCompoundList("AttributeModifiers");
