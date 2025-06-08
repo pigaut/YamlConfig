@@ -98,11 +98,6 @@ public interface StringFormatter {
         return camelCase.toString();
     }
 
-    static String toIdentifier(String string) {
-        String[] words = splitWords(string);
-        return String.join("", words).toLowerCase();
-    }
-
     static boolean match(@NotNull String key, @Nullable String keyToCompare) {
         if (keyToCompare == null) {
             return false;
@@ -110,12 +105,20 @@ public interface StringFormatter {
         return toConstantCase(key).equals(toConstantCase(keyToCompare));
     }
 
-    static String[] splitWords(String string) {
-        return string.trim().split("[-_\\s]+");
+    static boolean containsDelimiter(String string) {
+        return string.contains("-") || string.contains("_") || string.contains(" ");
     }
 
     static String[] splitClassName(Class<?> clazz) {
         return clazz.getSimpleName().trim().replaceAll("([a-z])([A-Z])", "$1 $2").split(" ");
+    }
+
+    static String[] splitWords(String string) {
+        string = string.trim();
+        if (!containsDelimiter(string)) {
+            string = string.replaceAll("([a-z])([A-Z])", "$1 $2");
+        }
+        return string.split("[-_\\s]+");
     }
 
 }

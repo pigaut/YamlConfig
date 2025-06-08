@@ -1,9 +1,12 @@
 package io.github.pigaut.yaml;
+
+import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.util.regex.*;
 
-public class InvalidConfigurationException extends RuntimeException {
+public class InvalidConfigurationException extends ConfigurationException {
 
     private final @Nullable String prefix;
     private final @Nullable String problem;
@@ -38,9 +41,44 @@ public class InvalidConfigurationException extends RuntimeException {
         this.debug = config.isDebug();
     }
 
+    public @Nullable String getPrefix() {
+        return prefix;
+    }
+
+    public @Nullable String getProblem() {
+        return problem;
+    }
+
+    public @Nullable File getFile() {
+        return file;
+    }
+
+    public @Nullable String getPath() {
+        return path;
+    }
+
+    public @NotNull String getDetails() {
+        return cause;
+    }
+
     @Override
     public String getMessage() {
         return toString();
+    }
+
+    @Override
+    public @NotNull String getLogMessage(String parentDirectory) {
+        final String optionalPrefix = prefix != null ? (prefix + " ") : "";
+        final String optionalProblem = problem != null ? (": " + problem) : "";
+        final String optionalFile = file != null ? ("File: " + file.getPath().replaceAll(Pattern.quote(parentDirectory), "") + "\n") : "";
+        final String optionalPath = path != null ? ("Path: " + path + "\n") : "";
+        final String details = "Details: " + cause + "\n";
+        final String logMessage = optionalPrefix + "Configuration" + optionalProblem + "\n" +
+                optionalFile +
+                optionalPath +
+                details +
+                "---------------------------------------------";
+        return logMessage;
     }
 
     @Override
@@ -51,9 +89,9 @@ public class InvalidConfigurationException extends RuntimeException {
         final String optionalPath = path != null ? (" Path: " + path + "\n") : "";
 
         final String errorMessage = "%sConfiguration Error%s\n" +
-                                    "%s" +
-                                    "%s" +
-                                    " Details: %s." + (debug ? "\n\n" : "");
+                "%s" +
+                "%s" +
+                " Details: %s." + (debug ? "\n\n" : "");
         return String.format(errorMessage, optionalPrefix, optionalProblem, optionalFile, optionalPath, cause);
     }
 

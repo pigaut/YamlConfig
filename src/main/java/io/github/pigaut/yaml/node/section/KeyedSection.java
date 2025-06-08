@@ -22,11 +22,6 @@ public class KeyedSection extends Section {
         }
     }
 
-    public KeyedSection(@NotNull Section parent, @NotNull String key, @NotNull Map<String, @NotNull Object> mappings) {
-        this(parent, key);
-        this.map(mappings);
-    }
-
     @Override
     public @NotNull ConfigRoot getRoot() {
         return parent.getRoot();
@@ -49,7 +44,7 @@ public class KeyedSection extends Section {
 
     @Override
     public @NotNull Sequence convertToSequence() {
-        final Sequence sequence = new KeyedSequence(parent, key, toList());
+        final Sequence sequence = new KeyedSequence(parent, key);
         parent.putNode(key, sequence);
         return sequence;
     }

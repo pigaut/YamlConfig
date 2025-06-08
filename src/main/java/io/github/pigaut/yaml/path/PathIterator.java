@@ -56,15 +56,21 @@ public class PathIterator implements Iterator<Object> {
             throw new IllegalStateException("Current branch is null.");
         }
 
-        final FieldKey currentKey = getCurrentKey();
-        if (!isLast() && getNextKey() instanceof IndexKey) {
-            currentBranch = currentKey.createSequence(currentBranch);
-        }
-        else {
-            currentBranch = currentKey.createSection(currentBranch);
+        final FieldKey currentKey = keys.get(pointer);
+        pointer++;
+
+        final ConfigField existingField = currentKey.getField(currentBranch);
+        if (existingField instanceof Branch existingBranch) {
+            currentBranch = existingBranch;
+            return existingBranch;
         }
 
-        pointer++;
+        if (!isLast() && getNextKey() instanceof IndexKey) {
+            currentBranch = currentKey.createSequence(currentBranch);
+            return currentBranch;
+        }
+
+        currentBranch = currentKey.createSection(currentBranch);
         return currentBranch;
     }
 

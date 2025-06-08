@@ -22,11 +22,6 @@ public class KeyedSequence extends Sequence {
         }
     }
 
-    public KeyedSequence(@NotNull Section parent, @NotNull String key, @NotNull List<@NotNull Object> elements) {
-        this(parent, key);
-        this.map(elements);
-    }
-
     @Override
     public @NotNull String getKey() throws UnsupportedOperationException {
         return key;
@@ -49,9 +44,11 @@ public class KeyedSequence extends Sequence {
 
     @Override
     public @NotNull Section convertToSection() {
-        final Section section = new KeyedSection(parent, key, toMap());
+        final Section section = new KeyedSection(parent, key);
         parent.putNode(key, section);
         return section;
     }
+
+
 
 }

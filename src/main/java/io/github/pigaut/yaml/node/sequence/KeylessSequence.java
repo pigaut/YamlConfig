@@ -23,11 +23,6 @@ public class KeylessSequence extends Sequence implements KeylessField {
         }
     }
 
-    public KeylessSequence(@NotNull Sequence parent, int index, @NotNull List<@NotNull Object> elements) {
-        this(parent, index);
-        this.map(elements);
-    }
-
     @Override
     public boolean isRoot() {
         return false;
@@ -60,7 +55,7 @@ public class KeylessSequence extends Sequence implements KeylessField {
 
     @Override
     public @NotNull Section convertToSection() {
-        final Section section = new KeylessSection(parent, index, toMap());
+        final Section section = new KeylessSection(parent, index);
         parent.set(index, section);
         return section;
     }

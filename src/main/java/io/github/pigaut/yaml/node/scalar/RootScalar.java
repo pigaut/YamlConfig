@@ -10,6 +10,7 @@ import org.snakeyaml.engine.v2.api.*;
 import org.snakeyaml.engine.v2.exceptions.*;
 
 import java.io.*;
+import java.nio.charset.*;
 import java.util.*;
 import java.util.regex.*;
 
@@ -149,7 +150,7 @@ public class RootScalar extends Scalar implements ConfigRoot {
         }
         try {
             return load(file);
-        } catch (ParserException | ScannerException e) {
+        } catch (ParserException | ScannerException | ComposerException e) {
             throw new ConfigurationLoadException(this, e);
         }
     }
@@ -160,10 +161,12 @@ public class RootScalar extends Scalar implements ConfigRoot {
             return false;
         }
 
-        try (Reader reader = new BufferedReader(new FileReader(file))) {
+        try (FileInputStream fileInputStream = new FileInputStream(file);
+             InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, StandardCharsets.UTF_8);
+             BufferedReader reader = new BufferedReader(inputStreamReader)) {
             return load(reader);
         } catch (IOException e) {
-            throw new InvalidConfigurationException(this, e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
@@ -220,7 +223,10 @@ public class RootScalar extends Scalar implements ConfigRoot {
 
     @Override
     public ConfigSequence split(String regex) {
-        return new RootSequence(file, configurator, Deserializers.parseAll(this.toString().split(regex)));
+        final ConfigSequence sequence = new RootSequence(file, configurator);
+        final List<Object> parsedValues = Deserializers.parseAll(this.toString().split(regex));
+        sequence.map(parsedValues);
+        return sequence;
     }
 
     @Override
@@ -235,7 +241,10 @@ public class RootScalar extends Scalar implements ConfigRoot {
                 }
             }
         }
-        return new RootSequence(file, configurator, Deserializers.parseAll(parts));
+        final ConfigSequence sequence = new RootSequence(file, configurator);
+        final List<Object> parsedValues = Deserializers.parseAll(parts);
+        sequence.map(parsedValues);
+        return sequence;
     }
 
 }

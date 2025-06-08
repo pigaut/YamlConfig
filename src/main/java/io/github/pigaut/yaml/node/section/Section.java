@@ -11,6 +11,7 @@ import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.common.*;
 
+import java.io.*;
 import java.util.*;
 import java.util.stream.*;
 
@@ -122,7 +123,12 @@ public abstract class Section extends Branch implements ConfigSection {
 
     @Override
     public @NotNull Map<String, Object> toMap() {
-        return new LinkedHashMap<>(fieldsByKey);
+        final Map<String, Object> map = new LinkedHashMap<>();
+        for (Map.Entry<String, ConfigField> entry : fieldsByKey.entrySet()) {
+            final ConfigField field = entry.getValue();
+            map.put(entry.getKey(), field.getValue());
+        }
+        return map;
     }
 
     @Override
@@ -736,16 +742,16 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     private void setScalar(@NotNull String path, @NotNull Object value) {
-        final PathIterator iterator = PathIterator.of(this, path);
-        while (iterator.hasNext()) {
-            if (iterator.isLast()) {
-                final Branch currentBranch = iterator.getCurrentBranch();
-                final FieldKey lastKey = iterator.getLastKey();
+        final PathIterator pathIterator = PathIterator.of(this, path);
+        while (pathIterator.hasNext()) {
+            if (pathIterator.isLast()) {
+                final Branch currentBranch = pathIterator.getCurrentBranch();
+                final FieldKey lastKey = pathIterator.getLastKey();
 
                 lastKey.set(currentBranch, value);
                 break;
             }
-            iterator.branch();
+            pathIterator.branch();
         }
     }
 

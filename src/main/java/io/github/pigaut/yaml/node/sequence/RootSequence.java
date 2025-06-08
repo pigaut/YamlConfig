@@ -10,6 +10,7 @@ import org.snakeyaml.engine.v2.common.*;
 import org.snakeyaml.engine.v2.exceptions.*;
 
 import java.io.*;
+import java.nio.charset.*;
 import java.util.*;
 
 public class RootSequence extends Sequence implements ConfigRoot {
@@ -41,14 +42,6 @@ public class RootSequence extends Sequence implements ConfigRoot {
         this.file = file;
         this.name = file != null ? YamlConfig.getFileName(file) : null;
         this.configurator = configurator;
-    }
-
-    public RootSequence(@Nullable File file, @NotNull Configurator configurator, @NotNull List<@NotNull Object> elements) {
-        super(FlowStyle.BLOCK);
-        this.file = file;
-        this.name = YamlConfig.getFileName(file);
-        this.configurator = configurator;
-        this.map(elements);
     }
 
     @Override
@@ -157,7 +150,7 @@ public class RootSequence extends Sequence implements ConfigRoot {
         }
         try {
             return load(file);
-        } catch (ParserException | ScannerException e) {
+        } catch (ParserException | ScannerException | ComposerException e) {
             throw new ConfigurationLoadException(this, e);
         }
     }
@@ -168,7 +161,9 @@ public class RootSequence extends Sequence implements ConfigRoot {
             return false;
         }
 
-        try (Reader reader = new BufferedReader(new FileReader(file))) {
+        try (FileInputStream fileInputStream = new FileInputStream(file);
+             InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, StandardCharsets.UTF_8);
+             BufferedReader reader = new BufferedReader(inputStreamReader)) {
             return load(reader);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -220,7 +215,7 @@ public class RootSequence extends Sequence implements ConfigRoot {
 
     @Override
     public @NotNull RootSection convertToSection() {
-        return new RootSection(file, configurator, toMap());
+        return new RootSection(file, configurator);
     }
 
     private boolean loadDocuments(List<Object> documents) {

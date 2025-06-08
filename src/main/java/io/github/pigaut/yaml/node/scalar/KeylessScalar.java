@@ -52,7 +52,10 @@ public class KeylessScalar extends Scalar implements KeylessField {
 
     @Override
     public ConfigSequence split(String regex) {
-        return new KeylessSequence(parent, index, Deserializers.parseAll(this.toString().split(regex)));
+        final ConfigSequence sequence = new KeylessSequence(parent, index);
+        final List<Object> parsedValues = Deserializers.parseAll(this.toString().split(regex));
+        sequence.map(parsedValues);
+        return sequence;
     }
 
     @Override
@@ -67,7 +70,10 @@ public class KeylessScalar extends Scalar implements KeylessField {
                 }
             }
         }
-        return new KeylessSequence(parent, index, Deserializers.parseAll(parts));
+        final ConfigSequence sequence = new KeylessSequence(parent, index);
+        final List<Object> parsedValues = Deserializers.parseAll(parts);
+        sequence.map(parsedValues);
+        return sequence;
     }
 
 }

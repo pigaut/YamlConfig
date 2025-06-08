@@ -61,7 +61,8 @@ public class StandardConfigurator extends Configurator {
             section.clear();
             int count = 0;
             for (Object element : elements) {
-                section.set(Integer.toString(count++), element);
+                final String indexAsKey = Integer.toString(count++);
+                section.set(indexAsKey, element);
             }
         }
         @Override

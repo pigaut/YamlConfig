@@ -23,7 +23,7 @@ public interface FieldKey {
 
     static List<FieldKey> keysOf(@NotNull String path) {
         List<FieldKey> keys = new ArrayList<>();
-        final String[] rawKeys = path.toLowerCase().split("\\.");
+        final String[] rawKeys = path.split("\\.");
         for (String rawKey : rawKeys) {
             final Matcher indicesMatcher = PathFormatter.INDEX_PATTERN.matcher(rawKey);
             if (indicesMatcher.matches()) {

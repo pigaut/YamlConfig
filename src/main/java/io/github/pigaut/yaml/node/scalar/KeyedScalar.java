@@ -42,7 +42,10 @@ public class KeyedScalar extends Scalar {
 
     @Override
     public ConfigSequence split(String regex) {
-        return new KeyedSequence(parent, key, Deserializers.parseAll(this.toString().split(regex)));
+        final ConfigSequence sequence = new KeyedSequence(parent, key);
+        final List<Object> parsedValues = Deserializers.parseAll(this.toString().split(regex));
+        sequence.map(parsedValues);
+        return sequence;
     }
 
     @Override
@@ -57,7 +60,11 @@ public class KeyedScalar extends Scalar {
                 }
             }
         }
-        return new KeyedSequence(parent, key, Deserializers.parseAll(parts));
+
+        final ConfigSequence sequence = new KeyedSequence(parent, key);
+        final List<Object> parsedValues = Deserializers.parseAll(parts);
+        sequence.map(parsedValues);
+        return sequence;
     }
 
 }

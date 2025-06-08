@@ -40,10 +40,10 @@ public class Configurator {
             return Serializers.defaultSerializer();
         }
 
-        for (Class<?> setterType : mappersByType.keySet()) {
-            if (setterType.isAssignableFrom(type)) {
+        for (Class<?> mapperType : mappersByType.keySet()) {
+            if (mapperType.isAssignableFrom(type)) {
                 @SuppressWarnings("unchecked")
-                ConfigMapper<? super T> parentMapper = (ConfigMapper<? super T>) mappersByType.get(setterType);
+                ConfigMapper<? super T> parentMapper = (ConfigMapper<? super T>) mappersByType.get(mapperType);
                 return parentMapper;
             }
         }

@@ -20,9 +20,13 @@ public class Deserializers {
         if (bool != null) {
             return bool;
         }
-        final Double num = Deserializers.getDouble(string);
-        if (num != null) {
-            return num;
+        final Integer integerNumber = Deserializers.getInteger(string);
+        if (integerNumber != null) {
+            return integerNumber;
+        }
+        final Double doubleNumber = Deserializers.getDouble(string);
+        if (doubleNumber != null) {
+            return doubleNumber;
         }
         return string;
     }

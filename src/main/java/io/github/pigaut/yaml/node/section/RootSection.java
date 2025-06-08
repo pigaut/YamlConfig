@@ -10,6 +10,7 @@ import org.snakeyaml.engine.v2.common.*;
 import org.snakeyaml.engine.v2.exceptions.*;
 
 import java.io.*;
+import java.nio.charset.*;
 import java.util.*;
 
 public class RootSection extends Section implements ConfigRoot {
@@ -41,11 +42,6 @@ public class RootSection extends Section implements ConfigRoot {
         this.file = file;
         this.name = file != null ? YamlConfig.getFileName(file) : null;
         this.configurator = configurator;
-    }
-
-    public RootSection(@Nullable File file, @NotNull Configurator configurator, @NotNull Map<String, @NotNull Object> mappings) {
-        this(file, configurator);
-        this.map(mappings);
     }
 
     @Override
@@ -154,7 +150,7 @@ public class RootSection extends Section implements ConfigRoot {
         }
         try {
             return load(file);
-        } catch (ParserException | ScannerException e) {
+        } catch (ParserException | ScannerException | ComposerException e) {
             throw new ConfigurationLoadException(this, e);
         }
     }
@@ -165,7 +161,9 @@ public class RootSection extends Section implements ConfigRoot {
             return false;
         }
 
-        try (Reader reader = new BufferedReader(new FileReader(file))) {
+        try (FileInputStream fileInputStream = new FileInputStream(file);
+             InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, StandardCharsets.UTF_8);
+             BufferedReader reader = new BufferedReader(inputStreamReader)) {
             return load(reader);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -230,7 +228,7 @@ public class RootSection extends Section implements ConfigRoot {
 
     @Override
     public @NotNull RootSequence convertToSequence() {
-        return new RootSequence(file, configurator, toList());
+        return new RootSequence(file, configurator);
     }
 
 }
