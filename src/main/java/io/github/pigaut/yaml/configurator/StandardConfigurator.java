@@ -1,9 +1,12 @@
 package io.github.pigaut.yaml.configurator;
 
 import io.github.pigaut.yaml.*;
-import io.github.pigaut.yaml.configurator.mapper.*;
-import io.github.pigaut.yaml.parser.deserializer.*;
-import io.github.pigaut.yaml.parser.serializer.*;
+import io.github.pigaut.yaml.amount.*;
+import io.github.pigaut.yaml.amount.config.*;
+import io.github.pigaut.yaml.configurator.deserialize.*;
+import io.github.pigaut.yaml.configurator.map.*;
+import io.github.pigaut.yaml.configurator.serialize.*;
+import io.github.pigaut.yaml.convert.format.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
@@ -20,27 +23,38 @@ public class StandardConfigurator extends Configurator {
         addDeserializer(Short.class, Deserializers.SHORT);
         addDeserializer(BigInteger.class, Deserializers.BIG_INTEGER);
         addDeserializer(BigDecimal.class, Deserializers.BIG_DECIMAL);
-        addDeserializer(LocalDate.class, Deserializers.LOCAL_DATE);
-        addDeserializer(LocalTime.class, Deserializers.LOCAL_TIME);
-        addDeserializer(LocalDateTime.class, Deserializers.LOCAL_DATE_TIME);
-        addDeserializer(UUID.class, Deserializers.UUID);
-        addDeserializer(Locale.class, Deserializers.LOCALE);
-        addDeserializer(File.class, Deserializers.FILE);
-        addDeserializer(URL.class, Deserializers.URL);
 
+        addDeserializer(LocalDate.class, Deserializers.LOCAL_DATE);
         addSerializer(LocalDate.class, Serializers.LOCAL_DATE);
+
+        addDeserializer(LocalTime.class, Deserializers.LOCAL_TIME);
         addSerializer(LocalTime.class, Serializers.LOCAL_TIME);
+
+        addDeserializer(LocalDateTime.class, Deserializers.LOCAL_DATE_TIME);
         addSerializer(LocalDateTime.class, Serializers.LOCAL_DATE_TIME);
+
+        addDeserializer(UUID.class, Deserializers.UUID);
         addSerializer(UUID.class, Serializers.defaultSerializer());
+
+        addDeserializer(Locale.class, Deserializers.LOCALE);
         addSerializer(Locale.class, Serializers.LOCALE);
+
+        addDeserializer(File.class, Deserializers.FILE);
         addSerializer(File.class, Serializers.defaultSerializer());
+
+        addDeserializer(URL.class, Deserializers.URL);
         addSerializer(URL.class, Serializers.defaultSerializer());
+
+        addLoader(Amount.class, new AmountLoader());
+        addMapper(FixedAmount.class, new FixedAmountMapper());
+        addMapper(RangedAmount.class, new RangedAmountMapper());
+        addMapper(CasualAmount.class, new CasualAmountMapper());
 
         addMapper(Map.class, new ConfigSectionMapper());
         addMapper(Iterable.class, new ConfigSequenceMapper());
     }
 
-    protected class ConfigSectionMapper implements SectionMapper<Map> {
+    protected static class ConfigSectionMapper implements SectionMapper<Map> {
         @Override
         public void mapSection(@NotNull ConfigSection section, @NotNull Map mappings) {
             section.clear();
@@ -55,7 +69,7 @@ public class StandardConfigurator extends Configurator {
         }
     }
 
-    protected class ConfigSequenceMapper implements SequenceMapper<Iterable> {
+    protected static class ConfigSequenceMapper implements SequenceMapper<Iterable> {
         @Override
         public void mapSection(@NotNull ConfigSection section, @NotNull Iterable elements) {
             section.clear();

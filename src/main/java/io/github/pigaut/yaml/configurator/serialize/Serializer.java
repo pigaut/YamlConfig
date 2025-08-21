@@ -1,12 +1,14 @@
-package io.github.pigaut.yaml.configurator.parser;
+package io.github.pigaut.yaml.configurator.serialize;
 
 import io.github.pigaut.yaml.configurator.*;
-import io.github.pigaut.yaml.configurator.mapper.*;
-import io.github.pigaut.yaml.parser.serializer.*;
+import io.github.pigaut.yaml.configurator.map.*;
+import io.github.pigaut.yaml.convert.format.*;
 import org.jetbrains.annotations.*;
 
 @FunctionalInterface
-public interface ConfigSerializer<T> extends ConfigMapper<T>, Serializer<T> {
+public interface Serializer<T> extends ConfigMapper<T> {
+
+    @NotNull String serialize(@NotNull T value);
 
     @Override
     default @NotNull FieldType getDefaultMappingType() {

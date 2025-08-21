@@ -1,9 +1,9 @@
 package io.github.pigaut.yaml.node.scalar;
 
 import io.github.pigaut.yaml.*;
+import io.github.pigaut.yaml.convert.parse.*;
 import io.github.pigaut.yaml.node.section.*;
 import io.github.pigaut.yaml.node.sequence.*;
-import io.github.pigaut.yaml.parser.deserializer.*;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -43,7 +43,7 @@ public class KeyedScalar extends Scalar {
     @Override
     public ConfigSequence split(String regex) {
         final ConfigSequence sequence = new KeyedSequence(parent, key);
-        final List<Object> parsedValues = Deserializers.parseAll(this.toString().split(regex));
+        final List<Object> parsedValues = ParseUtil.parseAllAsScalars(this.toString().split(regex));
         sequence.map(parsedValues);
         return sequence;
     }
@@ -62,7 +62,7 @@ public class KeyedScalar extends Scalar {
         }
 
         final ConfigSequence sequence = new KeyedSequence(parent, key);
-        final List<Object> parsedValues = Deserializers.parseAll(parts);
+        final List<Object> parsedValues = ParseUtil.parseAllAsScalars(parts);
         sequence.map(parsedValues);
         return sequence;
     }

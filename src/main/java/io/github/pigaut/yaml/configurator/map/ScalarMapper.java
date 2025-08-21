@@ -1,4 +1,4 @@
-package io.github.pigaut.yaml.configurator.mapper;
+package io.github.pigaut.yaml.configurator.map;
 
 import io.github.pigaut.yaml.configurator.*;
 import org.jetbrains.annotations.*;

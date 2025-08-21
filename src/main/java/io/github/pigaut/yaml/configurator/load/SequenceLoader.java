@@ -1,4 +1,4 @@
-package io.github.pigaut.yaml.configurator.loader;
+package io.github.pigaut.yaml.configurator.load;
 
 import io.github.pigaut.yaml.*;
 import org.jetbrains.annotations.*;

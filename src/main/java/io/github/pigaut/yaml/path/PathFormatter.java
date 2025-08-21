@@ -1,6 +1,6 @@
 package io.github.pigaut.yaml.path;
 
-import io.github.pigaut.yaml.parser.*;
+import io.github.pigaut.yaml.convert.format.*;
 
 import java.util.regex.*;
 

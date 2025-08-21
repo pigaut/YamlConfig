@@ -2,9 +2,9 @@ package io.github.pigaut.yaml.node.scalar;
 
 import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.configurator.*;
+import io.github.pigaut.yaml.convert.parse.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.sequence.*;
-import io.github.pigaut.yaml.parser.deserializer.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.api.*;
 import org.snakeyaml.engine.v2.exceptions.*;
@@ -224,7 +224,7 @@ public class RootScalar extends Scalar implements ConfigRoot {
     @Override
     public ConfigSequence split(String regex) {
         final ConfigSequence sequence = new RootSequence(file, configurator);
-        final List<Object> parsedValues = Deserializers.parseAll(this.toString().split(regex));
+        final List<Object> parsedValues = ParseUtil.parseAllAsScalars(this.toString().split(regex));
         sequence.map(parsedValues);
         return sequence;
     }
@@ -242,7 +242,7 @@ public class RootScalar extends Scalar implements ConfigRoot {
             }
         }
         final ConfigSequence sequence = new RootSequence(file, configurator);
-        final List<Object> parsedValues = Deserializers.parseAll(parts);
+        final List<Object> parsedValues = ParseUtil.parseAllAsScalars(parts);
         sequence.map(parsedValues);
         return sequence;
     }

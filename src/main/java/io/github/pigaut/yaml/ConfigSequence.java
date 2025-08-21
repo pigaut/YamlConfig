@@ -1,9 +1,8 @@
 package io.github.pigaut.yaml;
 
 import io.github.pigaut.yaml.configurator.*;
-import io.github.pigaut.yaml.node.section.*;
+import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.sequence.*;
-import io.github.pigaut.yaml.parser.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.common.*;
 
