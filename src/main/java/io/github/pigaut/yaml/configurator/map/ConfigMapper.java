@@ -29,4 +29,40 @@ public interface ConfigMapper<T> {
         throw new UnsupportedOperationException(getClass().getSimpleName() + " does not support lists");
     }
 
+    @FunctionalInterface
+    interface Scalar<T> extends ConfigMapper<T> {
+
+        @NotNull Object createScalar(@NotNull T value);
+
+        @Override
+        default @NotNull FieldType getDefaultMappingType() {
+            return FieldType.SCALAR;
+        }
+
+    }
+
+    @FunctionalInterface
+    interface Section<T> extends ConfigMapper<T> {
+
+        void mapSection(@NotNull ConfigSection section, @NotNull T value);
+
+        @Override
+        default @NotNull FieldType getDefaultMappingType() {
+            return FieldType.SECTION;
+        }
+
+    }
+
+    @FunctionalInterface
+    interface Sequence<T> extends ConfigMapper<T> {
+
+        void mapSequence(@NotNull ConfigSequence sequence, @NotNull T value);
+
+        @Override
+        default @NotNull FieldType getDefaultMappingType() {
+            return FieldType.SEQUENCE;
+        }
+
+    }
+
 }

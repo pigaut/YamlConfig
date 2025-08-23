@@ -1,28 +1,11 @@
 package io.github.pigaut.yaml;
 
-import io.github.pigaut.yaml.configurator.*;
 import io.github.pigaut.yaml.convert.format.*;
-import io.github.pigaut.yaml.node.scalar.*;
+import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.common.*;
 
-import java.io.*;
-import java.util.*;
-import java.util.regex.*;
-
 public interface ConfigScalar extends ConfigField {
-
-    static RootScalar loadConfiguration(File file) {
-        final RootScalar config = new RootScalar(file);
-        config.load();
-        return config;
-    }
-
-    static RootScalar loadConfiguration(File file, Configurator configurator) {
-        final RootScalar config = new RootScalar(file, configurator);
-        config.load();
-        return config;
-    }
 
     @NotNull
     Object getValue();
@@ -34,38 +17,22 @@ public interface ConfigScalar extends ConfigField {
 
     void setScalarStyle(@NotNull ScalarStyle scalarStyle);
 
-    boolean toBoolean() throws InvalidConfigurationException;
+    @NotNull String toString();
 
-    char toCharacter() throws InvalidConfigurationException;
+    @NotNull String toString(@NotNull StringFormatter formatter);
 
-    @NotNull
-    String toString();
+    ConfigOptional<Boolean> toBoolean();
 
-    @NotNull
-    String toString(@NotNull StringFormatter formatter);
+    ConfigOptional<Character> toCharacter();
 
-    int toInteger() throws InvalidConfigurationException;
+    ConfigOptional<Integer> toInteger();
 
-    long toLong() throws InvalidConfigurationException;
+    ConfigOptional<Long> toLong();
 
-    float toFloat() throws InvalidConfigurationException;
+    ConfigOptional<Float> toFloat();
 
-    double toDouble() throws InvalidConfigurationException;
+    ConfigOptional<Double> toDouble();
 
-    Optional<Boolean> asBoolean();
-
-    Optional<Character> asCharacter();
-
-    Optional<Integer> asInteger();
-
-    Optional<Long> asLong();
-
-    Optional<Float> asFloat();
-
-    Optional<Double> asDouble();
-
-    ConfigSequence split(String regex);
-
-    ConfigSequence split(Pattern pattern);
+    ConfigLine toLine();
 
 }

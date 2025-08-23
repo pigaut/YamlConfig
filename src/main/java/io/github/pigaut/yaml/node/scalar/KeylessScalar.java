@@ -50,30 +50,4 @@ public class KeylessScalar extends Scalar implements KeylessField {
         return parent.getRoot();
     }
 
-    @Override
-    public ConfigSequence split(String regex) {
-        final ConfigSequence sequence = new KeylessSequence(parent, index);
-        final List<Object> parsedValues = ParseUtil.parseAllAsScalars(this.toString().split(regex));
-        sequence.map(parsedValues);
-        return sequence;
-    }
-
-    @Override
-    public ConfigSequence split(Pattern pattern) {
-        Matcher matcher = pattern.matcher(this.toString());
-        List<String> parts = new ArrayList<>();
-        while (matcher.find()) {
-            for (int i = 1; i <= matcher.groupCount(); i++) {
-                if (matcher.group(i) != null) {
-                    parts.add(matcher.group(i));
-                    break;
-                }
-            }
-        }
-        final ConfigSequence sequence = new KeylessSequence(parent, index);
-        final List<Object> parsedValues = ParseUtil.parseAllAsScalars(parts);
-        sequence.map(parsedValues);
-        return sequence;
-    }
-
 }

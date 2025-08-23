@@ -1,9 +1,8 @@
 package io.github.pigaut.yaml;
 
 import io.github.pigaut.yaml.configurator.FieldType;
+import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
-
-import java.util.*;
 
 public interface ConfigField {
 
@@ -27,16 +26,14 @@ public interface ConfigField {
 
     void clear();
 
-    <T> T load(Class<T> type) throws InvalidConfigurationException;
+    <T> ConfigOptional<T> load(Class<T> classType);
 
-    <T> Optional<T> loadOptional(Class<T> type);
+    ConfigOptional<ConfigScalar> toScalar();
 
-    @NotNull ConfigScalar toScalar() throws InvalidConfigurationException;
-    @NotNull ConfigSection toSection() throws InvalidConfigurationException;
-    @NotNull ConfigSequence toSequence() throws InvalidConfigurationException;
+    ConfigOptional<ConfigSection> toSection();
 
-    Optional<ConfigScalar> asScalar();
-    Optional<ConfigSection> asSection();
-    Optional<ConfigSequence> asSequence();
+    ConfigOptional<ConfigSequence> toSequence();
+
+    ConfigOptional<ConfigBranch> toBranch();
 
 }

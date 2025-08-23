@@ -8,12 +8,28 @@ import java.util.regex.*;
 
 public class InvalidConfigurationException extends ConfigurationException {
 
-    private final @Nullable String prefix;
-    private final @Nullable String problem;
-    private final @Nullable File file;
-    private final @Nullable String path;
-    private final @NotNull String cause;
-    private final boolean debug;
+    protected final @Nullable String prefix;
+    protected final @Nullable String problem;
+    protected final @Nullable File file;
+    protected final @Nullable String path;
+    protected final @Nullable String line;
+    protected final @NotNull String cause;
+    protected final boolean debug;
+
+    public InvalidConfigurationException(@NotNull InvalidConfigurationException exception, @NotNull String cause) {
+        super(null, null, false, exception.debug);
+        this.prefix = exception.prefix;
+        this.problem = exception.problem;
+        this.file = exception.file;
+        this.path = exception.path;
+        this.line = null;
+        this.cause = cause;
+        this.debug = exception.debug;
+    }
+
+    public InvalidConfigurationException(ConfigLine line, String cause) {
+        this(line.getRoot(), line.getRoot().getCurrentProblem(), line.getPath(), line.getValue(), cause);
+    }
 
     public InvalidConfigurationException(ConfigField field, String cause) {
         this(field.getRoot(), field.getRoot().getCurrentProblem(), field.getPath(), cause);
@@ -37,6 +53,19 @@ public class InvalidConfigurationException extends ConfigurationException {
         this.file = config.getFile();
         this.problem = problem;
         this.path = path;
+        this.line = null;
+        this.cause = cause;
+        this.debug = config.isDebug();
+    }
+
+    public InvalidConfigurationException(@NotNull ConfigRoot config, @Nullable String problem, @Nullable String path,
+                                         @Nullable String line, @NotNull String cause) {
+        super(null, null, false, config.isDebug());
+        this.prefix = config.getPrefix();
+        this.file = config.getFile();
+        this.problem = problem;
+        this.path = path;
+        this.line = line;
         this.cause = cause;
         this.debug = config.isDebug();
     }

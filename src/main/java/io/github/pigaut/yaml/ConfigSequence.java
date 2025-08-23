@@ -1,132 +1,52 @@
 package io.github.pigaut.yaml;
 
-import io.github.pigaut.yaml.configurator.*;
 import io.github.pigaut.yaml.convert.format.*;
-import io.github.pigaut.yaml.node.sequence.*;
+import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
-import org.snakeyaml.engine.v2.common.*;
 
-import java.io.*;
 import java.util.*;
-import java.util.stream.*;
 
-public interface ConfigSequence extends ConfigField, Iterable<ConfigField> {
-
-    static RootSequence loadConfiguration(File file) {
-        final RootSequence config = new RootSequence(file);
-        config.load();
-        return config;
-    }
-
-    static RootSequence loadConfiguration(File file, Configurator configurator) {
-        final RootSequence config = new RootSequence(file, configurator);
-        config.load();
-        return config;
-    }
-
-    int size();
-
-    boolean isEmpty();
+public interface ConfigSequence extends ConfigBranch, Iterable<ConfigField> {
 
     boolean isSet(int index);
-
-    @NotNull
-    FlowStyle getFlowStyle();
-
-    void setFlowStyle(@NotNull FlowStyle flowStyle);
-
-    @Nullable
-    FlowStyle getNestedFlowStyle();
-
-    void setNestedFlowStyle(@Nullable FlowStyle flowStyle);
-
-    @Nullable
-    ScalarStyle getNestedScalarStyle();
-
-    void setNestedScalarStyle(@Nullable ScalarStyle scalarStyle);
-
-    Stream<ConfigField> stream();
-
-    Set<ConfigField> getNestedFields();
-
-    Set<ConfigSection> getNestedSections() throws InvalidConfigurationException;
-
-    @NotNull
-    ConfigSection convertToSection();
-
-    @NotNull
-    ConfigSequence convertToSequence();
-
-    <T> void map(T value);
-
-    <T> void add(T value);
-
-    <T> void addAll(Collection<T> elements);
-
-    <T> List<@NotNull T> getAll(@NotNull Class<T> type) throws InvalidConfigurationException;
 
     <T> void set(int index, @Nullable T value);
 
     void remove(int index);
 
-    <T> T get(int index, Class<T> type);
+    <T> ConfigOptional<T> get(int index, Class<T> type);
 
-    <T> Optional<T> getOptional(int index, Class<T> type);
+    ConfigOptional<ConfigField> getField(int index);
 
-    ConfigField getField(int index) throws InvalidConfigurationException;
+    ConfigOptional<ConfigScalar> getScalar(int index);
 
-    Optional<ConfigField> getOptionalField(int index);
-
-    ConfigScalar getScalar(int index) throws InvalidConfigurationException;
-
-    Optional<ConfigScalar> getOptionalScalar(int index);
-
-    ConfigSection getSection(int index) throws InvalidConfigurationException;
-
-    Optional<ConfigSection> getOptionalSection(int index);
+    ConfigOptional<ConfigSection> getSection(int index);
 
     ConfigSection getSectionOrCreate(int index);
 
     ConfigSection addSection();
 
-    ConfigSequence getSequence(int index) throws InvalidConfigurationException;
-
-    Optional<ConfigSequence> getOptionalSequence(int index);
+    ConfigOptional<ConfigSequence> getSequence(int index);
 
     ConfigSequence getSequenceOrCreate(int index);
 
     ConfigSequence addSequence();
 
-    boolean getBoolean(int index) throws InvalidConfigurationException;
+    ConfigOptional<Boolean> getBoolean(int index);
 
-    char getCharacter(int index) throws InvalidConfigurationException;
+    ConfigOptional<Character> getCharacter(int index);
 
-    @NotNull
-    String getString(int index) throws InvalidConfigurationException;
+    ConfigOptional<String> getString(int index);
 
-    int getInteger(int index) throws InvalidConfigurationException;
+    ConfigOptional<String> getString(int index, StringFormatter formatter);
 
-    long getLong(int index) throws InvalidConfigurationException;
+    ConfigOptional<Integer> getInteger(int index);
 
-    float getFloat(int index) throws InvalidConfigurationException;
+    ConfigOptional<Long> getLong(int index);
 
-    double getDouble(int index) throws InvalidConfigurationException;
+    ConfigOptional<Float> getFloat(int index);
 
-    Optional<Boolean> getOptionalBoolean(int index);
-
-    Optional<Character> getOptionalCharacter(int index);
-
-    Optional<String> getOptionalString(int index);
-
-    Optional<Integer> getOptionalInteger(int index);
-
-    Optional<Long> getOptionalLong(int index);
-
-    Optional<Float> getOptionalFloat(int index);
-
-    Optional<Double> getOptionalDouble(int index);
-
-    <T> @NotNull List<@NotNull T> toList(Class<T> type);
+    ConfigOptional<Double> getDouble(int index);
 
     List<ConfigField> toFieldList();
 

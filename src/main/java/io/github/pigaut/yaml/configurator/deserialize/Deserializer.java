@@ -6,7 +6,7 @@ import io.github.pigaut.yaml.convert.parse.*;
 import org.jetbrains.annotations.*;
 
 @FunctionalInterface
-public interface Deserializer<T> extends ScalarLoader<T> {
+public interface Deserializer<T> extends ConfigLoader.Scalar<T> {
 
     T deserialize(String string) throws StringParseException;
 

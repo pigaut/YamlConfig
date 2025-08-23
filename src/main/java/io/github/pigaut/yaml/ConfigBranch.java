@@ -33,6 +33,8 @@ public interface ConfigBranch extends ConfigField, Iterable<ConfigField> {
 
     Set<ConfigSection> getNestedSections() throws InvalidConfigurationException;
 
+    Set<ConfigSequence> getNestedSequences() throws InvalidConfigurationException;
+
     @NotNull
     ConfigSection convertToSection();
 
@@ -45,58 +47,8 @@ public interface ConfigBranch extends ConfigField, Iterable<ConfigField> {
 
     <T> void addAll(Collection<T> elements);
 
-    @NotNull
-    <T> T get(@NotNull String path, int index, @NotNull Class<T> type) throws InvalidConfigurationException;
-
-    <T> Optional<T> getOptional(@NotNull String path, int index, @NotNull Class<T> type);
-
     <T> List<@NotNull T> getAll(@NotNull Class<T> type) throws InvalidConfigurationException;
 
-    ConfigField getField(String path, int index);
-
-    ConfigScalar getScalar(String path, int index) throws InvalidConfigurationException;
-
-    Optional<ConfigScalar> getOptionalScalar(String path, int index);
-
-    ConfigSection getSection(String path, int index) throws InvalidConfigurationException;
-
-    Optional<ConfigSection> getOptionalSection(String path, int index);
-
-    ConfigSection getSectionOrCreate(String path, int index);
-
-    ConfigSequence getSequence(String path, int index) throws InvalidConfigurationException;
-
-    Optional<ConfigSequence> getOptionalSequence(String path, int index);
-
-    ConfigSequence getSequenceOrCreate(String path, int index);
-
-    boolean getBoolean(String path, int index) throws InvalidConfigurationException;
-
-    char getCharacter(String path, int index) throws InvalidConfigurationException;
-
-    @NotNull
-    String getString(String path, int index) throws InvalidConfigurationException;
-
-    int getInteger(String path, int index) throws InvalidConfigurationException;
-
-    long getLong(String path, int index) throws InvalidConfigurationException;
-
-    float getFloat(String path, int index) throws InvalidConfigurationException;
-
-    double getDouble(String path, int index) throws InvalidConfigurationException;
-
-    Optional<Boolean> getOptionalBoolean(String path, int index);
-
-    Optional<Character> getOptionalCharacter(String path, int index);
-
-    Optional<String> getOptionalString(String path, int index);
-
-    Optional<Integer> getOptionalInteger(String path, int index);
-
-    Optional<Long> getOptionalLong(String path, int index);
-
-    Optional<Float> getOptionalFloat(String path, int index);
-
-    Optional<Double> getOptionalDouble(String path, int index);
+    <T> List<T> getAllOrSkip(@NotNull Class<T> type);
 
 }

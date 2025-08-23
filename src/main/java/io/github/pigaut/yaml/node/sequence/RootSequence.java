@@ -20,28 +20,18 @@ public class RootSequence extends Sequence implements ConfigRoot {
     private final Load loader = new ConfigLoad();
     private final Dump dumper = new ConfigDump();
     private @NotNull Configurator configurator;
-    private @Nullable String prefix = null;
-    private boolean debug = true;
+    private @Nullable String prefix;
+    private boolean debug;
     private @NotNull String header = "";
     private final Deque<String> problems = new LinkedList<>();
 
-    public RootSequence() {
-        this(null, new StandardConfigurator());
-    }
-
-    public RootSequence(@Nullable File file) {
-        this(file, new StandardConfigurator());
-    }
-
-    public RootSequence(@NotNull Configurator configurator) {
-        this(null, configurator);
-    }
-
-    public RootSequence(@Nullable File file, @NotNull Configurator configurator) {
+    public RootSequence(@Nullable File file, @NotNull Configurator configurator, @Nullable String prefix, boolean debug) {
         super(FlowStyle.BLOCK);
         this.file = file;
         this.name = file != null ? YamlConfig.getFileName(file) : null;
         this.configurator = configurator;
+        this.prefix = prefix;
+        this.debug = debug;
     }
 
     @Override
@@ -215,7 +205,7 @@ public class RootSequence extends Sequence implements ConfigRoot {
 
     @Override
     public @NotNull RootSection convertToSection() {
-        return new RootSection(file, configurator);
+        return new RootSection(file, configurator, prefix, debug);
     }
 
     private boolean loadDocuments(List<Object> documents) {

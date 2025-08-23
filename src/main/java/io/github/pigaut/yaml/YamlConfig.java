@@ -1,5 +1,9 @@
 package io.github.pigaut.yaml;
 
+import io.github.pigaut.yaml.configurator.*;
+import io.github.pigaut.yaml.node.scalar.*;
+import io.github.pigaut.yaml.node.section.*;
+import io.github.pigaut.yaml.node.sequence.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
@@ -10,6 +14,108 @@ import java.util.stream.*;
 public class YamlConfig {
 
     private YamlConfig() {}
+
+    static RootSection loadSection(@NotNull File file) {
+        return loadSection(file, new StandardConfigurator(), null, true);
+    }
+
+    static RootSection loadSection(@NotNull File file, @NotNull Configurator configurator) {
+        return loadSection(file, configurator, null, true);
+    }
+
+    static RootSection loadSection(@NotNull File file, @NotNull Configurator configurator, String prefix) {
+        return loadSection(file, configurator, prefix, true);
+    }
+
+    static RootSection loadSection(@NotNull File file, @NotNull Configurator configurator, String prefix, boolean debug) {
+        RootSection rootSection = createEmptySection(file, configurator, prefix, debug);
+        rootSection.load();
+        return rootSection;
+    }
+
+    static RootSection createEmptySection(@Nullable File file) {
+        return new RootSection(file, new StandardConfigurator(), null, true);
+    }
+
+    static RootSection createEmptySection(@Nullable File file, @NotNull Configurator configurator) {
+        return new RootSection(file, configurator, null, true);
+    }
+
+    static RootSection createEmptySection(@Nullable File file, @NotNull Configurator configurator, @Nullable String prefix) {
+        return new RootSection(file, configurator, prefix, true);
+    }
+
+    static RootSection createEmptySection(@Nullable File file, @NotNull Configurator configurator, @Nullable String prefix, boolean debug) {
+        return new RootSection(file, configurator, prefix, debug);
+    }
+
+    static RootSequence loadSequence(@NotNull File file) {
+        return loadSequence(file, new StandardConfigurator(), null, true);
+    }
+
+    static RootSequence loadSequence(@NotNull File file, @NotNull Configurator configurator) {
+        return loadSequence(file, configurator, null, true);
+    }
+
+    static RootSequence loadSequence(@NotNull File file, @NotNull Configurator configurator, String prefix) {
+        return loadSequence(file, configurator, prefix, true);
+    }
+
+    static RootSequence loadSequence(@NotNull File file, @NotNull Configurator configurator, String prefix, boolean debug) {
+        RootSequence rootSequence = createEmptySequence(file, configurator, prefix, debug);
+        rootSequence.load();
+        return rootSequence;
+    }
+
+    static RootSequence createEmptySequence(@Nullable File file) {
+        return new RootSequence(file, new StandardConfigurator(), null, true);
+    }
+
+    static RootSequence createEmptySequence(@Nullable File file, @NotNull Configurator configurator) {
+        return new RootSequence(file, configurator, null, true);
+    }
+
+    static RootSequence createEmptySequence(@Nullable File file, @NotNull Configurator configurator, @Nullable String prefix) {
+        return new RootSequence(file, configurator, prefix, true);
+    }
+
+    static RootSequence createEmptySequence(@Nullable File file, @NotNull Configurator configurator, @Nullable String prefix, boolean debug) {
+        return new RootSequence(file, configurator, prefix, debug);
+    }
+
+    static RootScalar loadScalar(@NotNull File file) {
+        return loadScalar(file, new StandardConfigurator(), null, true);
+    }
+
+    static RootScalar loadScalar(@NotNull File file, @NotNull Configurator configurator) {
+        return loadScalar(file, configurator, null, true);
+    }
+
+    static RootScalar loadScalar(@NotNull File file, @NotNull Configurator configurator, String prefix) {
+        return loadScalar(file, configurator, prefix, true);
+    }
+
+    static RootScalar loadScalar(@NotNull File file, @NotNull Configurator configurator, String prefix, boolean debug) {
+        RootScalar rootScalar = createEmptyScalar(file, configurator, prefix, debug);
+        rootScalar.load();
+        return rootScalar;
+    }
+
+    static RootScalar createEmptyScalar(@Nullable File file) {
+        return new RootScalar(file, new StandardConfigurator(), null, true);
+    }
+
+    static RootScalar createEmptyScalar(@Nullable File file, @NotNull Configurator configurator) {
+        return new RootScalar(file, configurator, null, true);
+    }
+
+    static RootScalar createEmptyScalar(@Nullable File file, @NotNull Configurator configurator, @Nullable String prefix) {
+        return new RootScalar(file, configurator, prefix, true);
+    }
+
+    static RootScalar createEmptyScalar(@Nullable File file, @NotNull Configurator configurator, @Nullable String prefix, boolean debug) {
+        return new RootScalar(file, configurator, prefix, debug);
+    }
 
     public static final List<Class<?>> SCALARS = List.of(
             Boolean.class, Character.class, String.class,

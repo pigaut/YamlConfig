@@ -20,28 +20,18 @@ public class RootSection extends Section implements ConfigRoot {
     private final Load loader = new ConfigLoad();
     private final Dump dumper = new ConfigDump();
     private @NotNull Configurator configurator;
-    private @Nullable String prefix = null;
-    private boolean debug = true;
+    private @Nullable String prefix;
+    private boolean debug;
     private @NotNull String header = "";
     private final Deque<String> problems = new LinkedList<>();
 
-    public RootSection() {
-        this(null, new StandardConfigurator());
-    }
-
-    public RootSection(@Nullable File file) {
-        this(file, new StandardConfigurator());
-    }
-
-    public RootSection(@NotNull Configurator configurator) {
-        this(null, configurator);
-    }
-
-    public RootSection(@Nullable File file, @NotNull Configurator configurator) {
+    public RootSection(@Nullable File file, @NotNull Configurator configurator, @Nullable String prefix, boolean debug) {
         super(FlowStyle.BLOCK);
         this.file = file;
         this.name = file != null ? YamlConfig.getFileName(file) : null;
         this.configurator = configurator;
+        this.prefix = prefix;
+        this.debug = debug;
     }
 
     @Override
@@ -173,7 +163,6 @@ public class RootSection extends Section implements ConfigRoot {
     @Override
     public boolean load(@NotNull InputStream inputStream) {
         final Object data = loader.loadFromInputStream(inputStream);
-        ;
         this.clear();
 
         if (data instanceof Map<?, ?> map) {
@@ -228,7 +217,7 @@ public class RootSection extends Section implements ConfigRoot {
 
     @Override
     public @NotNull RootSequence convertToSequence() {
-        return new RootSequence(file, configurator);
+        return new RootSequence(file, configurator, prefix, debug);
     }
 
 }

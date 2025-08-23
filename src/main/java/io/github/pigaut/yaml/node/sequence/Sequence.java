@@ -147,7 +147,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
             throw new IllegalArgumentException("No config mapper found for class type: " + value.getClass().getSimpleName());
         }
 
-        final ConfigField existingField = getField(index);
+        final ConfigField existingField = getField(index).orElse(null);
         final FieldType defaultMappingType = mapper.getDefaultMappingType();
 
         if (existingField != null) {
@@ -228,61 +228,34 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     }
 
     @Override
-    public <T> T get(int index, Class<T> type) {
-        final ConfigField field = getField(index);
-        return field.load(type);
+    public <T> ConfigOptional<T> get(int index, Class<T> classType) {
+        return getField(index).flatMap(field -> field.load(classType));
     }
 
     @Override
-    public <T> Optional<T> getOptional(int index, Class<T> type) {
-        final ConfigField field = getOptionalField(index).orElse(null);
-        if (field == null) {
-            return Optional.empty();
-        }
-        return Optional.of(field.load(type));
-    }
-
-    @Override
-    public ConfigField getField(int index) throws InvalidConfigurationException {
+    public ConfigOptional<ConfigField> getField(int index) {
         if (index >= fields.size()) {
-            throw new InvalidConfigurationException(this, index, "Field is not set");
+            return ConfigOptional.empty(new InvalidConfigurationException(this, index, "Field is not set"));
         }
-        return fields.get(index);
+        return ConfigOptional.of(fields.get(index));
     }
 
     @Override
-    public Optional<ConfigField> getOptionalField(int index) {
-        return isSet(index) ? Optional.of(fields.get(index)) : Optional.empty();
+    public ConfigOptional<ConfigScalar> getScalar(int index) {
+        return getField(index).flatMap(ConfigField::toScalar);
     }
 
     @Override
-    public ConfigScalar getScalar(int index) {
-        final ConfigField field = getField(index);
-        return field.toScalar();
-    }
-
-    @Override
-    public Optional<ConfigScalar> getOptionalScalar(int index) {
-        return ConfigOptional.of(() -> getScalar(index));
-    }
-
-    @Override
-    public ConfigSection getSection(int index) {
-        final ConfigField field = getField(index);
-        return field.toSection();
-    }
-
-    @Override
-    public Optional<ConfigSection> getOptionalSection(int index) {
-        return ConfigOptional.of(() -> getSection(index));
+    public ConfigOptional<ConfigSection> getSection(int index) {
+        return getField(index).flatMap(ConfigField::toSection);
     }
 
     @Override
     public ConfigSection getSectionOrCreate(int index) {
-        final ConfigField field = getField(index);
+        ConfigOptional<ConfigSection> optionalSection = getSection(index);
 
-        if (field.getFieldType() == FieldType.SECTION) {
-            return field.toSection();
+        if (optionalSection.isSet()) {
+            return optionalSection.value();
         }
 
         final ConfigSection section = new KeylessSection(this, index);
@@ -299,22 +272,16 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     }
 
     @Override
-    public ConfigSequence getSequence(int index) {
-        final ConfigField field = getField(index);
-        return field.toSequence();
-    }
-
-    @Override
-    public Optional<ConfigSequence> getOptionalSequence(int index) {
-        return ConfigOptional.of(() -> getSequence(index));
+    public ConfigOptional<ConfigSequence> getSequence(int index) {
+        return getField(index).flatMap(ConfigField::toSequence);
     }
 
     @Override
     public ConfigSequence getSequenceOrCreate(int index) {
-        final ConfigField field = getField(index);
+        ConfigOptional<ConfigSequence> optionalSequence = getSequence(index);
 
-        if (field.getFieldType() == FieldType.SEQUENCE) {
-            return field.toSequence();
+        if (optionalSequence.isSet()) {
+            return optionalSequence.value();
         }
 
         final ConfigSequence sequence = new KeylessSequence(this, index);
@@ -331,87 +298,43 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     }
 
     @Override
-    public boolean getBoolean(int index) throws InvalidConfigurationException {
-        return getScalar(index).toBoolean();
+    public ConfigOptional<Boolean> getBoolean(int index) {
+        return getScalar(index).flatMap(ConfigScalar::toBoolean);
     }
 
     @Override
-    public char getCharacter(int index) throws InvalidConfigurationException {
-        return getScalar(index).toCharacter();
+    public ConfigOptional<Character> getCharacter(int index) {
+        return getScalar(index).flatMap(ConfigScalar::toCharacter);
     }
 
     @Override
-    public @NotNull String getString(int index) throws InvalidConfigurationException {
-        return getScalar(index).toString();
+    public ConfigOptional<String> getString(int index) {
+        return getScalar(index).map(ConfigScalar::toString);
     }
 
     @Override
-    public int getInteger(int index) throws InvalidConfigurationException {
-        return getScalar(index).toInteger();
+    public ConfigOptional<String> getString(int index, StringFormatter formatter) {
+        return getScalar(index).map(scalar -> scalar.toString(formatter));
     }
 
     @Override
-    public long getLong(int index) throws InvalidConfigurationException {
-        return getScalar(index).toLong();
+    public ConfigOptional<Integer> getInteger(int index) {
+        return getScalar(index).flatMap(ConfigScalar::toInteger);
     }
 
     @Override
-    public float getFloat(int index) throws InvalidConfigurationException {
-        return getScalar(index).toFloat();
+    public ConfigOptional<Long> getLong(int index) {
+        return getScalar(index).flatMap(ConfigScalar::toLong);
     }
 
     @Override
-    public double getDouble(int index) throws InvalidConfigurationException {
-        return getScalar(index).toDouble();
+    public ConfigOptional<Float> getFloat(int index) {
+        return getScalar(index).flatMap(ConfigScalar::toFloat);
     }
 
     @Override
-    public Optional<Boolean> getOptionalBoolean(int index) {
-        return getOptionalScalar(index)
-                .flatMap(ConfigScalar::asBoolean);
-    }
-
-    @Override
-    public Optional<Character> getOptionalCharacter(int index) {
-        return getOptionalScalar(index)
-                .flatMap(ConfigScalar::asCharacter);
-    }
-
-    @Override
-    public Optional<String> getOptionalString(int index) {
-        return getOptionalScalar(index)
-                .map(ConfigScalar::toString);
-    }
-
-    @Override
-    public Optional<Integer> getOptionalInteger(int index) {
-        return getOptionalScalar(index)
-                .flatMap(ConfigScalar::asInteger);
-    }
-
-    @Override
-    public Optional<Long> getOptionalLong(int index) {
-        return getOptionalScalar(index)
-                .flatMap(ConfigScalar::asLong);
-    }
-
-    @Override
-    public Optional<Float> getOptionalFloat(int index) {
-        return getOptionalScalar(index)
-                .flatMap(ConfigScalar::asFloat);
-    }
-
-    @Override
-    public Optional<Double> getOptionalDouble(int index) {
-        return getOptionalScalar(index)
-                .flatMap(ConfigScalar::asDouble);
-    }
-
-    @Override
-    public @NotNull <T> List<@NotNull T> toList(Class<T> type) {
-        return fields.stream()
-                .map(field -> field.load(type))
-                .toList();
+    public ConfigOptional<Double> getDouble(int index) {
+        return getScalar(index).flatMap(ConfigScalar::toDouble);
     }
 
     @Override
@@ -421,81 +344,80 @@ public abstract class Sequence extends Branch implements ConfigSequence {
 
     @Override
     public List<ConfigScalar> toScalarList() throws InvalidConfigurationException {
-        return fields.stream().map(ConfigField::toScalar).toList();
+        return stream().map(field -> field.toScalar().orElseThrow()).toList();
     }
 
     @Override
     public List<ConfigSection> toSectionList() throws InvalidConfigurationException {
-        return fields.stream().map(ConfigField::toSection).toList();
+        return stream().map(field -> field.toSection().orElseThrow()).toList();
     }
 
     @Override
     public List<ConfigSequence> toSequenceList() throws InvalidConfigurationException {
-        return fields.stream().map(ConfigField::toSequence).toList();
+        return stream().map(field -> field.toSequence().orElseThrow()).toList();
     }
 
     @Override
     public List<Boolean> toBooleanList() throws InvalidConfigurationException {
-        return fields.stream()
-                .map(ConfigField::toScalar)
-                .map(ConfigScalar::toBoolean)
+        return stream()
+                .map(field -> field.toScalar().orElseThrow())
+                .map(scalar -> scalar.toBoolean().orElseThrow())
                 .toList();
     }
 
     @Override
     public List<Character> toCharacterList() throws InvalidConfigurationException {
-        return fields.stream()
-                .map(ConfigField::toScalar)
-                .map(ConfigScalar::toCharacter)
+        return stream()
+                .map(field -> field.toScalar().orElseThrow())
+                .map(scalar -> scalar.toCharacter().orElseThrow())
                 .toList();
     }
 
     @Override
     public List<String> toStringList() throws InvalidConfigurationException {
-        return fields.stream()
-                .map(ConfigField::toScalar)
+        return stream()
+                .map(field -> field.toScalar().orElseThrow())
                 .map(ConfigScalar::toString)
                 .toList();
     }
 
     @Override
     public List<String> toStringList(StringFormatter formatter) throws InvalidConfigurationException {
-        return fields.stream()
-                .map(ConfigField::toScalar)
-                .map(ConfigScalar::toString)
-                .map(formatter::format)
+        return stream()
+                .map(field -> field.toScalar().orElseThrow())
+                .map(scalar -> scalar.toString(formatter))
                 .toList();
     }
 
     @Override
     public List<Integer> toIntegerList() throws InvalidConfigurationException {
-        return fields.stream()
-                .map(ConfigField::toScalar)
-                .map(ConfigScalar::toInteger)
+        return stream()
+                .map(field -> field.toScalar().orElseThrow())
+                .map(scalar -> scalar.toInteger().orElseThrow())
                 .toList();
     }
 
     @Override
     public List<Long> toLongList() throws InvalidConfigurationException {
-        return fields.stream()
-                .map(ConfigField::toScalar)
-                .map(ConfigScalar::toLong)
+        return stream()
+                .map(field -> field.toScalar().orElseThrow())
+                .map(scalar -> scalar.toLong().orElseThrow())
                 .toList();
     }
 
     @Override
     public List<Float> toFloatList() throws InvalidConfigurationException {
-        return fields.stream()
-                .map(ConfigField::toScalar)
-                .map(ConfigScalar::toFloat)
+        return stream()
+                .map(field -> field.toScalar().orElseThrow())
+                .map(scalar -> scalar.toFloat().orElseThrow())
                 .toList();
     }
 
     @Override
     public List<Double> toDoubleList() throws InvalidConfigurationException {
-        return fields.stream()
-                .map(ConfigField::toScalar)
-                .map(ConfigScalar::toDouble)
+        return stream()
+                .map(field -> field.toScalar().orElseThrow())
+                .map(scalar -> scalar.toDouble().orElseThrow())
                 .toList();
     }
 
@@ -515,33 +437,42 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     }
 
     @Override
-    public <T> @NotNull T load(@NotNull Class<T> type) throws InvalidConfigurationException {
+    public <T> ConfigOptional<T> load(@NotNull Class<T> type) {
         final ConfigRoot root = getRoot();
         final Configurator configurator = root.getConfigurator();
+
         final ConfigLoader<? extends T> loader = configurator.getLoader(type);
         if (loader == null) {
             throw new IllegalArgumentException("No config loader found for class: " + type.getSimpleName());
         }
+
         final String problemDescription = loader.getProblemDescription();
         root.addProblem(problemDescription);
-        final T value = loader.loadFromSequence(this);
-        root.removeProblem(problemDescription);
-        return value;
+
+        try {
+            return ConfigOptional.of(this, loader.loadFromSequence(this));
+        }
+        catch (InvalidConfigurationException e) {
+            return ConfigOptional.empty(e);
+        }
+        finally {
+            root.removeProblem(problemDescription);
+        }
     }
 
     @Override
-    public @NotNull ConfigScalar toScalar() throws InvalidConfigurationException {
-        throw new InvalidConfigurationException(this, "Expected a value but found a list");
+    public ConfigOptional<ConfigScalar> toScalar() {
+        return ConfigOptional.empty(this, "Expected a value but found a list");
     }
 
     @Override
-    public @NotNull ConfigSection toSection() throws InvalidConfigurationException {
-        throw new InvalidConfigurationException(this, "Expected a section but found a list");
+    public ConfigOptional<ConfigSection> toSection() {
+        return ConfigOptional.empty(this, "Expected a section but found a list");
     }
 
     @Override
-    public @NotNull ConfigSequence toSequence() throws InvalidConfigurationException {
-        return this;
+    public ConfigOptional<ConfigSequence> toSequence() {
+        return ConfigOptional.of(this);
     }
 
     @Override

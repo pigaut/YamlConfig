@@ -137,22 +137,22 @@ public abstract class Section extends Branch implements ConfigSection {
 
     @Override
     public boolean contains(@NotNull String path) {
-        return getOptionalField(path).isPresent();
+        return getField(path).isSet();
     }
 
     @Override
     public boolean isSet(@NotNull String path) {
-        return getOptionalScalar(path).isPresent();
+        return getScalar(path).isSet();
     }
 
     @Override
     public boolean isSection(@NotNull String path) {
-        return getOptionalSection(path).isPresent();
+        return getSection(path).isSet();
     }
 
     @Override
     public boolean isSequence(@NotNull String path) {
-        return getOptionalSequence(path).isPresent();
+        return getSequence(path).isSet();
     }
 
     @Override
@@ -175,7 +175,7 @@ public abstract class Section extends Branch implements ConfigSection {
             throw new IllegalArgumentException("No config mapper found for value of class type: " + valueClass.getSimpleName());
         }
 
-        final ConfigField existingField = getOptionalField(path).orElse(null);
+        final ConfigField existingField = getField(path).orElse(null);
         final FieldType defaultMappingType = mapper.getDefaultMappingType();
 
         if (existingField != null) {
@@ -266,37 +266,29 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     @Override
-    public <T> @NotNull T get(@NotNull String path, @NotNull Class<T> type) throws InvalidConfigurationException {
-        final ConfigField field = getField(path);
-        return field.load(type);
+    public <T> ConfigOptional<T> get(@NotNull String path, @NotNull Class<T> classType) {
+        return getField(path).flatMap(field -> field.load(classType));
     }
 
     @Override
-    public <T> Optional<T> getOptional(@NotNull String path, @NotNull Class<T> type) {
-        final ConfigField field = getOptionalField(path).orElse(null);
-        return field != null ? Optional.of(field.load(type)) : Optional.empty();
+    public <T> List<T> getAll(@NotNull String path, @NotNull Class<T> type) throws InvalidConfigurationException {
+        return getField(path)
+                .flatMap(ConfigField::toBranch)
+                .map(branch -> branch.getAll(type))
+                .orElse(List.of());
     }
 
     @Override
-    public <T> List<@NotNull T> getAll(@NotNull String path, @NotNull Class<T> type) throws InvalidConfigurationException {
-        final ConfigField optionalField = getOptionalField(path).orElse(null);
-        if (optionalField instanceof ConfigBranch branch) {
-            return branch.getAll(type);
-        }
-        return List.of();
+    public <T> List<T> getAllOrSkip(@NotNull String path, @NotNull Class<T> type) {
+        return getField(path)
+                .flatMap(ConfigField::toBranch)
+                .map(branch -> branch.getAllOrSkip(type))
+                .orElse(List.of());
     }
 
     @Override
-    public @NotNull ConfigSection getSection(@NotNull String path) throws InvalidConfigurationException {
-        ConfigField field = getOptionalField(path).orElseThrow(() ->
-                new InvalidConfigurationException(this, path, "Section not found"));
-        return field.toSection();
-    }
-
-    @Override
-    public Optional<ConfigSection> getOptionalSection(@NotNull String path) {
-        Optional<ConfigField> optionalField = getOptionalField(path);
-        return optionalField.flatMap(ConfigField::asSection);
+    public ConfigOptional<ConfigSection> getSection(@NotNull String path) {
+        return getField(path).flatMap(ConfigField::toSection);
     }
 
     @Override
@@ -310,16 +302,8 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     @Override
-    public @NotNull ConfigSequence getSequence(@NotNull String path) throws InvalidConfigurationException {
-        ConfigField field = getOptionalField(path).orElseThrow(() ->
-                new InvalidConfigurationException(this, path, "List not found"));
-        return field.toSequence();
-    }
-
-    @Override
-    public Optional<ConfigSequence> getOptionalSequence(@NotNull String path) {
-        Optional<ConfigField> optionalField = getOptionalField(path);
-        return optionalField.flatMap(ConfigField::asSequence);
+    public ConfigOptional<ConfigSequence> getSequence(@NotNull String path) {
+        return getField(path).flatMap(ConfigField::toSequence);
     }
 
     @Override
@@ -334,94 +318,84 @@ public abstract class Section extends Branch implements ConfigSection {
 
     @Override
     public @NotNull Set<ConfigField> getNestedFields(@NotNull String path) {
-        final ConfigField foundField = getOptionalField(path).orElse(null);
-        if (foundField instanceof ConfigBranch branch) {
-            return branch.getNestedFields();
-        }
-        return Set.of();
+        return getField(path)
+                .flatMap(ConfigField::toBranch)
+                .map(ConfigBranch::getNestedFields)
+                .orElse(Set.of());
     }
 
     @Override
     public @NotNull Set<ConfigSection> getNestedSections(@NotNull String path) {
-        final ConfigField foundField = getOptionalField(path).orElse(null);
-        if (foundField instanceof ConfigBranch branch) {
-            return branch.getNestedSections();
-        }
-        return Set.of();
+        return getField(path)
+                .flatMap(ConfigField::toBranch)
+                .map(ConfigBranch::getNestedSections)
+                .orElse(Set.of());
+    }
+
+    @Override
+    public Set<ConfigSequence> getNestedSequences(@NotNull String path) {
+        return getField(path)
+                .flatMap(ConfigField::toBranch)
+                .map(ConfigBranch::getNestedSequences)
+                .orElse(Set.of());
     }
 
     @Override
     public List<ConfigField> getFieldList(@NotNull String path) {
-        final Optional<ConfigSequence> optionalSequence = getOptionalSequence(path);
-        return optionalSequence.map(ConfigSequence::toFieldList).orElse(List.of());
+        return getSequence(path).map(ConfigSequence::toFieldList).orElse(List.of());
     }
 
     @Override
-    public List<ConfigScalar> getScalarList(@NotNull String path) throws InvalidConfigurationException {
-        final Optional<ConfigSequence> optionalSequence = getOptionalSequence(path);
-        return optionalSequence.map(ConfigSequence::toScalarList).orElse(List.of());
+    public List<ConfigScalar> getScalarList(@NotNull String path) {
+        return getSequence(path).map(ConfigSequence::toScalarList).orElse(List.of());
     }
 
     @Override
-    public List<ConfigSection> getSectionList(@NotNull String path) throws InvalidConfigurationException {
-        final Optional<ConfigSequence> optionalSequence = getOptionalSequence(path);
-        return optionalSequence.map(ConfigSequence::toSectionList).orElse(List.of());
+    public List<ConfigSection> getSectionList(@NotNull String path) {
+        return getSequence(path).map(ConfigSequence::toSectionList).orElse(List.of());
     }
 
     @Override
     public List<Boolean> getBooleanList(@NotNull String path) {
-        final Optional<ConfigSequence> optionalSequence = getOptionalSequence(path);
-        return optionalSequence.map(ConfigSequence::toBooleanList).orElse(List.of());
+        return getSequence(path).map(ConfigSequence::toBooleanList).orElse(List.of());
     }
 
     @Override
     public List<Character> getCharacterList(@NotNull String path) {
-        final Optional<ConfigSequence> optionalSequence = getOptionalSequence(path);
-        return optionalSequence.map(ConfigSequence::toCharacterList).orElse(List.of());
+        return getSequence(path).map(ConfigSequence::toCharacterList).orElse(List.of());
     }
 
     @Override
     public List<String> getStringList(@NotNull String path) {
-        final Optional<ConfigSequence> optionalSequence = getOptionalSequence(path);
-        return optionalSequence.map(ConfigSequence::toStringList).orElse(List.of());
+        return getSequence(path).map(ConfigSequence::toStringList).orElse(List.of());
     }
 
     @Override
     public List<String> getStringList(@NotNull String path, @NotNull StringFormatter formatter) {
-        final Optional<ConfigSequence> optionalSequence = getOptionalSequence(path);
-        return optionalSequence.map(sequence -> sequence.toStringList(formatter)).orElse(List.of());
+        return getSequence(path).map(sequence -> sequence.toStringList(formatter)).orElse(List.of());
     }
 
     @Override
     public List<Integer> getIntegerList(@NotNull String path) {
-        final Optional<ConfigSequence> optionalSequence = getOptionalSequence(path);
-        return optionalSequence.map(ConfigSequence::toIntegerList).orElse(List.of());
+        return getSequence(path).map(ConfigSequence::toIntegerList).orElse(List.of());
     }
 
     @Override
     public List<Long> getLongList(@NotNull String path) {
-        final Optional<ConfigSequence> optionalSequence = getOptionalSequence(path);
-        return optionalSequence.map(ConfigSequence::toLongList).orElse(List.of());
+        return getSequence(path).map(ConfigSequence::toLongList).orElse(List.of());
     }
 
     @Override
     public List<Float> getFloatList(@NotNull String path) {
-        final Optional<ConfigSequence> optionalSequence = getOptionalSequence(path);
-        return optionalSequence.map(ConfigSequence::toFloatList).orElse(List.of());
+        return getSequence(path).map(ConfigSequence::toFloatList).orElse(List.of());
     }
 
     @Override
     public List<Double> getDoubleList(@NotNull String path) {
-        final Optional<ConfigSequence> optionalSequence = getOptionalSequence(path);
-        return optionalSequence.map(ConfigSequence::toDoubleList).orElse(List.of());
+        return getSequence(path).map(ConfigSequence::toDoubleList).orElse(List.of());
     }
 
-    public <T> List<T> getList(@NotNull String path, @NotNull Class<T> type) {
-        final Optional<ConfigSequence> optionalSequence = getOptionalSequence(path);
-        return optionalSequence.map(sequence -> sequence.toList(type)).orElse(List.of());
-    }
-
-    public @NotNull ConfigField getField(@NotNull String path) throws InvalidConfigurationException {
+    public ConfigOptional<ConfigField> getField(@NotNull String path) {
         final PathIterator iterator = PathIterator.of(this, path);
 
         ConfigField field = null;
@@ -430,315 +404,199 @@ public abstract class Section extends Branch implements ConfigSection {
         }
 
         if (field == null) {
-            throw new InvalidConfigurationException(this, path, "Field is not set");
+            return ConfigOptional.empty(new InvalidConfigurationException(this, path, "Field is not set"));
         }
 
-        return field;
+        return ConfigOptional.of(field);
     }
 
     @Override
-    public Optional<ConfigField> getOptionalField(@NotNull String path) {
-        return ConfigOptional.of(() -> getField(path));
+    public ConfigOptional<ConfigScalar> getScalar(@NotNull String path) {
+        return getField(path).flatMap(ConfigField::toScalar);
     }
 
     @Override
-    public @NotNull ConfigScalar getScalar(@NotNull String path) throws InvalidConfigurationException {
-        final ConfigField field = getOptionalField(path).orElseThrow(() ->
-                new InvalidConfigurationException(this, path, "Value is not set"));
-        return field.toScalar();
+    public ConfigOptional<Boolean> getBoolean(@NotNull String path) {
+        return getScalar(path).flatMap(ConfigScalar::toBoolean);
     }
 
     @Override
-    public Optional<ConfigScalar> getOptionalScalar(@NotNull String path) {
-        Optional<ConfigField> optionalField = getOptionalField(path);
-        return optionalField.flatMap(ConfigField::asScalar);
+    public ConfigOptional<Character> getCharacter(@NotNull String path) {
+        return getScalar(path).flatMap(ConfigScalar::toCharacter);
     }
 
     @Override
-    public boolean getBoolean(@NotNull String path) throws InvalidConfigurationException {
-        ConfigField field = getField(path);
-        return field.toScalar().toBoolean();
+    public @NotNull ConfigOptional<String> getString(@NotNull String path) {
+        return getScalar(path).map(ConfigScalar::toString);
     }
 
     @Override
-    public Optional<Boolean> getOptionalBoolean(@NotNull String path) {
-        Optional<ConfigScalar> optionalScalar = getOptionalScalar(path);
-        return optionalScalar.flatMap(ConfigScalar::asBoolean);
+    public @NotNull ConfigOptional<String> getString(@NotNull String path, @NotNull StringFormatter formatter) {
+        return getScalar(path).map(scalar -> formatter.format(scalar.toString()));
     }
 
     @Override
-    public char getCharacter(@NotNull String path) throws InvalidConfigurationException {
-        ConfigField field = getField(path);
-        return field.toScalar().toCharacter();
+    public ConfigOptional<Integer> getInteger(@NotNull String path) {
+        return getScalar(path).flatMap(ConfigScalar::toInteger);
     }
 
     @Override
-    public Optional<Character> getOptionalCharacter(@NotNull String path) {
-        Optional<ConfigScalar> optionalScalar = getOptionalScalar(path);
-        return optionalScalar.flatMap(ConfigScalar::asCharacter);
+    public ConfigOptional<Long> getLong(@NotNull String path) {
+        return getScalar(path).flatMap(ConfigScalar::toLong);
     }
 
     @Override
-    public @NotNull String getString(@NotNull String path) throws InvalidConfigurationException {
-        ConfigField field = getField(path);
-        return field.toScalar().toString();
+    public ConfigOptional<Float> getFloat(@NotNull String path) {
+        return getScalar(path).flatMap(ConfigScalar::toFloat);
     }
 
     @Override
-    public Optional<String> getOptionalString(@NotNull String path) {
-        Optional<ConfigScalar> optionalScalar = getOptionalScalar(path);
-        return optionalScalar.map(ConfigScalar::toString);
+    public ConfigOptional<Double> getDouble(@NotNull String path) {
+        return getScalar(path).flatMap(ConfigScalar::toDouble);
     }
 
-    @Override
-    public @NotNull String getString(@NotNull String path, @NotNull StringFormatter formatter) throws InvalidConfigurationException {
-        String string = getString(path);
-        return formatter.format(string);
-    }
-
-    @Override
-    public Optional<String> getOptionalString(@NotNull String path, @NotNull StringFormatter formatter) {
-        Optional<String> optionalString = getOptionalString(path);
-        return optionalString.map(formatter::format);
-    }
-
-    @Override
-    public int getInteger(@NotNull String path) throws InvalidConfigurationException {
-        ConfigField field = getField(path);
-        return field.toScalar().toInteger();
-    }
-
-    @Override
-    public Optional<Integer> getOptionalInteger(@NotNull String path) {
-        Optional<ConfigScalar> optionalScalar = getOptionalScalar(path);
-        return optionalScalar.flatMap(ConfigScalar::asInteger);
-    }
-
-    @Override
-    public long getLong(@NotNull String path) throws InvalidConfigurationException {
-        ConfigField field = getField(path);
-        return field.toScalar().toLong();
-    }
-
-    @Override
-    public Optional<Long> getOptionalLong(@NotNull String path) {
-        Optional<ConfigScalar> optionalScalar = getOptionalScalar(path);
-        return optionalScalar.flatMap(ConfigScalar::asLong);
-    }
-
-    @Override
-    public float getFloat(@NotNull String path) throws InvalidConfigurationException {
-        ConfigField field = getField(path);
-        return field.toScalar().toFloat();
-    }
-
-    @Override
-    public Optional<Float> getOptionalFloat(@NotNull String path) {
-        Optional<ConfigScalar> optionalScalar = getOptionalScalar(path);
-        return optionalScalar.flatMap(ConfigScalar::asFloat);
-    }
-
-    @Override
-    public double getDouble(@NotNull String path) throws InvalidConfigurationException {
-        ConfigField field = getField(path);
-        return field.toScalar().toDouble();
-    }
-
-    @Override
-    public Optional<Double> getOptionalDouble(@NotNull String path) {
-        Optional<ConfigScalar> optionalScalar = getOptionalScalar(path);
-        return optionalScalar.flatMap(ConfigScalar::asDouble);
-    }
-
-//    @Override
-//    public Object[] getSplitString(String path, String regex, Class<?>... types) {
-//        Preconditions.checkArgument(types.length > 1, "Types must have at least two elements.");
-//        final int length = types.length;
-//        final String[] elements = getString(path).split(regex);
-//
-//        if (elements.length != length) {
-//            throw new InvalidConfigurationException(this, path,
-//                    "(Invalid split string) expected " + types.length + " elements, but got " + elements.length);
+//    public ConfigScalar[][] getMatrix(@NotNull String path, int length, int height) {
+//        Preconditions.checkArgument(length > 0 && height > 0, "Matrix must have at least one row and one column.");
+//        final List<ConfigField> rows = getFieldList(path);
+//        if (rows.size() != height) {
+//            throw new InvalidConfigurationException(this, path, "Could not load matrix", "Expected " + height + " rows, but got " + rows.size());
 //        }
-//
-//        Object[] splitString = new Object[types.length];
-//
-//        final Parser parser = getRoot().getParser();
-//        for (int i = 0; i < types.length; i++) {
-//            try {
-//                splitString[i] = parser.deserialize(types[i], elements[i]);
-//            } catch (DeserializationException e) {
-//                throw new InvalidConfigurationException(this, path,
-//                        "(Invalid split string) " + e.getMessage());
+//        final ConfigScalar[][] matrix = new ConfigScalar[length][height];
+//        for (int row = 0; row < height; row++) {
+//            final List<ConfigField> columns = rows.get(row).toSequence().toFieldList();
+//            if (columns.size() != length) {
+//                throw new InvalidConfigurationException(this, path, "Could not load matrix",
+//                        "Expected " + length + " columns at row " + (row + 1) + ", but got " + columns.size());
+//            }
+//            for (int column = 0; column < length; column++) {
+//                final ConfigField field = columns.get(column);
+//                if (!(field instanceof ConfigScalar scalar)) {
+//                    throw new InvalidConfigurationException(this, path, "Could not load matrix",
+//                            "Expected a value at row " + (row + 1) + " and column " + (column + 1));
+//                }
+//                matrix[column][row] = scalar;
 //            }
 //        }
-//
-//        return splitString;
+//        return matrix;
 //    }
-
-
-    //matrix:
-    //  - [0, 0, 0, 0, 0]
-    //  - [0, 0, 0, 0, 0]
-    //  - [0, 0, 0, 0, 0]
-    //
-    //  x ->  y ^
-    // x is the columns or length
-    // y is the rows or height
-    //
-    // Matrix[x][y] matrix;
-    // Matrix[columns][rows] matrix;
-    // Matrix[length][height] matrix;
-    //
-    // The first list is the: rows or height or y
-    // The second list is the: columns or length or x
-    //
-    // int length = 5;
-    // int height = 3
-
-
-    public ConfigScalar[][] getMatrix(@NotNull String path, int length, int height) throws InvalidConfigurationException {
-        Preconditions.checkArgument(length > 0 && height > 0, "Matrix must have at least one row and one column.");
-        final List<ConfigField> rows = getFieldList(path);
-        if (rows.size() != height) {
-            throw new InvalidConfigurationException(this, path, "Could not load matrix", "Expected " + height + " rows, but got " + rows.size());
-        }
-        final ConfigScalar[][] matrix = new ConfigScalar[length][height];
-        for (int row = 0; row < height; row++) {
-            final List<ConfigField> columns = rows.get(row).toSequence().toFieldList();
-            if (columns.size() != length) {
-                throw new InvalidConfigurationException(this, path, "Could not load matrix",
-                        "Expected " + length + " columns at row " + (row + 1) + ", but got " + columns.size());
-            }
-            for (int column = 0; column < length; column++) {
-                final ConfigField field = columns.get(column);
-                if (!(field instanceof ConfigScalar scalar)) {
-                    throw new InvalidConfigurationException(this, path, "Could not load matrix",
-                            "Expected a value at row " + (row + 1) + " and column " + (column + 1));
-                }
-                matrix[column][row] = scalar;
-            }
-        }
-        return matrix;
-    }
-
-    @Override
-    public boolean[][] getBooleanMatrix(@NotNull String path, int length, int height) throws InvalidConfigurationException {
-        final ConfigScalar[][] matrix = getMatrix(path, length, height);
-        final boolean[][] booleanMatrix = new boolean[length][height];
-        for (int column = 0; column < length; column++) {
-            for (int row = 0; row < height; row++) {
-                final ConfigScalar scalar = matrix[column][row];
-                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load boolean matrix",
-                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not a boolean");
-                booleanMatrix[column][row] = scalar.asBoolean().orElseThrow(() -> matrixException);
-            }
-        }
-        return booleanMatrix;
-    }
-
-    // Matrix[x][y] matrix;
-    // Matrix[column][row] matrix;
-    // Matrix[length][height] matrix;
-
-    @Override
-    public char[][] getCharacterMatrix(@NotNull String path, int length, int height) throws InvalidConfigurationException {
-        final ConfigScalar[][] matrix = getMatrix(path, length, height);
-        final char[][] charMatrix = new char[length][height];
-        for (int column = 0; column < length; column++) {
-            for (int row = 0; row < height; row++) {
-                final ConfigScalar scalar = matrix[column][row];
-                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load character matrix",
-                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not a character");
-                charMatrix[column][row] = scalar.asCharacter().orElseThrow(() -> matrixException);
-            }
-        }
-        return charMatrix;
-    }
-
-    @Override
-    public String[][] getStringMatrix(@NotNull String path, int length, int height) throws InvalidConfigurationException {
-        final ConfigScalar[][] matrix = getMatrix(path, length, height);
-        final String[][] stringMatrix = new String[length][height];
-        for (int column = 0; column < length; column++) {
-            for (int row = 0; row < height; row++) {
-                stringMatrix[column][row] = matrix[column][row].toString();
-            }
-        }
-        return stringMatrix;
-    }
-
-    @Override
-    public String[][] getStringMatrix(@NotNull String path, int length, int height, StringFormatter formatter) throws InvalidConfigurationException {
-        final ConfigScalar[][] matrix = getMatrix(path, length, height);
-        final String[][] stringMatrix = new String[length][height];
-        for (int column = 0; column < length; column++) {
-            for (int row = 0; row < height; row++) {
-                stringMatrix[column][row] =  matrix[column][row].toString(formatter);
-            }
-        }
-        return stringMatrix;
-    }
-
-    @Override
-    public int[][] getIntegerMatrix(@NotNull String path, int length, int height) throws InvalidConfigurationException {
-        final ConfigScalar[][] matrix = getMatrix(path, length, height);
-        final int[][] intMatrix = new int[length][height];
-        for (int column = 0; column < length; column++) {
-            for (int row = 0; row < height; row++) {
-                final ConfigScalar scalar = matrix[row][column];
-                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load integer matrix",
-                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not an integer");
-                intMatrix[column][row] = scalar.asInteger().orElseThrow(() -> matrixException);
-            }
-        }
-        return intMatrix;
-    }
-
-    @Override
-    public long[][] getLongMatrix(@NotNull String path, int length, int height) throws InvalidConfigurationException {
-        final ConfigScalar[][] matrix = getMatrix(path, length, height);
-        final long[][] longMatrix = new long[length][height];
-        for (int column = 0; column < length; column++) {
-            for (int row = 0; row < height; row++) {
-                final ConfigScalar scalar = matrix[column][row];
-                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load long matrix",
-                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not a long");
-                longMatrix[column][row] = scalar.asLong().orElseThrow(() -> matrixException);
-            }
-        }
-        return longMatrix;
-    }
-
-    @Override
-    public float[][] getFloatMatrix(@NotNull String path, int length, int height) throws InvalidConfigurationException {
-        final ConfigScalar[][] matrix = getMatrix(path, length, height);
-        final float[][] floatMatrix = new float[length][height];
-        for (int column = 0; column < length; column++) {
-            for (int row = 0; row < height; row++) {
-                final ConfigScalar scalar = matrix[column][row];
-                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load float matrix",
-                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not a float");
-                floatMatrix[column][row] = scalar.asFloat().orElseThrow(() -> matrixException);
-            }
-        }
-        return floatMatrix;
-    }
-
-    @Override
-    public double[][] getDoubleMatrix(@NotNull String path, int length, int height) throws InvalidConfigurationException {
-        final ConfigScalar[][] matrix = getMatrix(path, length, height);
-        final double[][] doubleMatrix = new double[length][height];
-        for (int column = 0; column < length; column++) {
-            for (int row = 0; row < height; row++) {
-                final ConfigScalar scalar = matrix[column][row];
-                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load double matrix",
-                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not a double");
-                doubleMatrix[column][row] = scalar.asDouble().orElseThrow(() -> matrixException);
-            }
-        }
-        return doubleMatrix;
-    }
+//
+//    @Override
+//    public boolean[][] getBooleanMatrix(@NotNull String path, int length, int height) {
+//        final ConfigScalar[][] matrix = getMatrix(path, length, height);
+//        final boolean[][] booleanMatrix = new boolean[length][height];
+//        for (int column = 0; column < length; column++) {
+//            for (int row = 0; row < height; row++) {
+//                final ConfigScalar scalar = matrix[column][row];
+//                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load boolean matrix",
+//                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not a boolean");
+//                booleanMatrix[column][row] = scalar.asBoolean().orElseThrow(() -> matrixException);
+//            }
+//        }
+//        return booleanMatrix;
+//    }
+//
+//    // Matrix[x][y] matrix;
+//    // Matrix[column][row] matrix;
+//    // Matrix[length][height] matrix;
+//
+//    @Override
+//    public char[][] getCharacterMatrix(@NotNull String path, int length, int height) {
+//        final ConfigScalar[][] matrix = getMatrix(path, length, height);
+//        final char[][] charMatrix = new char[length][height];
+//        for (int column = 0; column < length; column++) {
+//            for (int row = 0; row < height; row++) {
+//                final ConfigScalar scalar = matrix[column][row];
+//                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load character matrix",
+//                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not a character");
+//                charMatrix[column][row] = scalar.asCharacter().orElseThrow(() -> matrixException);
+//            }
+//        }
+//        return charMatrix;
+//    }
+//
+//    @Override
+//    public String[][] getStringMatrix(@NotNull String path, int length, int height) {
+//        final ConfigScalar[][] matrix = getMatrix(path, length, height);
+//        final String[][] stringMatrix = new String[length][height];
+//        for (int column = 0; column < length; column++) {
+//            for (int row = 0; row < height; row++) {
+//                stringMatrix[column][row] = matrix[column][row].toString();
+//            }
+//        }
+//        return stringMatrix;
+//    }
+//
+//    @Override
+//    public String[][] getStringMatrix(@NotNull String path, int length, int height, StringFormatter formatter) {
+//        final ConfigScalar[][] matrix = getMatrix(path, length, height);
+//        final String[][] stringMatrix = new String[length][height];
+//        for (int column = 0; column < length; column++) {
+//            for (int row = 0; row < height; row++) {
+//                stringMatrix[column][row] =  matrix[column][row].toString(formatter);
+//            }
+//        }
+//        return stringMatrix;
+//    }
+//
+//    @Override
+//    public int[][] getIntegerMatrix(@NotNull String path, int length, int height) {
+//        final ConfigScalar[][] matrix = getMatrix(path, length, height);
+//        final int[][] intMatrix = new int[length][height];
+//        for (int column = 0; column < length; column++) {
+//            for (int row = 0; row < height; row++) {
+//                final ConfigScalar scalar = matrix[row][column];
+//                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load integer matrix",
+//                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not an integer");
+//                intMatrix[column][row] = scalar.asInteger().orElseThrow(() -> matrixException);
+//            }
+//        }
+//        return intMatrix;
+//    }
+//
+//    @Override
+//    public long[][] getLongMatrix(@NotNull String path, int length, int height) {
+//        final ConfigScalar[][] matrix = getMatrix(path, length, height);
+//        final long[][] longMatrix = new long[length][height];
+//        for (int column = 0; column < length; column++) {
+//            for (int row = 0; row < height; row++) {
+//                final ConfigScalar scalar = matrix[column][row];
+//                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load long matrix",
+//                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not a long");
+//                longMatrix[column][row] = scalar.asLong().orElseThrow(() -> matrixException);
+//            }
+//        }
+//        return longMatrix;
+//    }
+//
+//    @Override
+//    public float[][] getFloatMatrix(@NotNull String path, int length, int height) {
+//        final ConfigScalar[][] matrix = getMatrix(path, length, height);
+//        final float[][] floatMatrix = new float[length][height];
+//        for (int column = 0; column < length; column++) {
+//            for (int row = 0; row < height; row++) {
+//                final ConfigScalar scalar = matrix[column][row];
+//                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load float matrix",
+//                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not a float");
+//                floatMatrix[column][row] = scalar.asFloat().orElseThrow(() -> matrixException);
+//            }
+//        }
+//        return floatMatrix;
+//    }
+//
+//    @Override
+//    public double[][] getDoubleMatrix(@NotNull String path, int length, int height) {
+//        final ConfigScalar[][] matrix = getMatrix(path, length, height);
+//        final double[][] doubleMatrix = new double[length][height];
+//        for (int column = 0; column < length; column++) {
+//            for (int row = 0; row < height; row++) {
+//                final ConfigScalar scalar = matrix[column][row];
+//                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load double matrix",
+//                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not a double");
+//                doubleMatrix[column][row] = scalar.asDouble().orElseThrow(() -> matrixException);
+//            }
+//        }
+//        return doubleMatrix;
+//    }
 
     private void setScalar(@NotNull String path, @NotNull Object value) {
         final PathIterator pathIterator = PathIterator.of(this, path);
@@ -775,33 +633,42 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     @Override
-    public <T> @NotNull T load(@NotNull Class<T> type) throws InvalidConfigurationException {
+    public <T> ConfigOptional<T> load(@NotNull Class<T> type) {
         final ConfigRoot root = getRoot();
         final Configurator configurator = root.getConfigurator();
+
         final ConfigLoader<? extends T> loader = configurator.getLoader(type);
         if (loader == null) {
             throw new IllegalArgumentException("No config loader found for class: " + type.getSimpleName());
         }
+
         final String problemDescription = loader.getProblemDescription();
         root.addProblem(problemDescription);
-        final T value = loader.loadFromSection(this);
-        root.removeProblem(problemDescription);
-        return value;
+
+        try {
+            return ConfigOptional.of(this, loader.loadFromSection(this));
+        }
+        catch (InvalidConfigurationException e) {
+            return ConfigOptional.empty(e);
+        }
+        finally {
+            root.removeProblem(problemDescription);
+        }
     }
 
     @Override
-    public @NotNull ConfigScalar toScalar() throws InvalidConfigurationException {
-        throw new InvalidConfigurationException(this, "Expected a value but found a section");
+    public ConfigOptional<ConfigScalar> toScalar() {
+        return ConfigOptional.empty(new InvalidConfigurationException(this, "Expected a value but found a section"));
     }
 
     @Override
-    public @NotNull ConfigSection toSection() throws InvalidConfigurationException {
-        return this;
+    public ConfigOptional<ConfigSection> toSection() {
+        return ConfigOptional.of(this);
     }
 
     @Override
-    public @NotNull ConfigSequence toSequence() throws InvalidConfigurationException {
-        throw new InvalidConfigurationException(this, "Expected a list but found a section");
+    public ConfigOptional<ConfigSequence> toSequence() {
+        return ConfigOptional.empty(new InvalidConfigurationException(this, "Expected a list but found a section"));
     }
 
     @Override

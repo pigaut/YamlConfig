@@ -2,20 +2,19 @@ package io.github.pigaut.yaml.node.scalar;
 
 import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.configurator.*;
-import io.github.pigaut.yaml.configurator.FieldType;
 import io.github.pigaut.yaml.configurator.load.*;
 import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
+import io.github.pigaut.yaml.node.scalar.line.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.common.*;
-
-import java.util.*;
 
 public abstract class Scalar extends Field implements ConfigScalar {
 
     private Object value;
     private ScalarStyle scalarStyle;
+    private @Nullable Line line = null;
 
     protected Scalar(@NotNull Object value) {
         this(value, ScalarStyle.PLAIN);
@@ -36,6 +35,9 @@ public abstract class Scalar extends Field implements ConfigScalar {
         Preconditions.checkNotNull(value, "Value cannot be null");
         Preconditions.checkArgument(YamlConfig.isScalarType(value.getClass()), "Value is not a scalar");
         this.value = value;
+        if (line != null) {
+            line.updateLine(value.toString());
+        }
     }
 
     @Override
@@ -49,95 +51,57 @@ public abstract class Scalar extends Field implements ConfigScalar {
     }
 
     @Override
-    public boolean toBoolean() throws InvalidConfigurationException {
-        return asBoolean().orElseThrow(() -> new InvalidConfigurationException(this, "Expected a boolean but found: " + this));
-    }
-
-    @Override
-    public char toCharacter() throws InvalidConfigurationException {
-        return asCharacter().orElseThrow(() -> new InvalidConfigurationException(this, "Expected a character but found: " + this));
-    }
-
-    @Override
     public @NotNull String toString(@NotNull StringFormatter formatter) {
         final String string = this.toString();
         return formatter.format(string);
     }
 
     @Override
-    public int toInteger() throws InvalidConfigurationException {
-        return asInteger().orElseThrow(() -> new InvalidConfigurationException(this, "Expected an integer but found: " + this));
-    }
-
-    @Override
-    public long toLong() throws InvalidConfigurationException {
-        return asLong().orElseThrow(() -> new InvalidConfigurationException(this, "Expected a long but found: " + this));
-    }
-
-    @Override
-    public float toFloat() throws InvalidConfigurationException {
-        return asFloat().orElseThrow(() -> new InvalidConfigurationException(this, "Expected a float but found: " + this));
-    }
-
-    @Override
-    public double toDouble() throws InvalidConfigurationException {
-        return asDouble().orElseThrow(() -> new InvalidConfigurationException(this, "Expected a double but found: " + this));
-    }
-
-    @Override
-    public Optional<Boolean> asBoolean() {
-        if (value instanceof Boolean bool) {
-            return Optional.of(bool);
+    public ConfigOptional<Boolean> toBoolean() {
+        if (ScalarUtil.isBoolean(value)) {
+            return ConfigOptional.of(this, (Boolean) value);
         }
-        return Optional.empty();
+        return ConfigOptional.empty(this, "Expected a boolean but found: " + this);
     }
 
     @Override
-    public Optional<Character> asCharacter() {
-        if (value instanceof String string && string.length() == 1) {
-            return Optional.of(string.charAt(0));
+    public ConfigOptional<Character> toCharacter() {
+        if (ScalarUtil.isCharacter(value)) {
+            return ConfigOptional.of(this, value.toString().charAt(0));
         }
-        return Optional.empty();
+        return ConfigOptional.empty(this, "Expected a character but found: " + this);
     }
 
     @Override
-    public Optional<Integer> asInteger() {
-        if (value instanceof Number number) {
-            if (number instanceof Byte || number instanceof Short || number instanceof Integer) {
-                return Optional.of(number.intValue());
-            }
+    public ConfigOptional<Integer> toInteger() {
+        if (ScalarUtil.isInteger(value)) {
+            return ConfigOptional.of(this, ((Number) value).intValue());
         }
-        return Optional.empty();
+        return ConfigOptional.empty(this, "Expected an integer but found: " + this);
     }
 
     @Override
-    public Optional<Long> asLong() {
-        if (value instanceof Number number) {
-            if (number instanceof Byte || number instanceof Short || number instanceof Integer || number instanceof Long) {
-                return Optional.of(number.longValue());
-            }
+    public ConfigOptional<Long> toLong() {
+        if (ScalarUtil.isLong(value)) {
+            return ConfigOptional.of(this, ((Number) value).longValue());
         }
-        return Optional.empty();
+        return ConfigOptional.empty(this, "Expected a long but found: " + this);
     }
 
     @Override
-    public Optional<Float> asFloat() {
-        if (value instanceof Number number) {
-            if (number instanceof Byte || number instanceof Short || number instanceof Integer || number instanceof Long || number instanceof Float || number instanceof Double) {
-                return Optional.of(number.floatValue());
-            }
+    public ConfigOptional<Float> toFloat() {
+        if (ScalarUtil.isFloat(value)) {
+            return ConfigOptional.of(this, ((Number) value).floatValue());
         }
-        return Optional.empty();
+        return ConfigOptional.empty(this, "Expected a float but found: " + this);
     }
 
     @Override
-    public Optional<Double> asDouble() {
-        if (value instanceof Number number) {
-            if (number instanceof Byte || number instanceof Short || number instanceof Integer || number instanceof Long || number instanceof Float || number instanceof Double) {
-                return Optional.of(number.doubleValue());
-            }
+    public ConfigOptional<Double> toDouble() {
+        if (ScalarUtil.isDouble(value)) {
+            return ConfigOptional.of(this, ((Double) value).doubleValue());
         }
-        return Optional.empty();
+        return ConfigOptional.empty(this, "Expected a double but found: " + this);
     }
 
     @Override
@@ -151,33 +115,55 @@ public abstract class Scalar extends Field implements ConfigScalar {
     }
 
     @Override
-    public <T> T load(Class<T> type) throws InvalidConfigurationException {
-        final ConfigRoot root = getRoot();
+    public <T> ConfigOptional<T> load(Class<T> type) {
+        final ConfigRoot root = this.getRoot();
         final Configurator configurator = root.getConfigurator();
+
         final ConfigLoader<? extends T> loader = configurator.getLoader(type);
         if (loader == null) {
             throw new IllegalArgumentException("No config loader found for class type: " + type.getSimpleName());
         }
+
         final String problemDescription = loader.getProblemDescription();
         root.addProblem(problemDescription);
-        final T value = loader.loadFromScalar(this);
-        root.removeProblem(problemDescription);
-        return value;
+
+        try {
+            return ConfigOptional.of(this, loader.loadFromScalar(this));
+        } catch (InvalidConfigurationException e) {
+            return ConfigOptional.empty(e);
+        }
+        finally {
+            root.removeProblem(problemDescription);
+        }
     }
 
     @Override
-    public @NotNull ConfigScalar toScalar() throws InvalidConfigurationException {
-        return this;
+    public ConfigOptional<ConfigScalar> toScalar() {
+        return ConfigOptional.of(this);
     }
 
     @Override
-    public @NotNull ConfigSection toSection() throws InvalidConfigurationException {
-        throw new InvalidConfigurationException(this, "Expected a section but found a value");
+    public ConfigOptional<ConfigSection> toSection() {
+        return ConfigOptional.empty(this, "Expected a section but found a value");
     }
 
     @Override
-    public @NotNull ConfigSequence toSequence() throws InvalidConfigurationException {
-        throw new InvalidConfigurationException(this, "Expected a list but found a value");
+    public ConfigOptional<ConfigSequence> toSequence() {
+        return ConfigOptional.empty(this, "Expected a sequence (list) but found a value");
+    }
+
+    @Override
+    public ConfigOptional<ConfigBranch> toBranch() {
+        return ConfigOptional.empty(this, "Expected a branch but found a value");
+    }
+
+    @Override
+    public ConfigLine toLine() {
+        if (line != null) {
+            return line;
+        }
+
+        return (line = new Line(this, toString()));
     }
 
     @Override

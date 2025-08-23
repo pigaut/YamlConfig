@@ -6,7 +6,6 @@ import io.github.pigaut.yaml.amount.config.*;
 import io.github.pigaut.yaml.configurator.deserialize.*;
 import io.github.pigaut.yaml.configurator.map.*;
 import io.github.pigaut.yaml.configurator.serialize.*;
-import io.github.pigaut.yaml.convert.format.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
@@ -54,7 +53,7 @@ public class StandardConfigurator extends Configurator {
         addMapper(Iterable.class, new ConfigSequenceMapper());
     }
 
-    protected static class ConfigSectionMapper implements SectionMapper<Map> {
+    protected static class ConfigSectionMapper implements ConfigMapper.Section<Map> {
         @Override
         public void mapSection(@NotNull ConfigSection section, @NotNull Map mappings) {
             section.clear();
@@ -69,7 +68,7 @@ public class StandardConfigurator extends Configurator {
         }
     }
 
-    protected static class ConfigSequenceMapper implements SequenceMapper<Iterable> {
+    protected static class ConfigSequenceMapper implements ConfigMapper.Sequence<Iterable> {
         @Override
         public void mapSection(@NotNull ConfigSection section, @NotNull Iterable elements) {
             section.clear();

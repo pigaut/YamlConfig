@@ -2,7 +2,6 @@ package io.github.pigaut.yaml.node;
 
 import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.node.sequence.*;
-import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -34,12 +33,7 @@ public abstract class Field implements ConfigField {
         return getPath() + "." + key;
     }
 
-    @Override
-    public <T> Optional<T> loadOptional(Class<T> type) {
-        return ConfigOptional.of(() -> load(type));
-    }
-
-    protected Field[] getBranch() {
+    private Field[] getBranch() {
         final List<Field> nodeTree = new ArrayList<>();
 
         Field currentNode = this;
@@ -49,21 +43,6 @@ public abstract class Field implements ConfigField {
         }
 
         return nodeTree.toArray(new Field[0]);
-    }
-
-    @Override
-    public Optional<ConfigScalar> asScalar() {
-        return ConfigOptional.of(this::toScalar);
-    }
-
-    @Override
-    public Optional<ConfigSection> asSection() {
-        return ConfigOptional.of(this::toSection);
-    }
-
-    @Override
-    public Optional<ConfigSequence> asSequence() {
-        return ConfigOptional.of(this::toSequence);
     }
 
 }

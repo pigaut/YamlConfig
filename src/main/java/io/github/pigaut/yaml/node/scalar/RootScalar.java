@@ -7,6 +7,7 @@ import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.sequence.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.api.*;
+import org.snakeyaml.engine.v2.common.*;
 import org.snakeyaml.engine.v2.exceptions.*;
 
 import java.io.*;
@@ -20,28 +21,18 @@ public class RootScalar extends Scalar implements ConfigRoot {
     private final @Nullable String name;
     private final Load loader = new ConfigLoad();
     private @NotNull Configurator configurator;
-    private @Nullable String prefix = null;
-    private boolean debug = true;
+    private @Nullable String prefix;
+    private boolean debug;
     private @NotNull String header = "";
     private final Deque<String> problems = new LinkedList<>();
 
-    public RootScalar() {
-        this(null, new StandardConfigurator());
-    }
-
-    public RootScalar(@Nullable File file) {
-        this(file, new StandardConfigurator());
-    }
-
-    public RootScalar(@NotNull Configurator configurator) {
-        this(null, configurator);
-    }
-
-    public RootScalar(@Nullable File file, @NotNull Configurator configurator) {
+    public RootScalar(@Nullable File file, @NotNull Configurator configurator, @Nullable String prefix, boolean debug) {
         super("");
         this.file = file;
         this.name = file != null ? YamlConfig.getFileName(file) : null;
         this.configurator = configurator;
+        this.prefix = prefix;
+        this.debug = debug;
     }
 
     @Override
@@ -219,32 +210,6 @@ public class RootScalar extends Scalar implements ConfigRoot {
     @Override
     public String saveToString() {
         return header + this.toString();
-    }
-
-    @Override
-    public ConfigSequence split(String regex) {
-        final ConfigSequence sequence = new RootSequence(file, configurator);
-        final List<Object> parsedValues = ParseUtil.parseAllAsScalars(this.toString().split(regex));
-        sequence.map(parsedValues);
-        return sequence;
-    }
-
-    @Override
-    public ConfigSequence split(Pattern pattern) {
-        Matcher matcher = pattern.matcher(this.toString());
-        List<String> parts = new ArrayList<>();
-        while (matcher.find()) {
-            for (int i = 1; i <= matcher.groupCount(); i++) {
-                if (matcher.group(i) != null) {
-                    parts.add(matcher.group(i));
-                    break;
-                }
-            }
-        }
-        final ConfigSequence sequence = new RootSequence(file, configurator);
-        final List<Object> parsedValues = ParseUtil.parseAllAsScalars(parts);
-        sequence.map(parsedValues);
-        return sequence;
     }
 
 }

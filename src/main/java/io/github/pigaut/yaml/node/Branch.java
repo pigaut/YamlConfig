@@ -68,15 +68,22 @@ public abstract class Branch extends Field implements ConfigBranch {
     public abstract Stream<ConfigField> stream();
 
     @Override
-    public Set<@NotNull ConfigField> getNestedFields() {
-        return this.stream()
+    public Set<ConfigField> getNestedFields() {
+        return stream()
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     @Override
-    public Set<@NotNull ConfigSection> getNestedSections() throws InvalidConfigurationException {
-        return this.stream()
-                .map(ConfigField::toSection)
+    public Set<ConfigSection> getNestedSections() throws InvalidConfigurationException {
+        return stream()
+                .map(field -> field.toSection().orElseThrow())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    @Override
+    public Set<ConfigSequence> getNestedSequences() throws InvalidConfigurationException {
+        return stream()
+                .map(field -> field.toSequence().orElseThrow())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
@@ -96,153 +103,26 @@ public abstract class Branch extends Field implements ConfigBranch {
     public abstract <T> void addAll(Collection<T> elements);
 
     @Override
-    public <T> @NotNull T get(@NotNull String path, int index, @NotNull Class<T> type) throws InvalidConfigurationException {
-        if (this instanceof ConfigSection section) {
-            return section.get(path, type);
-        } else {
-            return ((ConfigSequence) this).get(index, type);
-        }
-    }
-
-    @Override
-    public <T> Optional<T> getOptional(@NotNull String path, int index, @NotNull Class<T> type) {
-        return ConfigOptional.of(() -> get(path, index, type));
-    }
-
-    @Override
     public <T> List<T> getAll(@NotNull Class<T> type) throws InvalidConfigurationException {
         final List<T> elements = new ArrayList<>();
         for (ConfigField nestedField : this) {
-            elements.add(nestedField.load(type));
+            elements.add(nestedField.load(type).orElseThrow());
         }
         return elements;
     }
 
     @Override
-    public ConfigField getField(String path, int index) {
-        if (this instanceof ConfigSection section) {
-            return section.getField(path);
-        } else {
-            return ((ConfigSequence) this).getField(index);
+    public <T> List<T> getAllOrSkip(@NotNull Class<T> classType) {
+        final List<T> elements = new ArrayList<>();
+        for (ConfigField nestedField : this) {
+            nestedField.load(classType).ifPresent(elements::add);
         }
+        return elements;
     }
 
     @Override
-    public ConfigScalar getScalar(String path, int index) throws InvalidConfigurationException {
-        return getField(path, index).toScalar();
-    }
-
-    @Override
-    public Optional<ConfigScalar> getOptionalScalar(String path, int index) {
-        return ConfigOptional.of(() -> getScalar(path, index));
-    }
-
-    @Override
-    public ConfigSection getSection(String path, int index) throws InvalidConfigurationException {
-        return getField(path, index).toSection();
-    }
-
-    @Override
-    public Optional<ConfigSection> getOptionalSection(String path, int index) {
-        return ConfigOptional.of(() -> getSection(path, index));
-    }
-
-    @Override
-    public ConfigSection getSectionOrCreate(String path, int index) {
-        if (this instanceof ConfigSection section) {
-            return section.getSectionOrCreate(path);
-        } else {
-            return ((ConfigSequence) this).getSectionOrCreate(index);
-        }
-    }
-
-    @Override
-    public ConfigSequence getSequence(String path, int index) throws InvalidConfigurationException {
-        return getField(path, index).toSequence();
-    }
-
-    @Override
-    public Optional<ConfigSequence> getOptionalSequence(String path, int index) {
-        return ConfigOptional.of(() -> getSequence(path, index));
-    }
-
-    @Override
-    public ConfigSequence getSequenceOrCreate(String path, int index) {
-        if (this instanceof ConfigSection section) {
-            return section.getSequenceOrCreate(path);
-        } else {
-            return ((ConfigSequence) this).getSequenceOrCreate(index);
-        }
-    }
-
-    @Override
-    public boolean getBoolean(String path, int index) throws InvalidConfigurationException {
-        return getScalar(path, index).toBoolean();
-    }
-
-    @Override
-    public char getCharacter(String path, int index) throws InvalidConfigurationException {
-        return getScalar(path, index).toCharacter();
-    }
-
-    @Override
-    public @NotNull String getString(String path, int index) throws InvalidConfigurationException {
-        return getScalar(path, index).toString();
-    }
-
-    @Override
-    public int getInteger(String path, int index) throws InvalidConfigurationException {
-        return getScalar(path, index).toInteger();
-    }
-
-    @Override
-    public long getLong(String path, int index) throws InvalidConfigurationException {
-        return getScalar(path, index).toLong();
-    }
-
-    @Override
-    public float getFloat(String path, int index) throws InvalidConfigurationException {
-        return getScalar(path, index).toFloat();
-    }
-
-    @Override
-    public double getDouble(String path, int index) throws InvalidConfigurationException {
-        return getScalar(path, index).toDouble();
-    }
-
-    @Override
-    public Optional<Boolean> getOptionalBoolean(String path, int index) {
-        return ConfigOptional.of(() -> getBoolean(path, index));
-    }
-
-    @Override
-    public Optional<Character> getOptionalCharacter(String path, int index) {
-        return ConfigOptional.of(() -> getCharacter(path, index));
-    }
-
-    @Override
-    public Optional<String> getOptionalString(String path, int index) {
-        return ConfigOptional.of(() -> getString(path, index));
-    }
-
-    @Override
-    public Optional<Integer> getOptionalInteger(String path, int index) {
-        return ConfigOptional.of(() -> getInteger(path, index));
-    }
-
-    @Override
-    public Optional<Long> getOptionalLong(String path, int index) {
-        return ConfigOptional.of(() -> getLong(path, index));
-    }
-
-    @Override
-    public Optional<Float> getOptionalFloat(String path, int index) {
-        return ConfigOptional.of(() -> getFloat(path, index));
-    }
-
-    @Override
-    public Optional<Double> getOptionalDouble(String path, int index) {
-        return ConfigOptional.of(() -> getDouble(path, index));
+    public ConfigOptional<ConfigBranch> toBranch() {
+        return ConfigOptional.of(this);
     }
 
     public abstract @NotNull List<@NotNull Object> toList();
