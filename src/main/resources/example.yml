@@ -1,0 +1,5 @@
+
+line: givePlayerMoney 100 chance=0.5
+
+do: chatMessage <Hello World> chance=0.5 delay=1.0 repetitions=3
+
