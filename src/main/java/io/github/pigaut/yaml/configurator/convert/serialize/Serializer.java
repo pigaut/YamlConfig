@@ -1,4 +1,4 @@
-package io.github.pigaut.yaml.configurator.serialize;
+package io.github.pigaut.yaml.configurator.convert.serialize;
 
 import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.configurator.*;

@@ -1,9 +1,10 @@
 package io.github.pigaut.yaml.configurator;
 
-import io.github.pigaut.yaml.configurator.deserialize.*;
+import io.github.pigaut.yaml.configurator.convert.*;
+import io.github.pigaut.yaml.configurator.convert.deserialize.*;
+import io.github.pigaut.yaml.configurator.convert.serialize.*;
 import io.github.pigaut.yaml.configurator.load.*;
 import io.github.pigaut.yaml.configurator.map.*;
-import io.github.pigaut.yaml.configurator.serialize.*;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -27,6 +28,11 @@ public class Configurator {
 
     public <T> void addSerializer(Class<T> classType, Serializer<T> serializer) {
         mappersByType.put(classType, serializer);
+    }
+
+    public <T> void addConverter(Class<T> classType, Converter<T> converter) {
+        addDeserializer(classType, converter);
+        addSerializer(classType, converter);
     }
 
     public <T> @Nullable ConfigLoader<T> getLoader(@NotNull Class<T> classType) {

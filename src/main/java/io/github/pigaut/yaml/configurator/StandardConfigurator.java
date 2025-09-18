@@ -3,9 +3,9 @@ package io.github.pigaut.yaml.configurator;
 import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.amount.*;
 import io.github.pigaut.yaml.amount.config.*;
-import io.github.pigaut.yaml.configurator.deserialize.*;
+import io.github.pigaut.yaml.configurator.convert.deserialize.*;
+import io.github.pigaut.yaml.configurator.convert.serialize.*;
 import io.github.pigaut.yaml.configurator.map.*;
-import io.github.pigaut.yaml.configurator.serialize.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
