@@ -54,9 +54,12 @@ public class SimpleKey implements FieldKey {
     }
 
     @Override
-    public void set(@NotNull Branch branch, @NotNull Object value) {
+    public Scalar createScalar(@NotNull Branch branch, @NotNull Object value) {
         final Section section = branch.convertToSection();
-        section.putNode(key, new KeyedScalar(section, key, value));
+        final KeyedScalar scalar = new KeyedScalar(section, key, value);
+
+        section.putNode(key, scalar);
+        return scalar;
     }
 
     @Override

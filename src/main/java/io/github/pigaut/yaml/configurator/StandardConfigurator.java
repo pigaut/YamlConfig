@@ -17,9 +17,15 @@ import java.util.*;
 public class StandardConfigurator extends Configurator {
 
     public StandardConfigurator() {
-
+        addDeserializer(Boolean.class, Deserializers.BOOLEAN);
+        addDeserializer(Character.class, Deserializers.CHARACTER);
+        addDeserializer(String.class, Deserializers.STRING);
         addDeserializer(Byte.class, Deserializers.BYTE);
         addDeserializer(Short.class, Deserializers.SHORT);
+        addDeserializer(Integer.class, Deserializers.INTEGER);
+        addDeserializer(Long.class, Deserializers.LONG);
+        addDeserializer(Float.class, Deserializers.FLOAT);
+        addDeserializer(Double.class, Deserializers.DOUBLE);
         addDeserializer(BigInteger.class, Deserializers.BIG_INTEGER);
         addDeserializer(BigDecimal.class, Deserializers.BIG_DECIMAL);
 
@@ -55,7 +61,7 @@ public class StandardConfigurator extends Configurator {
 
     protected static class ConfigSectionMapper implements ConfigMapper.Section<Map> {
         @Override
-        public void mapSection(@NotNull ConfigSection section, @NotNull Map mappings) {
+        public void mapToSection(@NotNull ConfigSection section, @NotNull Map mappings) {
             section.clear();
             mappings.forEach((key, value) -> {
                 final String keyAsString = String.valueOf(key);
@@ -69,8 +75,17 @@ public class StandardConfigurator extends Configurator {
     }
 
     protected static class ConfigSequenceMapper implements ConfigMapper.Sequence<Iterable> {
+
         @Override
-        public void mapSection(@NotNull ConfigSection section, @NotNull Iterable elements) {
+        public void mapToSequence(@NotNull ConfigSequence sequence, @NotNull Iterable elements) {
+            sequence.clear();
+            for (Object element : elements) {
+                sequence.add(element);
+            }
+        }
+
+        @Override
+        public void mapToSection(@NotNull ConfigSection section, @NotNull Iterable elements) {
             section.clear();
             int count = 0;
             for (Object element : elements) {
@@ -78,13 +93,16 @@ public class StandardConfigurator extends Configurator {
                 section.set(indexAsKey, element);
             }
         }
+
         @Override
-        public void mapSequence(@NotNull ConfigSequence sequence, @NotNull Iterable elements) {
-            sequence.clear();
+        public void mapToScalar(@NotNull ConfigScalar scalar, @NotNull Iterable elements) {
+            StringJoiner joiner = new StringJoiner(" ,");
             for (Object element : elements) {
-                sequence.add(element);
+                joiner.add(element.toString());
             }
+            scalar.setValue(joiner.toString());
         }
+
     }
 
 }

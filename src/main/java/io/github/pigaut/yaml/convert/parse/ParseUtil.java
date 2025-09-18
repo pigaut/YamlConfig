@@ -224,9 +224,12 @@ public class ParseUtil {
             return Amount.ranged(min, max);
         }
 
-        else if (string.contains(",")) {
-            final String[] values = Patterns.LIST_SPLIT.split(string);
-
+        else if (string.contains(";")) {
+            List<Double> values = new ArrayList<>();
+            for (String unparsedValue : Patterns.SEMICOLON_SEPARATED.split(string)) {
+                values.add(ParseUtil.parseDouble(unparsedValue));
+            }
+            return Amount.casual(values);
         }
 
         throw new StringParseException("Expected an amount but found: '" + string + "'");
@@ -364,24 +367,24 @@ public class ParseUtil {
         }
     }
 
-    public static <E extends Enum<E>> @Nullable E parseEnumOrNull(Class<E> type, String string) {
+    public static <E extends Enum<E>> @Nullable E parseEnumOrNull(Class<E> classType, String string) {
         try {
-            return parseEnum(type, string);
+            return parseEnum(classType, string);
         } catch (StringParseException e) {
             return null;
         }
     }
 
-    public static <E extends Enum<E>> E parseEnum(Class<E> type, String string) throws StringParseException {
-        return enumParser(type).parse(string);
+    public static <E extends Enum<E>> E parseEnum(Class<E> classType, String string) throws StringParseException {
+        return enumParser(classType).parse(string);
     }
 
-    public static <E extends Enum<E>> Parser<E> enumParser(Class<E> type) {
+    public static <E extends Enum<E>> Parser<E> enumParser(Class<E> classType) {
         return string -> {
             try {
-                return Enum.valueOf(type, CaseFormatter.toConstantCase(string));
+                return Enum.valueOf(classType, CaseFormatter.toConstantCase(string));
             } catch (IllegalArgumentException e) {
-                final String typeName = CaseFormatter.toTitleCase(CaseFormatter.splitClassName(type));
+                final String typeName = CaseFormatter.toTitleCase(CaseFormatter.splitClassName(classType));
                 throw new StringParseException("Expected a " + typeName + " but found: '" + string + "'");
             }
         };

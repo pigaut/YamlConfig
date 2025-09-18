@@ -21,13 +21,18 @@ public class KeyedScalar extends Scalar {
     }
 
     @Override
-    public @NotNull String getKey() throws UnsupportedOperationException {
-        return key;
+    public boolean isRoot() {
+        return false;
     }
 
     @Override
-    public boolean isRoot() {
-        return false;
+    public @NotNull ConfigRoot getRoot() {
+        return parent.getRoot();
+    }
+
+    @Override
+    public @NotNull String getKey() throws UnsupportedOperationException {
+        return key;
     }
 
     @Override
@@ -36,8 +41,11 @@ public class KeyedScalar extends Scalar {
     }
 
     @Override
-    public @NotNull ConfigRoot getRoot() {
-        return parent.getRoot();
+    public ConfigSequence split(Pattern pattern) {
+        final ConfigSequence sequence = new KeyedSequence(parent, key);
+        final List<Object> parsedValues = ParseUtil.parseAllAsScalars(pattern.split(toString()));
+        sequence.map(parsedValues);
+        return sequence;
     }
 
 }

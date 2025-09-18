@@ -2,6 +2,7 @@ package io.github.pigaut.yaml.path;
 
 import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.node.*;
+import io.github.pigaut.yaml.node.scalar.*;
 import io.github.pigaut.yaml.node.section.*;
 import io.github.pigaut.yaml.node.sequence.*;
 import org.jetbrains.annotations.*;
@@ -17,7 +18,7 @@ public interface FieldKey {
 
     Sequence createSequence(@NotNull Branch branch);
 
-    void set(@NotNull Branch branch, @NotNull Object value);
+    Scalar createScalar(@NotNull Branch branch, @NotNull Object value);
 
     void remove(@NotNull Branch branch);
 

@@ -47,7 +47,7 @@ public class PathIterator implements Iterator<Object> {
     }
 
     @NotNull
-    public Branch branch() {
+    public Branch nextBranch() {
         if (!hasNext()) {
             throw new NoSuchElementException("No more keys in the path.");
         }

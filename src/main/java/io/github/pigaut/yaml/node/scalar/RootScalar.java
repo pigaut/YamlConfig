@@ -7,7 +7,6 @@ import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.sequence.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.api.*;
-import org.snakeyaml.engine.v2.common.*;
 import org.snakeyaml.engine.v2.exceptions.*;
 
 import java.io.*;
@@ -20,11 +19,11 @@ public class RootScalar extends Scalar implements ConfigRoot {
     private final @Nullable File file;
     private final @Nullable String name;
     private final Load loader = new ConfigLoad();
+    private final Deque<String> problems = new LinkedList<>();
     private @NotNull Configurator configurator;
     private @Nullable String prefix;
     private boolean debug;
     private @NotNull String header = "";
-    private final Deque<String> problems = new LinkedList<>();
 
     public RootScalar(@Nullable File file, @NotNull Configurator configurator, @Nullable String prefix, boolean debug) {
         super("");
@@ -33,11 +32,6 @@ public class RootScalar extends Scalar implements ConfigRoot {
         this.configurator = configurator;
         this.prefix = prefix;
         this.debug = debug;
-    }
-
-    @Override
-    public @NotNull String getKey() throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Root does not have a key");
     }
 
     @Override
@@ -51,22 +45,8 @@ public class RootScalar extends Scalar implements ConfigRoot {
     }
 
     @Override
-    public @Nullable String getCurrentProblem() {
-        return problems.peekLast();
-    }
-
-    @Override
-    public void addProblem(String problemDescription) {
-        if (problemDescription != null) {
-            problems.add(problemDescription);
-        }
-    }
-
-    @Override
-    public void removeProblem(String problemDescription) {
-        if (problemDescription != null) {
-            problems.remove(problemDescription);
-        }
+    public @NotNull String getKey() throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Root does not have a key");
     }
 
     @Override
@@ -77,11 +57,6 @@ public class RootScalar extends Scalar implements ConfigRoot {
     @Override
     public @Nullable String getPath() {
         return null;
-    }
-
-    @Override
-    public @NotNull String getPath(String key) {
-        return key;
     }
 
     @Override
@@ -102,6 +77,25 @@ public class RootScalar extends Scalar implements ConfigRoot {
     @Override
     public void setDebug(boolean debug) {
         this.debug = debug;
+    }
+
+    @Override
+    public @Nullable String getCurrentProblem() {
+        return problems.peekLast();
+    }
+
+    @Override
+    public void addProblem(String problemDescription) {
+        if (problemDescription != null) {
+            problems.add(problemDescription);
+        }
+    }
+
+    @Override
+    public void removeProblem(String problemDescription) {
+        if (problemDescription != null) {
+            problems.remove(problemDescription);
+        }
     }
 
     @Override
@@ -210,6 +204,14 @@ public class RootScalar extends Scalar implements ConfigRoot {
     @Override
     public String saveToString() {
         return header + this.toString();
+    }
+
+    @Override
+    public ConfigSequence split(Pattern pattern) {
+        final ConfigSequence sequence = new RootSequence(file, configurator, prefix, debug);
+        final List<Object> parsedValues = ParseUtil.parseAllAsScalars(pattern.split(toString()));
+        sequence.map(parsedValues);
+        return sequence;
     }
 
 }

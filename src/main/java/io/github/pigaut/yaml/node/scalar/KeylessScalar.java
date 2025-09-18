@@ -26,13 +26,13 @@ public class KeylessScalar extends Scalar implements KeylessField {
     }
 
     @Override
-    public void setIndex(int index) {
-        this.index = index;
+    public int getPosition() {
+        return index + 1;
     }
 
     @Override
-    public @NotNull String getKey() throws UnsupportedOperationException {
-        return "[" + index + "]";
+    public void setIndex(int index) {
+        this.index = index;
     }
 
     @Override
@@ -41,13 +41,26 @@ public class KeylessScalar extends Scalar implements KeylessField {
     }
 
     @Override
+    public @NotNull ConfigRoot getRoot() {
+        return parent.getRoot();
+    }
+
+    @Override
+    public @NotNull String getKey() throws UnsupportedOperationException {
+        return "[" + index + "]";
+    }
+
+    @Override
     public @NotNull Sequence getParent() throws UnsupportedOperationException {
         return parent;
     }
 
     @Override
-    public @NotNull ConfigRoot getRoot() {
-        return parent.getRoot();
+    public ConfigSequence split(Pattern pattern) {
+        final ConfigSequence sequence = new KeylessSequence(parent, index);
+        final List<Object> parsedValues = ParseUtil.parseAllAsScalars(pattern.split(toString()));
+        sequence.map(parsedValues);
+        return sequence;
     }
 
 }

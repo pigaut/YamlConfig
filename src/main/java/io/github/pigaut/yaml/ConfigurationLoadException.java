@@ -1,7 +1,5 @@
-package io.github.pigaut.yaml.node;
+package io.github.pigaut.yaml;
 
-import io.github.pigaut.yaml.*;
-import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;

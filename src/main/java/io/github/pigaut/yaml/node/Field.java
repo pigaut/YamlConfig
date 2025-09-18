@@ -13,36 +13,56 @@ public abstract class Field implements ConfigField {
 
     @Nullable
     public String getPath() {
-        final Field[] branch = getBranch();
+        final List<Field> branch = new ArrayList<>();
+        Field currentNode = this;
+        while (!currentNode.isRoot()) {
+            branch.add(0, currentNode);
+            currentNode = currentNode.getParent();
+        }
+
         final List<String> keys = new ArrayList<>();
-        for (int i = 0; i < branch.length; i++) {
-            Field currentNode = branch[i];
-            final StringBuilder keyBuilder = new StringBuilder(currentNode.getKey());
-            while (currentNode instanceof Sequence && i < branch.length - 1) {
-                final Field nextNode = branch[1 + i++];
+        for (int i = 0; i < branch.size(); i++) {
+            Field node = branch.get(i);
+            final StringBuilder keyBuilder = new StringBuilder(node.getKey());
+            while (node instanceof Sequence && i < branch.size() - 1) {
+                final Field nextNode = branch.get(1 + i++);
                 keyBuilder.append(nextNode.getKey());
-                currentNode = nextNode;
+                node = nextNode;
             }
             keys.add(keyBuilder.toString());
         }
         return String.join(".", keys);
     }
 
-    @NotNull
-    public String getPath(String key) {
-        return getPath() + "." + key;
-    }
-
-    private Field[] getBranch() {
-        final List<Field> nodeTree = new ArrayList<>();
-
+    @Nullable
+    public String getSimplePath() {
+        final List<Field> branch = new ArrayList<>();
         Field currentNode = this;
         while (!currentNode.isRoot()) {
-            nodeTree.add(0, currentNode);
+            branch.add(0, currentNode);
             currentNode = currentNode.getParent();
         }
 
-        return nodeTree.toArray(new Field[0]);
+        final List<String> keys = new ArrayList<>();
+        for (int i = 0; i < branch.size(); i++) {
+            Field node = branch.get(i);
+            final StringBuilder keyBuilder = new StringBuilder();
+            keyBuilder.append(node instanceof KeylessField keylessNode ?
+                    ("[" + keylessNode.getPosition() + "]") : node.getKey());
+            while (node instanceof Sequence && i < branch.size() - 1) {
+                final KeylessField nextNode = (KeylessField) branch.get(1 + i++);
+                keyBuilder.append("[" + nextNode.getPosition() + "]");
+                node = (Field) nextNode;
+            }
+            keys.add(keyBuilder.toString());
+        }
+
+        return String.join(".", keys);
+    }
+
+    @Override
+    public <T> T loadRequired(Class<T> classType) {
+        return load(classType).orThrow();
     }
 
 }

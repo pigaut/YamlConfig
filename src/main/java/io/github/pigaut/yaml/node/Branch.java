@@ -3,7 +3,6 @@ package io.github.pigaut.yaml.node;
 import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.node.section.*;
 import io.github.pigaut.yaml.node.sequence.*;
-import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.common.*;
 
@@ -76,14 +75,14 @@ public abstract class Branch extends Field implements ConfigBranch {
     @Override
     public Set<ConfigSection> getNestedSections() throws InvalidConfigurationException {
         return stream()
-                .map(field -> field.toSection().orElseThrow())
+                .map(field -> field.toSection().orThrow())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     @Override
     public Set<ConfigSequence> getNestedSequences() throws InvalidConfigurationException {
         return stream()
-                .map(field -> field.toSequence().orElseThrow())
+                .map(field -> field.toSequence().orThrow())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
@@ -97,16 +96,16 @@ public abstract class Branch extends Field implements ConfigBranch {
     public abstract <T> void map(T value);
 
     @Override
-    public abstract <T> void add(T value);
+    public abstract <T> void add(@NotNull T value);
 
     @Override
     public abstract <T> void addAll(Collection<T> elements);
 
     @Override
-    public <T> List<T> getAll(@NotNull Class<T> type) throws InvalidConfigurationException {
+    public <T> List<T> getAll(@NotNull Class<T> classType) throws InvalidConfigurationException {
         final List<T> elements = new ArrayList<>();
         for (ConfigField nestedField : this) {
-            elements.add(nestedField.load(type).orElseThrow());
+            elements.add(nestedField.load(classType).orThrow());
         }
         return elements;
     }
@@ -118,11 +117,6 @@ public abstract class Branch extends Field implements ConfigBranch {
             nestedField.load(classType).ifPresent(elements::add);
         }
         return elements;
-    }
-
-    @Override
-    public ConfigOptional<ConfigBranch> toBranch() {
-        return ConfigOptional.of(this);
     }
 
     public abstract @NotNull List<@NotNull Object> toList();

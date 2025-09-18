@@ -9,30 +9,30 @@ public interface ConfigMapper<T> {
     @NotNull
     FieldType getDefaultMappingType();
 
-    default boolean keepExistingFields() {
-        return false;
+    default boolean clearExistingFields() {
+        return true;
     }
 
     default @NotNull String createKey(@NotNull T value) {
         return YamlConfig.generateRandomKey();
     }
 
-    default @NotNull Object createScalar(@NotNull T value) {
-        throw new UnsupportedOperationException(getClass().getSimpleName() + " does not support scalars");
+    default void mapToScalar(@NotNull ConfigScalar scalar, @NotNull T value) {
+        throw new UnsupportedMappingException(getClass().getSimpleName() + " does not support scalars");
     }
 
-    default void mapSection(@NotNull ConfigSection section, @NotNull T value) {
-        throw new UnsupportedOperationException(getClass().getSimpleName() + " does not support sections");
+    default void mapToSection(@NotNull ConfigSection section, @NotNull T value) {
+        throw new UnsupportedMappingException(getClass().getSimpleName() + " does not support sections");
     }
 
-    default void mapSequence(@NotNull ConfigSequence sequence, @NotNull T value) {
-        throw new UnsupportedOperationException(getClass().getSimpleName() + " does not support lists");
+    default void mapToSequence(@NotNull ConfigSequence sequence, @NotNull T value) {
+        throw new UnsupportedMappingException(getClass().getSimpleName() + " does not support lists");
     }
 
     @FunctionalInterface
     interface Scalar<T> extends ConfigMapper<T> {
 
-        @NotNull Object createScalar(@NotNull T value);
+        void mapToScalar(@NotNull ConfigScalar scalar, @NotNull T value);
 
         @Override
         default @NotNull FieldType getDefaultMappingType() {
@@ -42,9 +42,21 @@ public interface ConfigMapper<T> {
     }
 
     @FunctionalInterface
+    interface Line<T> extends Scalar<T> {
+
+        void mapToLine(@NotNull ConfigLine line, @NotNull T value);
+
+        @Override
+        default void mapToScalar(@NotNull ConfigScalar scalar, @NotNull T value) {
+            mapToLine(scalar.toLine(), value);
+        }
+
+    }
+
+    @FunctionalInterface
     interface Section<T> extends ConfigMapper<T> {
 
-        void mapSection(@NotNull ConfigSection section, @NotNull T value);
+        void mapToSection(@NotNull ConfigSection section, @NotNull T value);
 
         @Override
         default @NotNull FieldType getDefaultMappingType() {
@@ -56,7 +68,7 @@ public interface ConfigMapper<T> {
     @FunctionalInterface
     interface Sequence<T> extends ConfigMapper<T> {
 
-        void mapSequence(@NotNull ConfigSequence sequence, @NotNull T value);
+        void mapToSequence(@NotNull ConfigSequence sequence, @NotNull T value);
 
         @Override
         default @NotNull FieldType getDefaultMappingType() {

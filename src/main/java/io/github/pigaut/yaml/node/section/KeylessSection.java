@@ -29,6 +29,11 @@ public class KeylessSection extends Section implements KeylessField {
     }
 
     @Override
+    public int getPosition() {
+        return index + 1;
+    }
+
+    @Override
     public void setIndex(int index) {
         this.index = index;
     }

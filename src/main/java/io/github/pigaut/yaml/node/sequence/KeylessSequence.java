@@ -49,6 +49,11 @@ public class KeylessSequence extends Sequence implements KeylessField {
     }
 
     @Override
+    public int getPosition() {
+        return index + 1;
+    }
+
+    @Override
     public void setIndex(int index) {
         this.index = index;
     }

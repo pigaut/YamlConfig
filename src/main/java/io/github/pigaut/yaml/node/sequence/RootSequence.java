@@ -79,11 +79,6 @@ public class RootSequence extends Sequence implements ConfigRoot {
     }
 
     @Override
-    public @NotNull String getPath(String key) {
-        return key;
-    }
-
-    @Override
     public @Nullable String getPrefix() {
         return prefix;
     }

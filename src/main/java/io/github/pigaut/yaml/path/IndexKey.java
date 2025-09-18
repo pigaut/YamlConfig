@@ -62,9 +62,12 @@ public class IndexKey implements FieldKey {
     }
 
     @Override
-    public void set(@NotNull Branch branch, @NotNull Object value) {
+    public Scalar createScalar(@NotNull Branch branch, @NotNull Object value) {
         final Sequence sequence = branch.convertToSequence();
-        sequence.setNode(index, new KeylessScalar(sequence, index, value));
+        final KeylessScalar scalar = new KeylessScalar(sequence, index, value);
+
+        sequence.setNode(index, scalar);
+        return scalar;
     }
 
     @Override

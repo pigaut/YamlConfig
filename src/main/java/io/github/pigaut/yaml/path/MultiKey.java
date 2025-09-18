@@ -70,7 +70,7 @@ public class MultiKey implements FieldKey {
     }
 
     @Override
-    public void set(@NotNull Branch branch, @NotNull Object value) {
+    public Scalar createScalar(@NotNull Branch branch, @NotNull Object value) {
         final Section section = branch.convertToSection();
 
         String key = keys[0];
@@ -81,7 +81,9 @@ public class MultiKey implements FieldKey {
             }
         }
 
-        section.putNode(key, new KeyedScalar(section, key, value));
+        final KeyedScalar scalar = new KeyedScalar(section, key, value);
+        section.putNode(key, scalar);
+        return scalar;
     }
 
     @Override

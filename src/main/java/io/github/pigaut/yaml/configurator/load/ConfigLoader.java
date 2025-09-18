@@ -1,6 +1,7 @@
 package io.github.pigaut.yaml.configurator.load;
 
 import io.github.pigaut.yaml.*;
+import io.github.pigaut.yaml.node.*;
 import org.jetbrains.annotations.*;
 
 public interface ConfigLoader<T> {
@@ -9,12 +10,8 @@ public interface ConfigLoader<T> {
         return null;
     }
 
-    default @NotNull T loadFromLine(ConfigLine line) throws InvalidConfigurationException {
-        throw new InvalidConfigurationException(line, "In-line data is not supported here");
-    }
-
     default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigurationException {
-        throw new InvalidConfigurationException(scalar, "Scalar value is not supported here");
+        throw new InvalidConfigurationException(scalar, "Value is not supported here");
     }
 
     default @NotNull T loadFromSection(@NotNull ConfigSection section) throws InvalidConfigurationException {
@@ -25,7 +22,12 @@ public interface ConfigLoader<T> {
         throw new InvalidConfigurationException(sequence, "Sequence (list) is not supported here");
     }
 
+    @FunctionalInterface
     interface Scalar<T> extends ConfigLoader<T> {
+
+        @NotNull
+        T loadFromScalar(ConfigScalar line) throws InvalidConfigurationException;
+
         @Override
         default @NotNull T loadFromSection(@NotNull ConfigSection section) throws InvalidConfigurationException {
             throw new InvalidConfigurationException(section, "Section not supported for scalar loader");
@@ -37,7 +39,34 @@ public interface ConfigLoader<T> {
         }
     }
 
+    @FunctionalInterface
+    interface Line<T> extends ConfigLoader<T> {
+
+        @NotNull
+        T loadFromLine(ConfigLine line) throws InvalidConfigurationException;
+
+        @Override
+        default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigurationException {
+            return loadFromLine(scalar.toLine());
+        }
+
+        @Override
+        default @NotNull T loadFromSection(@NotNull ConfigSection section) throws InvalidConfigurationException {
+            throw new InvalidConfigurationException(section, "loadFromSection is not supported for line loader");
+        }
+
+        @Override
+        default @NotNull T loadFromSequence(@NotNull ConfigSequence sequence) throws InvalidConfigurationException {
+            throw new InvalidConfigurationException(sequence, "loadFromSequence is not supported for line loader");
+        }
+    }
+
+    @FunctionalInterface
     interface Section<T> extends ConfigLoader<T> {
+
+        @Override
+        @NotNull T loadFromSection(@NotNull ConfigSection section);
+
         @Override
         default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigurationException {
             throw new InvalidConfigurationException(scalar, "Scalar not supported for section loader");
@@ -49,7 +78,12 @@ public interface ConfigLoader<T> {
         }
     }
 
+    @FunctionalInterface
     interface Sequence<T> extends ConfigLoader<T> {
+
+        @Override
+        @NotNull T loadFromSequence(@NotNull ConfigSequence section);
+
         @Override
         default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigurationException {
             throw new InvalidConfigurationException(scalar, "Scalar not supported for sequence loader");
@@ -61,6 +95,7 @@ public interface ConfigLoader<T> {
         }
     }
 
+    @FunctionalInterface
     interface Branch<T> extends ConfigLoader<T> {
         @NotNull T loadFromBranch(@NotNull ConfigBranch branch) throws InvalidConfigurationException;
 
@@ -75,18 +110,25 @@ public interface ConfigLoader<T> {
         }
     }
 
-    interface Field<T> extends ConfigLoader<T> {
+    @FunctionalInterface
+    interface Any<T> extends ConfigLoader<T> {
         @NotNull T loadFromField(@NotNull ConfigField field) throws InvalidConfigurationException;
-
-        @Override
-        default @NotNull T loadFromLine(ConfigLine line) throws InvalidConfigurationException {
-            return loadFromField(line);
-        }
 
         @Override
         default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigurationException {
             return loadFromField(scalar);
         }
+
+        @Override
+        default @NotNull T loadFromSection(@NotNull ConfigSection section) throws InvalidConfigurationException {
+            return loadFromField(section);
+        }
+
+        @Override
+        default @NotNull T loadFromSequence(@NotNull ConfigSequence sequence) throws InvalidConfigurationException {
+            return loadFromField(sequence);
+        }
+
     }
 
 }
