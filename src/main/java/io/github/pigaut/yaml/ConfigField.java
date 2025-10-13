@@ -13,8 +13,8 @@ public interface ConfigField {
     @NotNull ConfigRoot getRoot();
     @NotNull String getKey();
     @NotNull Object getValue();
-    @Nullable String getPath();
-    @Nullable String getSimplePath();
+    @NotNull String getPath();
+    @NotNull String getSimplePath();
     @NotNull FieldType getFieldType();
 
     <T> T loadRequired(Class<T> classType) throws InvalidConfigurationException;

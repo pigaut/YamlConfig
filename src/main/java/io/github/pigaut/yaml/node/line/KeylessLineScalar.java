@@ -40,7 +40,7 @@ public class KeylessLineScalar extends LineScalar implements KeylessField {
         if (ScalarUtil.isBoolean(value)) {
             return ConfigOptional.of(line, (Boolean) value);
         }
-        return ConfigOptional.invalid(new InvalidConfigurationException(line, "Missing a boolean value at position: " + getPosition()));
+        return ConfigOptional.invalid(line, "Missing a boolean value at position: " + getPosition());
     }
 
     @Override
@@ -48,7 +48,7 @@ public class KeylessLineScalar extends LineScalar implements KeylessField {
         if (ScalarUtil.isCharacter(value)) {
             return ConfigOptional.of(line, value.toString().charAt(0));
         }
-        return ConfigOptional.invalid(new InvalidConfigurationException(line, "Missing a character value at position: " + getPosition()));
+        return ConfigOptional.invalid(line, "Missing a character value at position: " + getPosition());
     }
 
     @Override
@@ -56,7 +56,7 @@ public class KeylessLineScalar extends LineScalar implements KeylessField {
         if (ScalarUtil.isInteger(value)) {
             return ConfigOptional.of(line, ((Number) value).intValue());
         }
-        return ConfigOptional.invalid(new InvalidConfigurationException(line, "Missing an integer value at position: " + getPosition()));
+        return ConfigOptional.invalid(line, "Missing an integer value at position: " + getPosition());
     }
 
     @Override
@@ -64,7 +64,7 @@ public class KeylessLineScalar extends LineScalar implements KeylessField {
         if (ScalarUtil.isLong(value)) {
             return ConfigOptional.of(line, ((Number) value).longValue());
         }
-        return ConfigOptional.invalid(new InvalidConfigurationException(line, "Missing a long value at position: " + getPosition()));
+        return ConfigOptional.invalid(line, "Missing a long value at position: " + getPosition());
     }
 
     @Override
@@ -72,7 +72,7 @@ public class KeylessLineScalar extends LineScalar implements KeylessField {
         if (ScalarUtil.isFloat(value)) {
             return ConfigOptional.of(line, ((Number) value).floatValue());
         }
-        return ConfigOptional.invalid(new InvalidConfigurationException(line, "Missing a float value at position: " + getPosition()));
+        return ConfigOptional.invalid(line, "Missing a float value at position: " + getPosition());
     }
 
     @Override
@@ -80,7 +80,7 @@ public class KeylessLineScalar extends LineScalar implements KeylessField {
         if (ScalarUtil.isDouble(value)) {
             return ConfigOptional.of(line, ((Number) value).doubleValue());
         }
-        return ConfigOptional.invalid(new InvalidConfigurationException(line, "Missing a double value at position: " + getPosition()));
+        return ConfigOptional.invalid(line, "Missing a double value at position: " + getPosition());
     }
 
 }

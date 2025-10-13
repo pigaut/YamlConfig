@@ -28,6 +28,12 @@ public abstract class Scalar extends Field implements ConfigScalar {
     }
 
     @Override
+    public boolean contains(String value) {
+        String string = toString();
+        return string.contains(value);
+    }
+
+    @Override
     public @NotNull Object getValue() {
         return value;
     }
@@ -70,7 +76,7 @@ public abstract class Scalar extends Field implements ConfigScalar {
         if (ScalarUtil.isBoolean(value)) {
             return ConfigOptional.of(this, (Boolean) value);
         }
-        return ConfigOptional.invalid(new InvalidConfigurationException(this, "Expected a boolean but found: " + this));
+        return ConfigOptional.invalid(this, "Expected a boolean but found: " + this);
     }
 
     @Override
@@ -78,7 +84,7 @@ public abstract class Scalar extends Field implements ConfigScalar {
         if (ScalarUtil.isCharacter(value)) {
             return ConfigOptional.of(this, value.toString().charAt(0));
         }
-        return ConfigOptional.invalid(new InvalidConfigurationException(this, "Expected a character but found: " + this));
+        return ConfigOptional.invalid(this, "Expected a character but found: " + this);
     }
 
     @Override
@@ -86,7 +92,7 @@ public abstract class Scalar extends Field implements ConfigScalar {
         if (ScalarUtil.isInteger(value)) {
             return ConfigOptional.of(this, ((Number) value).intValue());
         }
-        return ConfigOptional.invalid(new InvalidConfigurationException(this, "Expected an integer but found: " + this));
+        return ConfigOptional.invalid(this, "Expected an integer but found: " + this);
     }
 
     @Override
@@ -94,7 +100,7 @@ public abstract class Scalar extends Field implements ConfigScalar {
         if (ScalarUtil.isLong(value)) {
             return ConfigOptional.of(this, ((Number) value).longValue());
         }
-        return ConfigOptional.invalid(new InvalidConfigurationException(this, "Expected a long but found: " + this));
+        return ConfigOptional.invalid(this, "Expected a long but found: " + this);
     }
 
     @Override
@@ -102,7 +108,7 @@ public abstract class Scalar extends Field implements ConfigScalar {
         if (ScalarUtil.isFloat(value)) {
             return ConfigOptional.of(this, ((Number) value).floatValue());
         }
-        return ConfigOptional.invalid(new InvalidConfigurationException(this, "Expected a float but found: " + this));
+        return ConfigOptional.invalid(this, "Expected a float but found: " + this);
     }
 
     @Override
@@ -110,7 +116,7 @@ public abstract class Scalar extends Field implements ConfigScalar {
         if (ScalarUtil.isDouble(value)) {
             return ConfigOptional.of(this, ((Number) value).doubleValue());
         }
-        return ConfigOptional.invalid(new InvalidConfigurationException(this, "Expected a double but found: " + this));
+        return ConfigOptional.invalid(this, "Expected a double but found: " + this);
     }
 
     @Override
@@ -165,12 +171,12 @@ public abstract class Scalar extends Field implements ConfigScalar {
 
     @Override
     public ConfigOptional<ConfigSection> toSection() {
-        return ConfigOptional.invalid(new InvalidConfigurationException(this, "Expected a section but found a value"));
+        return ConfigOptional.invalid(this, "Expected a section but found a value");
     }
 
     @Override
     public ConfigOptional<ConfigSequence> toSequence() {
-        return ConfigOptional.invalid(new InvalidConfigurationException(this, "Expected a sequence (list) but found a value"));
+        return ConfigOptional.invalid(this, "Expected a sequence (list) but found a value");
     }
 
     @Override

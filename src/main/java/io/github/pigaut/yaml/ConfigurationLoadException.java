@@ -33,6 +33,17 @@ public class ConfigurationLoadException extends ConfigurationException {
         return file;
     }
 
+    public @Nullable String getFilePath() {
+        return file != null ? file.getPath() : null;
+    }
+
+    public @Nullable String getFilePath(String parentDirectory) {
+        if (file != null) {
+            return file.getPath().replaceAll(Pattern.quote(parentDirectory + File.separator), "");
+        }
+        return null;
+    }
+
     public @NotNull String getDetails() {
         return cause;
     }

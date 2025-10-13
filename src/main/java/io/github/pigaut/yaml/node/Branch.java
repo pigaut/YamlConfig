@@ -73,16 +73,18 @@ public abstract class Branch extends Field implements ConfigBranch {
     }
 
     @Override
-    public Set<ConfigSection> getNestedSections() throws InvalidConfigurationException {
+    public Set<ConfigSection> getNestedSections() {
         return stream()
-                .map(field -> field.toSection().orThrow())
+                .map(field -> field.toSection().orElse(null))
+                .filter(Objects::nonNull)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     @Override
-    public Set<ConfigSequence> getNestedSequences() throws InvalidConfigurationException {
+    public Set<ConfigSequence> getNestedSequences() {
         return stream()
-                .map(field -> field.toSequence().orThrow())
+                .map(field -> field.toSequence().orElse(null))
+                .filter(Objects::nonNull)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 

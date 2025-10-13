@@ -5,6 +5,7 @@ import io.github.pigaut.yaml.configurator.*;
 import io.github.pigaut.yaml.convert.parse.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.sequence.*;
+import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.api.*;
 import org.snakeyaml.engine.v2.exceptions.*;
@@ -27,6 +28,7 @@ public class RootScalar extends Scalar implements ConfigRoot {
 
     public RootScalar(@Nullable File file, @NotNull Configurator configurator, @Nullable String prefix, boolean debug) {
         super("");
+        Preconditions.checkNotNull(configurator, "Configurator cannot be null");
         this.file = file;
         this.name = file != null ? YamlConfig.getFileName(file) : null;
         this.configurator = configurator;
@@ -52,11 +54,6 @@ public class RootScalar extends Scalar implements ConfigRoot {
     @Override
     public @NotNull Branch getParent() throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Root does not have a parent");
-    }
-
-    @Override
-    public @Nullable String getPath() {
-        return null;
     }
 
     @Override

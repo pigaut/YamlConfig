@@ -2,6 +2,7 @@ package io.github.pigaut.yaml.convert.parse;
 
 import io.github.pigaut.yaml.amount.*;
 import io.github.pigaut.yaml.convert.format.*;
+import io.github.pigaut.yaml.util.*;
 
 import java.io.*;
 import java.math.*;
@@ -21,6 +22,7 @@ public class Parsers {
     public static final Parser<Float> FLOAT = ParseUtil::parseFloat;
     public static final Parser<Double> DOUBLE = ParseUtil::parseDouble;
     public static final Parser<Amount> AMOUNT = ParseUtil::parseAmount;
+    public static final Parser<Ticks> TIME = ParseUtil::parseTime;
     public static final Parser<LocalDate> LOCAL_DATE = ParseUtil::parseLocalDate;
     public static final Parser<LocalTime> LOCAL_TIME = ParseUtil::parseLocalTime;
     public static final Parser<LocalDateTime> LOCAL_DATE_TIME = ParseUtil::parseLocalDateTime;
@@ -72,6 +74,7 @@ public class Parsers {
         PARSERS.put(double.class, DOUBLE);
 
         PARSERS.put(Amount.class, AMOUNT);
+        PARSERS.put(Ticks.class, TIME);
 
         PARSERS.put(BigInteger.class, BIG_INTEGER);
         PARSERS.put(BigDecimal.class, BIG_DECIMAL);

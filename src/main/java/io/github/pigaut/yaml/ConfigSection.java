@@ -23,8 +23,8 @@ public interface ConfigSection extends ConfigBranch, Iterable<ConfigField> {
     ConfigScalar getScalarOrCreate(@NotNull String path);
 
     Set<ConfigField> getNestedFields(@NotNull String path);
-    Set<ConfigSection> getNestedSections(@NotNull String path) throws InvalidConfigurationException;
-    Set<ConfigSequence> getNestedSequences(@NotNull String path) throws InvalidConfigurationException;
+    Set<ConfigSection> getNestedSections(@NotNull String path);
+    Set<ConfigSequence> getNestedSequences(@NotNull String path);
 
     <T> List<T> getAll(@NotNull String path, @NotNull Class<T> classType) throws InvalidConfigurationException;
     <T> List<T> getAllOrSkip(@NotNull String path, @NotNull Class<T> classType);
@@ -59,6 +59,7 @@ public interface ConfigSection extends ConfigBranch, Iterable<ConfigField> {
     ConfigOptional<Float> getFloat(@NotNull String path);
     ConfigOptional<Double> getDouble(@NotNull String path);
 
+    <T> List<T> getList(@NotNull String path, Class<T> classType) throws InvalidConfigurationException;
     List<ConfigField> getFieldList(@NotNull String path) throws InvalidConfigurationException;
     List<ConfigScalar> getScalarList(@NotNull String path) throws InvalidConfigurationException;
     List<ConfigSection> getSectionList(@NotNull String path) throws InvalidConfigurationException;
@@ -70,5 +71,18 @@ public interface ConfigSection extends ConfigBranch, Iterable<ConfigField> {
     List<Long> getLongList(@NotNull String path) throws InvalidConfigurationException;
     List<Float> getFloatList(@NotNull String path) throws InvalidConfigurationException;
     List<Double> getDoubleList(@NotNull String path) throws InvalidConfigurationException;
+
+    <T> ConfigOptional<List<T>> getElements(@NotNull String path, Class<T> classType);
+    ConfigOptional<List<ConfigField>> getFields(@NotNull String path);
+    ConfigOptional<List<ConfigScalar>> getScalars(@NotNull String path);
+    ConfigOptional<List<ConfigSection>> getSections(@NotNull String path);
+    ConfigOptional<List<Boolean>> getBooleans(@NotNull String path);
+    ConfigOptional<List<Character>> getCharacters(@NotNull String path);
+    ConfigOptional<List<String>> getStrings(@NotNull String path);
+    ConfigOptional<List<String>> getStrings(@NotNull String path, @NotNull StringFormatter formatter);
+    ConfigOptional<List<Integer>> getIntegers(@NotNull String path);
+    ConfigOptional<List<Long>> getLongs(@NotNull String path);
+    ConfigOptional<List<Float>> getFloats(@NotNull String path);
+    ConfigOptional<List<Double>> getDoubles(@NotNull String path);
 
 }

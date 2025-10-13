@@ -11,19 +11,24 @@ public abstract class Field implements ConfigField {
     @NotNull
     public abstract Branch getParent() throws UnsupportedOperationException;
 
-    @Nullable
-    public String getPath() {
-        final List<Field> branch = new ArrayList<>();
+    public @NotNull String getPath() {
+        if (isRoot()) {
+            throw new UnsupportedOperationException("Root configurations do not have a path");
+        }
+
+        List<Field> branch = new ArrayList<>();
         Field currentNode = this;
         while (!currentNode.isRoot()) {
             branch.add(0, currentNode);
             currentNode = currentNode.getParent();
         }
 
-        final List<String> keys = new ArrayList<>();
+        List<String> keys = new ArrayList<>();
         for (int i = 0; i < branch.size(); i++) {
             Field node = branch.get(i);
-            final StringBuilder keyBuilder = new StringBuilder(node.getKey());
+            final StringBuilder keyBuilder = new StringBuilder();
+            keyBuilder.append(node.getKey());
+
             while (node instanceof Sequence && i < branch.size() - 1) {
                 final Field nextNode = branch.get(1 + i++);
                 keyBuilder.append(nextNode.getKey());
@@ -31,19 +36,23 @@ public abstract class Field implements ConfigField {
             }
             keys.add(keyBuilder.toString());
         }
+
         return String.join(".", keys);
     }
 
-    @Nullable
-    public String getSimplePath() {
-        final List<Field> branch = new ArrayList<>();
+    public @NotNull String getSimplePath() {
+        if (isRoot()) {
+            throw new UnsupportedOperationException("Root configurations do not have a path");
+        }
+
+        List<Field> branch = new ArrayList<>();
         Field currentNode = this;
         while (!currentNode.isRoot()) {
             branch.add(0, currentNode);
             currentNode = currentNode.getParent();
         }
 
-        final List<String> keys = new ArrayList<>();
+        List<String> keys = new ArrayList<>();
         for (int i = 0; i < branch.size(); i++) {
             Field node = branch.get(i);
             final StringBuilder keyBuilder = new StringBuilder();

@@ -48,12 +48,12 @@ public class Line implements ConfigLine {
     }
 
     @Override
-    public @Nullable String getPath() {
+    public @NotNull String getPath() {
         return scalar.getPath();
     }
 
     @Override
-    public @Nullable String getSimplePath() {
+    public @NotNull String getSimplePath() {
         return scalar.getSimplePath();
     }
 
@@ -85,6 +85,16 @@ public class Line implements ConfigLine {
     @Override
     public ConfigOptional<ConfigSequence> toSequence() {
         return scalar.toSequence();
+    }
+
+    @Override
+    public boolean contains(@NotNull String value) {
+        return scalar.contains(value);
+    }
+
+    @Override
+    public boolean hasFlag(@NotNull String key) {
+        return valuesByKey.containsKey(key);
     }
 
     @Override
@@ -186,7 +196,7 @@ public class Line implements ConfigLine {
                 return ConfigOptional.of(valuesByKey.get(alias));
             }
         }
-        return ConfigOptional.notSet(new InvalidConfigurationException(this, "Missing a value with flag: " + aliases[0]));
+        return ConfigOptional.notSet(this, "Missing a value with flag: " + aliases[0]);
     }
 
     private ConfigOptional<ConfigScalar> getScalar(int index) {
@@ -198,7 +208,7 @@ public class Line implements ConfigLine {
             return ConfigOptional.of(this, values.get(index));
         }
 
-        return ConfigOptional.notSet(new InvalidConfigurationException(this, "Missing a value at position: " + (index + 1)));
+        return ConfigOptional.notSet(this, "Missing a value at position: " + (index + 1));
     }
 
     @Override

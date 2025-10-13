@@ -8,6 +8,9 @@ import java.util.*;
 
 public interface ConfigLine extends ConfigField, Iterable<ConfigScalar> {
 
+    boolean contains(@NotNull String value);
+    boolean hasFlag(@NotNull String key);
+
     @NotNull ConfigScalar asScalar();
 
     @NotNull String getValue();

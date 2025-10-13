@@ -52,16 +52,18 @@ public interface ConfigSequence extends ConfigBranch, Iterable<ConfigField> {
     ConfigOptional<Double> getDouble(int index);
 
     List<ConfigField> toFieldList();
-    List<ConfigScalar> toScalarList() throws InvalidConfigurationException;
-    List<ConfigSection> toSectionList() throws InvalidConfigurationException;
-    List<ConfigSequence> toSequenceList() throws InvalidConfigurationException;
-    List<Boolean> toBooleanList() throws InvalidConfigurationException;
-    List<Character> toCharacterList() throws InvalidConfigurationException;
-    List<String> toStringList() throws InvalidConfigurationException;
-    List<String> toStringList(StringFormatter formatter) throws InvalidConfigurationException;
-    List<Integer> toIntegerList() throws InvalidConfigurationException;
-    List<Long> toLongList() throws InvalidConfigurationException;
-    List<Float> toFloatList() throws InvalidConfigurationException;
-    List<Double> toDoubleList() throws InvalidConfigurationException;
+
+    <T> ConfigOptional<List<T>> toList(Class<T> classType);
+    ConfigOptional<List<ConfigScalar>> toScalarList();
+    ConfigOptional<List<ConfigSection>> toSectionList();
+    ConfigOptional<List<ConfigSequence>> toSequenceList();
+    ConfigOptional<List<Boolean>> toBooleanList();
+    ConfigOptional<List<Character>> toCharacterList();
+    ConfigOptional<List<String>> toStringList();
+    ConfigOptional<List<String>> toStringList(StringFormatter formatter);
+    ConfigOptional<List<Integer>> toIntegerList();
+    ConfigOptional<List<Long>> toLongList();
+    ConfigOptional<List<Float>> toFloatList();
+    ConfigOptional<List<Double>> toDoubleList();
 
 }

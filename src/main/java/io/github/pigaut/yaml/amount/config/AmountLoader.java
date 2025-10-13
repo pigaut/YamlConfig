@@ -36,7 +36,7 @@ public class AmountLoader implements ConfigLoader<Amount> {
 
     @Override
     public @NotNull Amount loadFromSequence(@NotNull ConfigSequence sequence) throws InvalidConfigurationException {
-        final List<Double> values = sequence.toDoubleList();
+        final List<Double> values = sequence.toDoubleList().orThrow();
 
         if (values.isEmpty()) {
             throw new InvalidConfigurationException(sequence, "Casual amount needs at least two elements");

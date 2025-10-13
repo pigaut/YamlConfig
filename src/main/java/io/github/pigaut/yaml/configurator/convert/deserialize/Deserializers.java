@@ -3,6 +3,7 @@ package io.github.pigaut.yaml.configurator.convert.deserialize;
 import io.github.pigaut.yaml.amount.*;
 import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.convert.parse.*;
+import io.github.pigaut.yaml.util.*;
 
 import java.io.*;
 import java.math.*;
@@ -22,6 +23,7 @@ public class Deserializers {
     public static final Deserializer<Float> FLOAT = ParseUtil::parseFloat;
     public static final Deserializer<Double> DOUBLE = ParseUtil::parseDouble;
     public static final Deserializer<Amount> AMOUNT = ParseUtil::parseAmount;
+    public static final Deserializer<Ticks> TIME = ParseUtil::parseTime;
     public static final Deserializer<LocalDate> LOCAL_DATE = ParseUtil::parseLocalDate;
     public static final Deserializer<LocalTime> LOCAL_TIME = ParseUtil::parseLocalTime;
     public static final Deserializer<LocalDateTime> LOCAL_DATE_TIME = ParseUtil::parseLocalDateTime;
@@ -36,7 +38,8 @@ public class Deserializers {
         return string -> {
             try {
                 return Enum.valueOf(classType, CaseFormatter.toConstantCase(string));
-            } catch (IllegalArgumentException e) {
+            }
+            catch (IllegalArgumentException e) {
                 final String typeName = CaseFormatter.toTitleCase(CaseFormatter.splitClassName(classType));
                 throw new StringParseException("Expected a(n) " + typeName + " but found: '" + string + "'");
             }
@@ -73,6 +76,7 @@ public class Deserializers {
         DESERIALIZERS.put(double.class, DOUBLE);
 
         DESERIALIZERS.put(Amount.class, AMOUNT);
+        DESERIALIZERS.put(Ticks.class, TIME);
 
         DESERIALIZERS.put(BigInteger.class, BIG_INTEGER);
         DESERIALIZERS.put(BigDecimal.class, BIG_DECIMAL);

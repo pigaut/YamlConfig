@@ -24,7 +24,7 @@ public class KeyedLineScalar extends LineScalar implements ConfigScalar {
         if (ScalarUtil.isBoolean(value)) {
             return ConfigOptional.of(line, (Boolean) value);
         }
-        return ConfigOptional.invalid(new InvalidConfigurationException(line, "Missing a boolean value with flag: " + flag));
+        return ConfigOptional.invalid(line, "Missing a boolean value with flag: " + flag);
     }
 
     @Override
@@ -32,7 +32,7 @@ public class KeyedLineScalar extends LineScalar implements ConfigScalar {
         if (ScalarUtil.isCharacter(value)) {
             return ConfigOptional.of(line, value.toString().charAt(0));
         }
-        return ConfigOptional.invalid(new InvalidConfigurationException(line, "Missing a character value with flag: " + flag));
+        return ConfigOptional.invalid(line, "Missing a character value with flag: " + flag);
     }
 
     @Override
@@ -40,7 +40,7 @@ public class KeyedLineScalar extends LineScalar implements ConfigScalar {
         if (ScalarUtil.isInteger(value)) {
             return ConfigOptional.of(line, ((Number) value).intValue());
         }
-        return ConfigOptional.invalid(new InvalidConfigurationException(line, "Missing an integer value with flag: " + flag));
+        return ConfigOptional.invalid(line, "Missing an integer value with flag: " + flag);
     }
 
     @Override
@@ -48,7 +48,7 @@ public class KeyedLineScalar extends LineScalar implements ConfigScalar {
         if (ScalarUtil.isLong(value)) {
             return ConfigOptional.of(line, ((Number) value).longValue());
         }
-        return ConfigOptional.invalid(new InvalidConfigurationException(line, "Missing a long value with flag: " + flag));
+        return ConfigOptional.invalid(line, "Missing a long value with flag: " + flag);
     }
 
     @Override
@@ -56,7 +56,7 @@ public class KeyedLineScalar extends LineScalar implements ConfigScalar {
         if (ScalarUtil.isFloat(value)) {
             return ConfigOptional.of(line, ((Number) value).floatValue());
         }
-        return ConfigOptional.invalid(new InvalidConfigurationException(line, "Missing a float value with flag: " + flag));
+        return ConfigOptional.invalid(line, "Missing a float value with flag: " + flag);
     }
 
     @Override
@@ -64,7 +64,7 @@ public class KeyedLineScalar extends LineScalar implements ConfigScalar {
         if (ScalarUtil.isDouble(value)) {
             return ConfigOptional.of(line, ((Number) value).doubleValue());
         }
-        return ConfigOptional.invalid(new InvalidConfigurationException(line, "Missing a double value with flag: " + flag));
+        return ConfigOptional.invalid(line, "Missing a double value with flag: " + flag);
     }
 
 }

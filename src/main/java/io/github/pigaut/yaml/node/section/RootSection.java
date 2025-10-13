@@ -4,6 +4,7 @@ import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.configurator.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.sequence.*;
+import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.api.*;
 import org.snakeyaml.engine.v2.common.*;
@@ -27,6 +28,7 @@ public class RootSection extends Section implements ConfigRoot {
 
     public RootSection(@Nullable File file, @NotNull Configurator configurator, @Nullable String prefix, boolean debug) {
         super(FlowStyle.BLOCK);
+        Preconditions.checkNotNull(configurator, "Configurator cannot be null");
         this.file = file;
         this.name = file != null ? YamlConfig.getFileName(file) : null;
         this.configurator = configurator;
@@ -71,11 +73,6 @@ public class RootSection extends Section implements ConfigRoot {
     @Override
     public @NotNull Branch getParent() throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Root does not have a parent");
-    }
-
-    @Override
-    public @Nullable String getPath() {
-        return null;
     }
 
     @Override

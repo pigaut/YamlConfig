@@ -63,8 +63,16 @@ public class CaseFormatter {
         return String.join("_", splitWords(string)).toUpperCase();
     }
 
+    public static String toSnakeCase(Class<?> clazz) {
+        return toSnakeCase(splitClassName(clazz));
+    }
+
     public static String toSnakeCase(String string) {
-        return String.join("_", splitWords(string)).toLowerCase();
+        return toSnakeCase(splitWords(string));
+    }
+
+    public static String toSnakeCase(String... words) {
+        return String.join("_", words).toLowerCase();
     }
 
     public static String toKebabCase(String string) {

@@ -6,6 +6,7 @@ import io.github.pigaut.yaml.amount.config.*;
 import io.github.pigaut.yaml.configurator.convert.deserialize.*;
 import io.github.pigaut.yaml.configurator.convert.serialize.*;
 import io.github.pigaut.yaml.configurator.map.*;
+import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
@@ -49,6 +50,9 @@ public class StandardConfigurator extends Configurator {
 
         addDeserializer(URL.class, Deserializers.URL);
         addSerializer(URL.class, Serializers.defaultSerializer());
+
+        addDeserializer(Ticks.class, Deserializers.TIME);
+        addSerializer(Ticks.class, Serializers.defaultSerializer());
 
         addLoader(Amount.class, new AmountLoader());
         addMapper(FixedAmount.class, new FixedAmountMapper());

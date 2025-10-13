@@ -9,6 +9,8 @@ import java.util.regex.*;
 
 public interface ConfigScalar extends ConfigField {
 
+    boolean contains(String value);
+
     @NotNull Object getValue();
     @NotNull ScalarStyle getScalarStyle();
 

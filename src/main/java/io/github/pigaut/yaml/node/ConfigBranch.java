@@ -21,8 +21,8 @@ public interface ConfigBranch extends ConfigField, Iterable<ConfigField> {
 
     Stream<ConfigField> stream();
     Set<ConfigField> getNestedFields();
-    Set<ConfigSection> getNestedSections() throws InvalidConfigurationException;
-    Set<ConfigSequence> getNestedSequences() throws InvalidConfigurationException;
+    Set<ConfigSection> getNestedSections();
+    Set<ConfigSequence> getNestedSequences();
 
     @NotNull ConfigSection convertToSection();
     @NotNull ConfigSequence convertToSequence();

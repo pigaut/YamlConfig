@@ -22,6 +22,11 @@ public abstract class LineScalar implements ConfigScalar {
     }
 
     @Override
+    public boolean contains(String value) {
+        return line.contains(value);
+    }
+
+    @Override
     public @NotNull Object getValue() {
         return value;
     }
@@ -84,12 +89,12 @@ public abstract class LineScalar implements ConfigScalar {
     }
 
     @Override
-    public @Nullable String getPath() {
+    public @NotNull String getPath() {
         return line.getPath();
     }
 
     @Override
-    public @Nullable String getSimplePath() {
+    public @NotNull String getSimplePath() {
         return line.getSimplePath();
     }
 

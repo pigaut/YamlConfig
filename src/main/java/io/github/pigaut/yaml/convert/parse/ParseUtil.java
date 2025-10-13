@@ -1,5 +1,6 @@
 package io.github.pigaut.yaml.convert.parse;
 
+import com.sun.security.jgss.*;
 import io.github.pigaut.yaml.amount.*;
 import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.util.*;
@@ -11,6 +12,7 @@ import java.net.*;
 import java.time.*;
 import java.time.format.*;
 import java.util.*;
+import java.util.regex.*;
 
 public class ParseUtil {
 
@@ -199,6 +201,23 @@ public class ParseUtil {
     }
 
     public static @NotNull Amount parseAmount(String string) throws StringParseException {
+        string = string.trim();
+
+        if (string.endsWith("+")) {
+            Double amount = parseDoubleOrNull(string.replace("+", ""));
+            if (amount == null) {
+                throw new StringParseException("Expected an inequality amount but found: '" + string + "'");
+            }
+            return InequalityAmount.greaterThanOrEqualTo(amount);
+        }
+        else if (string.endsWith("-")) {
+            Double amount = parseDoubleOrNull(string.replace("-", ""));
+            if (amount == null) {
+                throw new StringParseException("Expected an inequality amount but found: '" + string + "'");
+            }
+            return InequalityAmount.lessThanOrEqualTo(amount);
+        }
+
         final Double value = parseDoubleOrNull(string);
         if (value != null) {
             return Amount.fixed(value);
@@ -238,6 +257,57 @@ public class ParseUtil {
     public static Amount parseAmountOrNull(String string) {
         try {
             return parseAmount(string);
+        } catch (StringParseException e) {
+            return null;
+        }
+    }
+
+    private static final Pattern TIME_PATTERN = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*(tick|ticks|h|hour|hours|m|min|mins|minute|minutes|s|sec|secs|second|seconds)?");
+
+    public static Ticks parseTime(String string) throws StringParseException {
+        string = string.trim().toLowerCase();
+
+        if (string.matches("\\d+")) {
+            int ticks = Integer.parseInt(string);
+            if (ticks < 0) {
+                throw new StringParseException("Time values must be positive");
+            }
+            return new Ticks(ticks);
+        }
+
+        Matcher matcher = TIME_PATTERN.matcher(string);
+
+        int totalTicks = 0;
+        while (matcher.find()) {
+            double value = Double.parseDouble(matcher.group(1));
+            if (value < 0) {
+                throw new StringParseException("Time values must be positive");
+            }
+            String unit = matcher.group(2);
+
+            if (unit == null || unit.equals("tick") || unit.equals("ticks")) {
+                totalTicks += (int) value;
+            }
+            else if (unit.equals("s") || unit.equals("sec") || unit.equals("secs") || unit.equals("second") || unit.equals("seconds")) {
+                totalTicks += (int) (value * 20);
+            }
+            else if (unit.equals("m") || unit.equals("min") || unit.equals("mins") || unit.equals("minute") || unit.equals("minutes")) {
+                totalTicks += (int) (value * 1200);
+            }
+            else if (unit.equals("h") || unit.equals("hour") || unit.equals("hours")) {
+                totalTicks += (int) (value * 72000);
+            }
+            else {
+                throw new StringParseException("Expected a time unit but found: '" + unit + "'");
+            }
+        }
+
+        return new Ticks(totalTicks);
+    }
+
+    public static @Nullable Ticks parseTicksOrNull(String string) {
+        try {
+            return parseTime(string);
         } catch (StringParseException e) {
             return null;
         }
