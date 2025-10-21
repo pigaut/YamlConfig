@@ -19,4 +19,12 @@ public interface Deserializer<T> extends ConfigLoader.Scalar<T> {
         }
     }
 
+    default @NotNull T loadFromKey(ConfigSection section, String key) throws InvalidConfigurationException {
+        try {
+            return deserialize(key);
+        } catch (StringParseException e) {
+            throw new InvalidConfigurationException(section, e.getMessage());
+        }
+    }
+
 }
