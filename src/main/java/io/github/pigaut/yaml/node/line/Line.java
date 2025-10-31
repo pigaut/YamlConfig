@@ -5,6 +5,7 @@ import io.github.pigaut.yaml.configurator.*;
 import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.convert.parse.*;
 import io.github.pigaut.yaml.node.*;
+import io.github.pigaut.yaml.node.line.scalar.*;
 import io.github.pigaut.yaml.optional.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
@@ -382,8 +383,13 @@ public class Line implements ConfigLine {
         boolean inBrackets = false;
 
         for (char c : line.toCharArray()) {
-            if (c == '<') inBrackets = true;
-            if (c == '>') inBrackets = false;
+            if (c == '<' && !inBrackets) {
+                inBrackets = true;
+            }
+
+            if (c == '>' && inBrackets) {
+                inBrackets = false;
+            }
 
             if ((c == ' ' || c == ',') && !inBrackets) {
                 if (!current.isEmpty()) {

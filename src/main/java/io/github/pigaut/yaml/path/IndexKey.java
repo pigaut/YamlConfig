@@ -42,9 +42,9 @@ public class IndexKey implements FieldKey {
             return foundSection;
         }
 
-        final Section createdSection = new KeylessSection(sequence, index);
-        sequence.setNode(index, createdSection);
-        return createdSection;
+        KeylessSection newSection = new KeylessSection(sequence, index);
+        sequence.add(newSection);
+        return newSection;
     }
 
     @Override
@@ -56,17 +56,16 @@ public class IndexKey implements FieldKey {
             return foundSequence;
         }
 
-        final Sequence createdSequence = new KeylessSequence(section, index);
-        section.setNode(index, createdSequence);
-        return createdSequence;
+        KeylessSequence newSequence = new KeylessSequence(section, index);
+        section.addNode(newSequence);
+        return newSequence;
     }
 
     @Override
     public Scalar createScalar(@NotNull Branch branch, @NotNull Object value) {
-        final Sequence sequence = branch.convertToSequence();
-        final KeylessScalar scalar = new KeylessScalar(sequence, index, value);
-
-        sequence.setNode(index, scalar);
+        Sequence sequence = branch.convertToSequence();
+        KeylessScalar scalar = new KeylessScalar(sequence, index, value);
+        sequence.addNode(scalar);
         return scalar;
     }
 

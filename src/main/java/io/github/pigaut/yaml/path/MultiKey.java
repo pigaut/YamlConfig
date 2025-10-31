@@ -49,9 +49,9 @@ public class MultiKey implements FieldKey {
             return foundSection;
         }
 
-        final Section createdSection = new KeyedSection(parent, key);
-        parent.putNode(key, createdSection);
-        return createdSection;
+        KeyedSection newSection = new KeyedSection(parent, key);
+        parent.addNode(newSection);
+        return newSection;
     }
 
     @Override
@@ -64,9 +64,9 @@ public class MultiKey implements FieldKey {
             return foundSequence;
         }
 
-        final Sequence createdSequence = new KeyedSequence(parent, key);
-        parent.putNode(key, createdSequence);
-        return createdSequence;
+        KeyedSequence newSequence = new KeyedSequence(parent, key);
+        parent.addNode(newSequence);
+        return newSequence;
     }
 
     @Override
@@ -81,9 +81,9 @@ public class MultiKey implements FieldKey {
             }
         }
 
-        final KeyedScalar scalar = new KeyedScalar(section, key, value);
-        section.putNode(key, scalar);
-        return scalar;
+        KeyedScalar newScalar = new KeyedScalar(section, key, value);
+        section.addNode(newScalar);
+        return newScalar;
     }
 
     @Override

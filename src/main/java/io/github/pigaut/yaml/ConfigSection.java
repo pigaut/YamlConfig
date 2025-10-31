@@ -6,8 +6,9 @@ import io.github.pigaut.yaml.optional.*;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
+import java.util.stream.*;
 
-public interface ConfigSection extends ConfigBranch, Iterable<ConfigField> {
+public interface ConfigSection extends ConfigBranch, Iterable<KeyedField> {
 
     Set<String> getKeys();
     boolean contains(@NotNull String path);
@@ -16,13 +17,15 @@ public interface ConfigSection extends ConfigBranch, Iterable<ConfigField> {
     boolean isSequence(@NotNull String path);
     <T> void set(@NotNull String path, @NotNull T value);
     void remove(@NotNull String path);
-    void formatKeys(StringFormatter formatter);
 
     ConfigSection getSectionOrCreate(@NotNull String path);
     ConfigSequence getSequenceOrCreate(@NotNull String path);
     ConfigScalar getScalarOrCreate(@NotNull String path);
 
-    Set<ConfigField> getNestedFields(@NotNull String path);
+    Stream<KeyedField> stream();
+    Set<KeyedField> getNestedFields();
+
+    Set<? extends ConfigField> getNestedFields(@NotNull String path);
     Set<ConfigSection> getNestedSections(@NotNull String path);
     Set<ConfigSequence> getNestedSequences(@NotNull String path);
 

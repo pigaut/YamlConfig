@@ -1,4 +1,4 @@
-package io.github.pigaut.yaml.node.line;
+package io.github.pigaut.yaml.node.line.scalar;
 
 import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.optional.*;

@@ -19,28 +19,29 @@ import java.util.stream.*;
 
 public abstract class Sequence extends Branch implements ConfigSequence {
 
-    private final List<@NotNull ConfigField> fields = new ArrayList<>();
+    private final List<@NotNull KeylessField> fields = new ArrayList<>();
 
     protected Sequence(@NotNull FlowStyle flowStyle) {
         super(flowStyle);
     }
 
-    public ConfigField getNode(int index) {
-        if (index < size())
+    public @Nullable ConfigField getNode(int index) {
+        if (index < size()) {
             return fields.get(index);
+        }
         return null;
     }
 
-    public void setNode(int index, Field node) {
+    public void addNode(KeylessField node) {
+        int index = node.getIndex();
         while (index >= size()) {
             add("");
         }
         fields.set(index, node);
     }
 
-    @NotNull
     @Override
-    public Iterator<ConfigField> iterator() {
+    public Iterator<KeylessField> iterator() {
         return fields.iterator();
     }
 
@@ -52,11 +53,6 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     @Override
     public boolean isEmpty() {
         return size() == 0;
-    }
-
-    @Override
-    public Stream<ConfigField> stream() {
-        return fields.stream();
     }
 
     @Override
@@ -144,6 +140,16 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     }
 
     @Override
+    public Stream<KeylessField> stream() {
+        return fields.stream();
+    }
+
+    @Override
+    public Set<KeylessField> getNestedFields() {
+        return new LinkedHashSet<>(fields);
+    }
+
+    @Override
     public boolean isSet(int index) {
         if (index < 0) {
             throw new IllegalArgumentException("Index must be greater than 0");
@@ -158,13 +164,13 @@ public abstract class Sequence extends Branch implements ConfigSequence {
         }
 
         if (value == null) {
-            setScalar(index, "");
+            addNode(new KeylessScalar(this, size(), ""));
             return;
         }
 
         final var classType = value.getClass();
         if (YamlConfig.isScalar(classType)) {
-            setScalar(index, value);
+            addNode(new KeylessScalar(this, size(), value));
             return;
         }
 
@@ -225,9 +231,8 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     public void remove(int index) {
         fields.remove(index);
         for (int i = 0; i < size(); i++) {
-            if (fields.get(i) instanceof KeylessField keylessField) {
-                keylessField.setIndex(i);
-            }
+            KeylessField field = fields.get(i);
+            field.setIndex(i);
         }
     }
 
@@ -238,9 +243,8 @@ public abstract class Sequence extends Branch implements ConfigSequence {
             return optionalSection.value();
         }
 
-        final ConfigSection section = new KeylessSection(this, index);
-        fields.set(index, section);
-
+        KeylessSection section = new KeylessSection(this, index);
+        addNode(section);
         return section;
     }
 
@@ -251,9 +255,8 @@ public abstract class Sequence extends Branch implements ConfigSequence {
             return optionalSequence.value();
         }
 
-        final ConfigSequence sequence = new KeylessSequence(this, index);
-        fields.set(index, sequence);
-
+        KeylessSequence sequence = new KeylessSequence(this, index);
+        addNode(sequence);
         return sequence;
     }
 
@@ -264,29 +267,28 @@ public abstract class Sequence extends Branch implements ConfigSequence {
             return optionalScalar.value();
         }
 
-        final ConfigScalar scalar = new KeylessScalar(this, index, "");
-        fields.set(index, scalar);
-
+        KeylessScalar scalar = new KeylessScalar(this, index, "");
+        addNode(scalar);
         return scalar;
     }
 
     @Override
     public @NotNull ConfigSection addEmptySection() {
-        final Section childSection = new KeylessSection(this, size());
+        KeylessSection childSection = new KeylessSection(this, size());
         fields.add(childSection);
         return childSection;
     }
 
     @Override
     public @NotNull ConfigSequence addEmptySequence() {
-        final Sequence childSequence = new KeylessSequence(this, size());
+        KeylessSequence childSequence = new KeylessSequence(this, size());
         fields.add(childSequence);
         return childSequence;
     }
 
     @Override
     public @NotNull ConfigScalar addEmptyScalar() {
-        final Scalar childScalar = new KeylessScalar(this, size(), "");
+        KeylessScalar childScalar = new KeylessScalar(this, size(), "");
         fields.add(childScalar);
         return childScalar;
     }
@@ -435,13 +437,13 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     }
 
     @Override
-    public <T> ConfigOptional<List<T>> toList(Class<T> classType) {
-        return createList(field -> field.load(classType).orThrow());
+    public List<ConfigField> toFieldList() {
+        return new ArrayList<>(fields);
     }
 
     @Override
-    public List<ConfigField> toFieldList() {
-        return new ArrayList<>(fields);
+    public <T> ConfigOptional<List<T>> toList(Class<T> classType) {
+        return createList(field -> field.load(classType).orThrow());
     }
 
     @Override
@@ -504,20 +506,11 @@ public abstract class Sequence extends Branch implements ConfigSequence {
         for (ConfigField field : this) {
             try {
                 list.add(mapper.apply(field));
-            }
-            catch (InvalidConfigurationException e) {
+            } catch (InvalidConfigurationException e) {
                 return ConfigOptional.invalid(e);
             }
         }
         return ConfigOptional.of(this, list);
-    }
-
-    private void setScalar(int index, Object value) {
-        fields.set(index, new KeylessScalar(this, size(), value));
-    }
-
-    private void addScalar(Object value) {
-        fields.add(new KeylessScalar(this, size(), value));
     }
 
     @Override
@@ -550,11 +543,9 @@ public abstract class Sequence extends Branch implements ConfigSequence {
 
         try {
             return ConfigOptional.of(this, loader.loadFromSequence(this));
-        }
-        catch (InvalidConfigurationException e) {
+        } catch (InvalidConfigurationException e) {
             return ConfigOptional.invalid(e);
-        }
-        finally {
+        } finally {
             root.removeProblem(problemDescription);
         }
     }

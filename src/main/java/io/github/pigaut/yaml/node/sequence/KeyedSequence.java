@@ -1,13 +1,14 @@
 package io.github.pigaut.yaml.node.sequence;
 
 import io.github.pigaut.yaml.*;
+import io.github.pigaut.yaml.node.*;
+import io.github.pigaut.yaml.node.scalar.key.*;
 import io.github.pigaut.yaml.node.section.*;
+import io.github.pigaut.yaml.optional.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.common.*;
 
-import java.util.*;
-
-public class KeyedSequence extends Sequence {
+public class KeyedSequence extends Sequence implements KeyedField {
 
     private final Section parent;
     private final String key;
@@ -23,18 +24,8 @@ public class KeyedSequence extends Sequence {
     }
 
     @Override
-    public @NotNull String getKey() throws UnsupportedOperationException {
-        return key;
-    }
-
-    @Override
     public boolean isRoot() {
         return false;
-    }
-
-    @Override
-    public @NotNull Section getParent() throws UnsupportedOperationException {
-        return parent;
     }
 
     @Override
@@ -43,9 +34,59 @@ public class KeyedSequence extends Sequence {
     }
 
     @Override
+    public @NotNull String getKey() throws UnsupportedOperationException {
+        return key;
+    }
+
+    @Override
+    public @NotNull Section getParent() throws UnsupportedOperationException {
+        return parent;
+    }
+
+    @Override
+    public @NotNull ConfigScalar getKeyAsScalar() {
+        return new KeyScalar(parent, key);
+    }
+
+    @Override
+    public <T> ConfigOptional<T> getKeyAs(Class<T> classType) {
+        return getKeyAsScalar().load(classType);
+    }
+
+    @Override
+    public ConfigOptional<Boolean> getBooleanKey() {
+        return getKeyAsScalar().toBoolean();
+    }
+
+    @Override
+    public ConfigOptional<Character> getCharacterKey() {
+        return getKeyAsScalar().toCharacter();
+    }
+
+    @Override
+    public ConfigOptional<Integer> getIntegerKey() {
+        return getKeyAsScalar().toInteger();
+    }
+
+    @Override
+    public ConfigOptional<Long> getLongKey() {
+        return getKeyAsScalar().toLong();
+    }
+
+    @Override
+    public ConfigOptional<Float> getFloatKey() {
+        return getKeyAsScalar().toFloat();
+    }
+
+    @Override
+    public ConfigOptional<Double> getDoubleKey() {
+        return getKeyAsScalar().toDouble();
+    }
+
+    @Override
     public @NotNull Section convertToSection() {
-        final Section section = new KeyedSection(parent, key);
-        parent.putNode(key, section);
+        KeyedSection section = new KeyedSection(parent, key);
+        parent.addNode(section);
         return section;
     }
 

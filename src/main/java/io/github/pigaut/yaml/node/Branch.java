@@ -40,7 +40,7 @@ public abstract class Branch extends Field implements ConfigBranch {
 
     @Override
     public void setNestedFlowStyle(@Nullable FlowStyle flowStyle) {
-        for (ConfigField field : this) {
+        for (ConfigField field : stream().toList()) {
             if (field instanceof ConfigBranch branch) {
                 branch.setFlowStyle(flowStyle);
             }
@@ -55,21 +55,12 @@ public abstract class Branch extends Field implements ConfigBranch {
 
     @Override
     public void setNestedScalarStyle(@Nullable ScalarStyle scalarStyle) {
-        for (ConfigField field : this) {
+        for (ConfigField field : stream().toList()) {
             if (field instanceof ConfigScalar scalar) {
                 scalar.setScalarStyle(scalarStyle);
             }
         }
         this.nestedScalarStyle = scalarStyle;
-    }
-
-    @Override
-    public abstract Stream<ConfigField> stream();
-
-    @Override
-    public Set<ConfigField> getNestedFields() {
-        return stream()
-                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     @Override
@@ -105,20 +96,17 @@ public abstract class Branch extends Field implements ConfigBranch {
 
     @Override
     public <T> List<T> getAll(@NotNull Class<T> classType) throws InvalidConfigurationException {
-        final List<T> elements = new ArrayList<>();
-        for (ConfigField nestedField : this) {
-            elements.add(nestedField.load(classType).orThrow());
-        }
-        return elements;
+        return stream()
+                .map(field -> field.load(classType).orThrow())
+                .toList();
     }
 
     @Override
     public <T> List<T> getAllOrSkip(@NotNull Class<T> classType) {
-        final List<T> elements = new ArrayList<>();
-        for (ConfigField nestedField : this) {
-            nestedField.load(classType).ifPresent(elements::add);
-        }
-        return elements;
+        return stream()
+                .map(field -> field.load(classType).orElse(null))
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     public abstract @NotNull List<@NotNull Object> toList();

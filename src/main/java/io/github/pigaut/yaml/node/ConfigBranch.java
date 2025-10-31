@@ -7,7 +7,7 @@ import org.snakeyaml.engine.v2.common.*;
 import java.util.*;
 import java.util.stream.*;
 
-public interface ConfigBranch extends ConfigField, Iterable<ConfigField> {
+public interface ConfigBranch extends ConfigField {
 
     int size();
     boolean isEmpty();
@@ -19,8 +19,9 @@ public interface ConfigBranch extends ConfigField, Iterable<ConfigField> {
     void setNestedFlowStyle(@Nullable FlowStyle flowStyle);
     void setNestedScalarStyle(@Nullable ScalarStyle scalarStyle);
 
-    Stream<ConfigField> stream();
-    Set<ConfigField> getNestedFields();
+    Stream<? extends ConfigField> stream();
+
+    Set<? extends ConfigField> getNestedFields();
     Set<ConfigSection> getNestedSections();
     Set<ConfigSequence> getNestedSequences();
 

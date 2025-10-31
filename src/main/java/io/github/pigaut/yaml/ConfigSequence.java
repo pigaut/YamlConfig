@@ -6,12 +6,16 @@ import io.github.pigaut.yaml.optional.*;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
+import java.util.stream.*;
 
-public interface ConfigSequence extends ConfigBranch, Iterable<ConfigField> {
+public interface ConfigSequence extends ConfigBranch, Iterable<KeylessField> {
 
     boolean isSet(int index);
     <T> void set(int index, @Nullable T value);
     void remove(int index);
+
+    Stream<KeylessField> stream();
+    Set<KeylessField> getNestedFields();
 
     @NotNull ConfigSection getSectionOrCreate(int index);
     @NotNull ConfigSequence getSequenceOrCreate(int index);

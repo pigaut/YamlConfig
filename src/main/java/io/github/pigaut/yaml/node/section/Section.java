@@ -18,18 +18,18 @@ import java.util.stream.*;
 
 public abstract class Section extends Branch implements ConfigSection {
 
-    private final Map<@NotNull String, @NotNull ConfigField> fieldsByKey = new LinkedHashMap<>();
+    private final Map<@NotNull String, @NotNull KeyedField> fieldsByKey = new LinkedHashMap<>();
 
     protected Section(FlowStyle flowStyle) {
         super(flowStyle);
     }
 
-    public void putNode(String key, Field value) {
-        fieldsByKey.put(key, value);
-    }
-
     public ConfigField getNode(String key) {
         return fieldsByKey.get(key);
+    }
+
+    public void addNode(KeyedField keyedField) {
+        fieldsByKey.put(keyedField.getKey(), keyedField);
     }
 
     public void removeNode(String key) {
@@ -44,11 +44,6 @@ public abstract class Section extends Branch implements ConfigSection {
     @Override
     public boolean isEmpty() {
         return size() == 0;
-    }
-
-    @Override
-    public Stream<@NotNull ConfigField> stream() {
-        return fieldsByKey.values().stream();
     }
 
     @Override
@@ -147,11 +142,21 @@ public abstract class Section extends Branch implements ConfigSection {
     @Override
     public @NotNull Map<String, Object> toMap() {
         final Map<String, Object> map = new LinkedHashMap<>();
-        for (Map.Entry<String, ConfigField> entry : fieldsByKey.entrySet()) {
-            final ConfigField field = entry.getValue();
+        for (Map.Entry<String, KeyedField> entry : fieldsByKey.entrySet()) {
+            ConfigField field = entry.getValue();
             map.put(entry.getKey(), field.getValue());
         }
         return map;
+    }
+
+    @Override
+    public Stream<KeyedField> stream() {
+        return fieldsByKey.values().stream();
+    }
+
+    @Override
+    public Set<KeyedField> getNestedFields() {
+        return new LinkedHashSet<>(fieldsByKey.values());
     }
 
     @Override
@@ -260,15 +265,6 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     @Override
-    public void formatKeys(StringFormatter formatter) {
-        final Set<ConfigField> fields = getNestedFields();
-        clear();
-        for (ConfigField field : fields) {
-            fieldsByKey.put(formatter.format(field.getKey()), field);
-        }
-    }
-
-    @Override
     public @NotNull Section getSectionOrCreate(@NotNull String path) {
         final PathIterator iterator = PathIterator.of(this, path);
         Branch currentBranch = this;
@@ -295,7 +291,7 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     @Override
-    public @NotNull Set<ConfigField> getNestedFields(@NotNull String path) {
+    public @NotNull Set<? extends ConfigField> getNestedFields(@NotNull String path) {
         return getBranch(path)
                 .map(ConfigBranch::getNestedFields)
                 .orElse(Set.of());
@@ -485,11 +481,6 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     @Override
-    public <T> ConfigOptional<List<T>> getElements(@NotNull String path, Class<T> classType) {
-        return getSequence(path).flatMap(sequence -> sequence.toList(classType));
-    }
-
-    @Override
     public List<ConfigField> getFieldList(@NotNull String path) throws InvalidConfigurationException {
         return getFields(path).withDefault(List.of());
     }
@@ -542,6 +533,11 @@ public abstract class Section extends Branch implements ConfigSection {
     @Override
     public List<Double> getDoubleList(@NotNull String path) throws InvalidConfigurationException {
         return getDoubles(path).withDefault(List.of());
+    }
+
+    @Override
+    public <T> ConfigOptional<List<T>> getElements(@NotNull String path, Class<T> classType) {
+        return getSequence(path).flatMap(sequence -> sequence.toList(classType));
     }
 
     @Override
@@ -614,149 +610,6 @@ public abstract class Section extends Branch implements ConfigSection {
         return ConfigOptional.notSet(this, path, "Field is not set");
     }
 
-//    public ConfigScalar[][] getMatrix(@NotNull String path, int length, int height) {
-//        Preconditions.checkArgument(length > 0 && height > 0, "Matrix must have at least one row and one column.");
-//        final List<ConfigField> rows = getFieldList(path);
-//        if (rows.size() != height) {
-//            throw new InvalidConfigurationException(this, path, "Could not load matrix", "Expected " + height + " rows, but got " + rows.size());
-//        }
-//        final ConfigScalar[][] matrix = new ConfigScalar[length][height];
-//        for (int row = 0; row < height; row++) {
-//            final List<ConfigField> columns = rows.get(row).toSequence().toFieldList();
-//            if (columns.size() != length) {
-//                throw new InvalidConfigurationException(this, path, "Could not load matrix",
-//                        "Expected " + length + " columns at row " + (row + 1) + ", but got " + columns.size());
-//            }
-//            for (int column = 0; column < length; column++) {
-//                final ConfigField field = columns.get(column);
-//                if (!(field instanceof ConfigScalar scalar)) {
-//                    throw new InvalidConfigurationException(this, path, "Could not load matrix",
-//                            "Expected a value at row " + (row + 1) + " and column " + (column + 1));
-//                }
-//                matrix[column][row] = scalar;
-//            }
-//        }
-//        return matrix;
-//    }
-//
-//    @Override
-//    public boolean[][] getBooleanMatrix(@NotNull String path, int length, int height) {
-//        final ConfigScalar[][] matrix = getMatrix(path, length, height);
-//        final boolean[][] booleanMatrix = new boolean[length][height];
-//        for (int column = 0; column < length; column++) {
-//            for (int row = 0; row < height; row++) {
-//                final ConfigScalar scalar = matrix[column][row];
-//                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load boolean matrix",
-//                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not a boolean");
-//                booleanMatrix[column][row] = scalar.asBoolean().orElseThrow(() -> matrixException);
-//            }
-//        }
-//        return booleanMatrix;
-//    }
-//
-//    // Matrix[x][y] matrix;
-//    // Matrix[column][row] matrix;
-//    // Matrix[length][height] matrix;
-//
-//    @Override
-//    public char[][] getCharacterMatrix(@NotNull String path, int length, int height) {
-//        final ConfigScalar[][] matrix = getMatrix(path, length, height);
-//        final char[][] charMatrix = new char[length][height];
-//        for (int column = 0; column < length; column++) {
-//            for (int row = 0; row < height; row++) {
-//                final ConfigScalar scalar = matrix[column][row];
-//                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load character matrix",
-//                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not a character");
-//                charMatrix[column][row] = scalar.asCharacter().orElseThrow(() -> matrixException);
-//            }
-//        }
-//        return charMatrix;
-//    }
-//
-//    @Override
-//    public String[][] getStringMatrix(@NotNull String path, int length, int height) {
-//        final ConfigScalar[][] matrix = getMatrix(path, length, height);
-//        final String[][] stringMatrix = new String[length][height];
-//        for (int column = 0; column < length; column++) {
-//            for (int row = 0; row < height; row++) {
-//                stringMatrix[column][row] = matrix[column][row].toString();
-//            }
-//        }
-//        return stringMatrix;
-//    }
-//
-//    @Override
-//    public String[][] getStringMatrix(@NotNull String path, int length, int height, StringFormatter formatter) {
-//        final ConfigScalar[][] matrix = getMatrix(path, length, height);
-//        final String[][] stringMatrix = new String[length][height];
-//        for (int column = 0; column < length; column++) {
-//            for (int row = 0; row < height; row++) {
-//                stringMatrix[column][row] =  matrix[column][row].toString(formatter);
-//            }
-//        }
-//        return stringMatrix;
-//    }
-//
-//    @Override
-//    public int[][] getIntegerMatrix(@NotNull String path, int length, int height) {
-//        final ConfigScalar[][] matrix = getMatrix(path, length, height);
-//        final int[][] intMatrix = new int[length][height];
-//        for (int column = 0; column < length; column++) {
-//            for (int row = 0; row < height; row++) {
-//                final ConfigScalar scalar = matrix[row][column];
-//                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load integer matrix",
-//                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not an integer");
-//                intMatrix[column][row] = scalar.asInteger().orElseThrow(() -> matrixException);
-//            }
-//        }
-//        return intMatrix;
-//    }
-//
-//    @Override
-//    public long[][] getLongMatrix(@NotNull String path, int length, int height) {
-//        final ConfigScalar[][] matrix = getMatrix(path, length, height);
-//        final long[][] longMatrix = new long[length][height];
-//        for (int column = 0; column < length; column++) {
-//            for (int row = 0; row < height; row++) {
-//                final ConfigScalar scalar = matrix[column][row];
-//                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load long matrix",
-//                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not a long");
-//                longMatrix[column][row] = scalar.asLong().orElseThrow(() -> matrixException);
-//            }
-//        }
-//        return longMatrix;
-//    }
-//
-//    @Override
-//    public float[][] getFloatMatrix(@NotNull String path, int length, int height) {
-//        final ConfigScalar[][] matrix = getMatrix(path, length, height);
-//        final float[][] floatMatrix = new float[length][height];
-//        for (int column = 0; column < length; column++) {
-//            for (int row = 0; row < height; row++) {
-//                final ConfigScalar scalar = matrix[column][row];
-//                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load float matrix",
-//                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not a float");
-//                floatMatrix[column][row] = scalar.asFloat().orElseThrow(() -> matrixException);
-//            }
-//        }
-//        return floatMatrix;
-//    }
-//
-//    @Override
-//    public double[][] getDoubleMatrix(@NotNull String path, int length, int height) {
-//        final ConfigScalar[][] matrix = getMatrix(path, length, height);
-//        final double[][] doubleMatrix = new double[length][height];
-//        for (int column = 0; column < length; column++) {
-//            for (int row = 0; row < height; row++) {
-//                final ConfigScalar scalar = matrix[column][row];
-//                final RuntimeException matrixException = new InvalidConfigurationException(this, path, "Could not load double matrix",
-//                        "Element at row " + (row + 1) + " and column " + (column + 1) + " is not a double");
-//                doubleMatrix[column][row] = scalar.asDouble().orElseThrow(() -> matrixException);
-//            }
-//        }
-//        return doubleMatrix;
-//    }
-
     private Scalar createScalar(@NotNull String path, @NotNull Object value) {
         final PathIterator pathIterator = PathIterator.of(this, path);
         while (pathIterator.hasNext()) {
@@ -772,7 +625,7 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     @Override
-    public Iterator<@NotNull ConfigField> iterator() {
+    public Iterator<KeyedField> iterator() {
         return fieldsByKey.values().iterator();
     }
 
@@ -806,11 +659,9 @@ public abstract class Section extends Branch implements ConfigSection {
 
         try {
             return ConfigOptional.of(this, loader.loadFromSection(this));
-        }
-        catch (InvalidConfigurationException e) {
+        } catch (InvalidConfigurationException e) {
             return ConfigOptional.invalid(e);
-        }
-        finally {
+        } finally {
             root.removeProblem(problemDescription);
         }
     }

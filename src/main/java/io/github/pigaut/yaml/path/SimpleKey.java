@@ -34,9 +34,9 @@ public class SimpleKey implements FieldKey {
             return foundSection;
         }
 
-        final Section createdSection = new KeyedSection(section, key);
-        section.putNode(key, createdSection);
-        return createdSection;
+        KeyedSection newSection = new KeyedSection(section, key);
+        section.addNode(newSection);
+        return newSection;
     }
 
     @Override
@@ -48,18 +48,17 @@ public class SimpleKey implements FieldKey {
             return foundSequence;
         }
 
-        final Sequence createdSequence = new KeyedSequence(section, key);
-        section.putNode(key, createdSequence);
-        return createdSequence;
+        KeyedSequence newSequence = new KeyedSequence(section, key);
+        section.addNode(newSequence);
+        return newSequence;
     }
 
     @Override
     public Scalar createScalar(@NotNull Branch branch, @NotNull Object value) {
-        final Section section = branch.convertToSection();
-        final KeyedScalar scalar = new KeyedScalar(section, key, value);
-
-        section.putNode(key, scalar);
-        return scalar;
+        Section section = branch.convertToSection();
+        KeyedScalar newScalar = new KeyedScalar(section, key, value);
+        section.addNode(newScalar);
+        return newScalar;
     }
 
     @Override
