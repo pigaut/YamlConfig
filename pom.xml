@@ -9,8 +9,8 @@
     <version>3.7.2</version>
     <packaging>jar</packaging>
     <name>YamlConfig</name>
-    <description>A library to read and write configuration files in YAML format, uses snakeyaml engine.</description>
-    <url>https://github.com/pigaut/YAMLib</url>
+    <description>A library to map/load objects from/to yaml with a user-friendly error system.</description>
+    <url>https://github.com/pigaut/YamlConfig</url>
 
     <licenses>
         <license>
