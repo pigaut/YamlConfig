@@ -13,6 +13,7 @@ import org.snakeyaml.engine.v2.exceptions.*;
 import java.io.*;
 import java.nio.charset.*;
 import java.util.*;
+import java.util.function.*;
 import java.util.regex.*;
 
 public class RootScalar extends Scalar implements ConfigRoot {
@@ -23,17 +24,15 @@ public class RootScalar extends Scalar implements ConfigRoot {
     private final Deque<String> problems = new LinkedList<>();
     private @NotNull Configurator configurator;
     private @Nullable String prefix;
-    private boolean debug;
     private @NotNull String header = "";
 
-    public RootScalar(@Nullable File file, @NotNull Configurator configurator, @Nullable String prefix, boolean debug) {
+    public RootScalar(@Nullable File file, @NotNull Configurator configurator, @Nullable String prefix) {
         super("");
         Preconditions.checkNotNull(configurator, "Configurator cannot be null");
         this.file = file;
         this.name = file != null ? YamlConfig.getFileName(file) : null;
         this.configurator = configurator;
         this.prefix = prefix;
-        this.debug = debug;
     }
 
     @Override
@@ -64,16 +63,6 @@ public class RootScalar extends Scalar implements ConfigRoot {
     @Override
     public void setPrefix(@Nullable String prefix) {
         this.prefix = prefix;
-    }
-
-    @Override
-    public boolean isDebug() {
-        return debug;
-    }
-
-    @Override
-    public void setDebug(boolean debug) {
-        this.debug = debug;
     }
 
     @Override
@@ -126,54 +115,55 @@ public class RootScalar extends Scalar implements ConfigRoot {
     }
 
     @Override
-    public boolean load() {
-        if (file == null) {
-            throw new IllegalStateException("You cannot load configuration from file because file is null");
-        }
+    public void load() throws ConfigurationLoadException {
+        Preconditions.checkState(file != null, "Cannot load configuration from file because file is null");
+        load(file);
+    }
+
+    @Override
+    public void load(@NotNull Consumer<ConfigurationLoadException> errorCollector) {
         try {
-            return load(file);
-        } catch (ParserException | ScannerException | ComposerException e) {
-            throw new ConfigurationLoadException(this, e);
+            load();
+        } catch (ConfigurationLoadException e) {
+            errorCollector.accept(e);
         }
     }
 
     @Override
-    public boolean load(@NotNull File file) {
+    public void load(@NotNull File file) throws ConfigurationLoadException {
         if (!file.exists()) {
-            return false;
+            throw new ConfigurationLoadException(this, "File does not exist");
         }
 
         try (FileInputStream fileInputStream = new FileInputStream(file);
              InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, StandardCharsets.UTF_8);
              BufferedReader reader = new BufferedReader(inputStreamReader)) {
-            return load(reader);
+            load(reader);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ConfigurationLoadException(this, e.getMessage());
         }
     }
 
     @Override
-    public boolean load(@NotNull InputStream inputStream) {
-        final Object data = loader.loadFromInputStream(inputStream);
-        this.clear();
-
-        if (YamlConfig.isScalarType(data.getClass())) {
-            setValue(data);
-            return true;
+    public void load(@NotNull InputStream inputStream) throws ConfigurationLoadException {
+        Object parsedNode;
+        try {
+            parsedNode = loader.loadFromInputStream(inputStream);
+        } catch (ParserException | ScannerException | ComposerException e) {
+            throw new ConfigurationLoadException(this, e.getMessage());
         }
-        return false;
+        load(parsedNode);
     }
 
     @Override
-    public boolean load(@NotNull Reader reader) {
-        final Object data = loader.loadFromReader(reader);
-        this.clear();
-
-        if (YamlConfig.isScalarType(data.getClass())) {
-            setValue(data);
-            return true;
+    public void load(@NotNull Reader reader) throws ConfigurationLoadException {
+        Object parsedNode;
+        try {
+            parsedNode = loader.loadFromReader(reader);
+        } catch (ParserException | ScannerException | ComposerException e) {
+            throw new ConfigurationLoadException(this, e.getMessage());
         }
-        return false;
+        load(parsedNode);
     }
 
     @Override
@@ -186,15 +176,17 @@ public class RootScalar extends Scalar implements ConfigRoot {
 
     @Override
     public boolean save(@NotNull File file) {
-        if (!YamlConfig.createFileIfNotExists(file))
+        if (!YamlConfig.createFileIfNotExists(file)) {
             return false;
-        final String yamlData = saveToString();
+        }
+
+        String yamlData = saveToString();
 
         try (FileWriter writer = new FileWriter(file)) {
             writer.write(yamlData);
             return true;
         } catch (IOException e) {
-            throw new InvalidConfigurationException(this, e.getMessage());
+            return false;
         }
     }
 
@@ -203,9 +195,16 @@ public class RootScalar extends Scalar implements ConfigRoot {
         return header + this.toString();
     }
 
+    private void load(Object parsedNode) throws ConfigurationLoadException {
+        if (!YamlConfig.isScalarType(parsedNode.getClass())) {
+            throw new ConfigurationLoadException(this, "Expected a scalar but found another node");
+        }
+        setValue(parsedNode);
+    }
+
     @Override
     public ConfigSequence split(Pattern pattern) {
-        final ConfigSequence sequence = new RootSequence(file, configurator, prefix, debug);
+        final ConfigSequence sequence = new RootSequence(file, configurator, prefix);
         final List<Object> parsedValues = ParseUtil.parseAllAsScalars(pattern.split(toString()));
         sequence.map(parsedValues);
         return sequence;

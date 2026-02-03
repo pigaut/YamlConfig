@@ -13,6 +13,7 @@ import org.snakeyaml.engine.v2.exceptions.*;
 import java.io.*;
 import java.nio.charset.*;
 import java.util.*;
+import java.util.function.*;
 
 public class RootSection extends Section implements ConfigRoot {
 
@@ -22,18 +23,16 @@ public class RootSection extends Section implements ConfigRoot {
     private final Dump dumper = new ConfigDump();
     private @NotNull Configurator configurator;
     private @Nullable String prefix;
-    private boolean debug;
     private @NotNull String header = "";
     private final Deque<String> problems = new LinkedList<>();
 
-    public RootSection(@Nullable File file, @NotNull Configurator configurator, @Nullable String prefix, boolean debug) {
+    public RootSection(@Nullable File file, @NotNull Configurator configurator, @Nullable String prefix) {
         super(FlowStyle.BLOCK);
         Preconditions.checkNotNull(configurator, "Configurator cannot be null");
         this.file = file;
         this.name = file != null ? YamlConfig.getFileName(file) : null;
         this.configurator = configurator;
         this.prefix = prefix;
-        this.debug = debug;
     }
 
     @Override
@@ -86,16 +85,6 @@ public class RootSection extends Section implements ConfigRoot {
     }
 
     @Override
-    public boolean isDebug() {
-        return debug;
-    }
-
-    @Override
-    public void setDebug(boolean debug) {
-        this.debug = debug;
-    }
-
-    @Override
     public @NotNull Configurator getConfigurator() {
         return configurator;
     }
@@ -126,59 +115,65 @@ public class RootSection extends Section implements ConfigRoot {
     }
 
     @Override
-    public boolean load() throws ConfigurationLoadException {
-        if (file == null) {
-            throw new IllegalStateException("You cannot load configuration from file because file is null");
-        }
+    public void load() throws ConfigurationLoadException {
+        Preconditions.checkState(file != null, "Cannot load configuration from file because file is null");
+        load(file);
+    }
+
+    @Override
+    public void load(@NotNull Consumer<ConfigurationLoadException> errorCollector) {
         try {
-            return load(file);
-        } catch (ParserException | ScannerException | ComposerException e) {
-            throw new ConfigurationLoadException(this, e);
+            load();
+        } catch (ConfigurationLoadException e) {
+            errorCollector.accept(e);
         }
     }
 
     @Override
-    public boolean load(@NotNull File file) {
+    public void load(@NotNull File file) throws ConfigurationLoadException {
         if (!file.exists()) {
-            return false;
+            throw new ConfigurationLoadException(this, "File does not exist");
         }
 
         try (FileInputStream fileInputStream = new FileInputStream(file);
              InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, StandardCharsets.UTF_8);
              BufferedReader reader = new BufferedReader(inputStreamReader)) {
-            return load(reader);
+            load(reader);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ConfigurationLoadException(this, e.getMessage());
         }
     }
 
     @Override
-    public boolean load(@NotNull InputStream inputStream) {
-        final Object data = loader.loadFromInputStream(inputStream);
-        this.clear();
-
-        if (data instanceof Map<?, ?> map) {
-            map.forEach((key, value) -> {
-                set(String.valueOf(key), value);
-            });
-            return true;
+    public void load(@NotNull InputStream inputStream) throws ConfigurationLoadException {
+        Object parsedNode;
+        try {
+            parsedNode = loader.loadFromInputStream(inputStream);
+        } catch (ParserException | ScannerException | ComposerException e) {
+            throw new ConfigurationLoadException(this, e.getMessage());
         }
-
-        return false;
+        load(parsedNode);
     }
 
     @Override
-    public boolean load(@NotNull Reader reader) {
-        final Object data = loader.loadFromReader(reader);
-        this.clear();
-
-        if (data instanceof Map<?, ?> map) {
-            map.forEach((key, value) -> {
-                set(String.valueOf(key), value);
-            });
-            return true;
+    public void load(@NotNull Reader reader) throws ConfigurationLoadException {
+        Object parsedNode;
+        try {
+            parsedNode = loader.loadFromReader(reader);
+        } catch (ParserException | ScannerException | ComposerException e) {
+            throw new ConfigurationLoadException(this, e.getMessage());
         }
-        return false;
+        load(parsedNode);
+    }
+
+    private void load(Object parsedNode) throws ConfigurationLoadException {
+        if (!(parsedNode instanceof Map<?, ?> map)) {
+            throw new ConfigurationLoadException(this, "Expected a section but found another node");
+        }
+        clear();
+        map.forEach((key, value) -> {
+            set(String.valueOf(key), value);
+        });
     }
 
     @Override
@@ -191,14 +186,18 @@ public class RootSection extends Section implements ConfigRoot {
 
     @Override
     public boolean save(@NotNull File file) {
-        if (!YamlConfig.createFileIfNotExists(file))
+        if (!YamlConfig.createFileIfNotExists(file)) {
             return false;
-        final String yamlData = saveToString();
+        }
+
+        String yamlData = saveToString();
+
         try (FileWriter writer = new FileWriter(file)) {
             writer.write(yamlData);
             return true;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        }
+        catch (IOException e) {
+            return false;
         }
     }
 
@@ -209,7 +208,7 @@ public class RootSection extends Section implements ConfigRoot {
 
     @Override
     public @NotNull RootSequence convertToSequence() {
-        return new RootSequence(file, configurator, prefix, debug);
+        return new RootSequence(file, configurator, prefix);
     }
 
 }

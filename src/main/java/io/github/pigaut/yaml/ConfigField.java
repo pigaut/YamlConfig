@@ -2,7 +2,6 @@ package io.github.pigaut.yaml;
 
 import io.github.pigaut.yaml.configurator.FieldType;
 import io.github.pigaut.yaml.node.*;
-import io.github.pigaut.yaml.optional.*;
 import org.jetbrains.annotations.*;
 
 public interface ConfigField {

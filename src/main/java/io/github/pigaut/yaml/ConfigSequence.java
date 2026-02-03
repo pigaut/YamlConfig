@@ -2,7 +2,6 @@ package io.github.pigaut.yaml;
 
 import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
-import io.github.pigaut.yaml.optional.*;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -57,17 +56,17 @@ public interface ConfigSequence extends ConfigBranch, Iterable<KeylessField> {
 
     List<ConfigField> toFieldList();
 
-    <T> ConfigOptional<List<T>> toList(Class<T> classType);
-    ConfigOptional<List<ConfigScalar>> toScalarList();
-    ConfigOptional<List<ConfigSection>> toSectionList();
-    ConfigOptional<List<ConfigSequence>> toSequenceList();
-    ConfigOptional<List<Boolean>> toBooleanList();
-    ConfigOptional<List<Character>> toCharacterList();
-    ConfigOptional<List<String>> toStringList();
-    ConfigOptional<List<String>> toStringList(StringFormatter formatter);
-    ConfigOptional<List<Integer>> toIntegerList();
-    ConfigOptional<List<Long>> toLongList();
-    ConfigOptional<List<Float>> toFloatList();
-    ConfigOptional<List<Double>> toDoubleList();
+    <T> ConfigList<T> toList(Class<T> classType);
+    ConfigList<ConfigScalar> toScalarList();
+    ConfigList<ConfigSection> toSectionList();
+    ConfigList<ConfigSequence> toSequenceList();
+    ConfigList<Boolean> toBooleanList();
+    ConfigList<Character> toCharacterList();
+    ConfigList<String> toStringList();
+    ConfigList<String> toStringList(StringFormatter formatter);
+    ConfigList<Integer> toIntegerList();
+    ConfigList<Long> toLongList();
+    ConfigList<Float> toFloatList();
+    ConfigList<Double> toDoubleList();
 
 }

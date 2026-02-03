@@ -1,7 +1,6 @@
 package io.github.pigaut.yaml;
 
 import io.github.pigaut.yaml.convert.format.*;
-import io.github.pigaut.yaml.optional.*;
 import org.jetbrains.annotations.*;
 
 import java.util.*;

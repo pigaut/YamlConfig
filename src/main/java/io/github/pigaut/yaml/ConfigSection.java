@@ -2,7 +2,6 @@ package io.github.pigaut.yaml;
 
 import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
-import io.github.pigaut.yaml.optional.*;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -62,30 +61,17 @@ public interface ConfigSection extends ConfigBranch, Iterable<KeyedField> {
     ConfigOptional<Float> getFloat(@NotNull String path);
     ConfigOptional<Double> getDouble(@NotNull String path);
 
-    <T> List<T> getList(@NotNull String path, Class<T> classType) throws InvalidConfigurationException;
-    List<ConfigField> getFieldList(@NotNull String path) throws InvalidConfigurationException;
-    List<ConfigScalar> getScalarList(@NotNull String path) throws InvalidConfigurationException;
-    List<ConfigSection> getSectionList(@NotNull String path) throws InvalidConfigurationException;
-    List<Boolean> getBooleanList(@NotNull String path) throws InvalidConfigurationException;
-    List<Character> getCharacterList(@NotNull String path) throws InvalidConfigurationException;
-    List<String> getStringList(@NotNull String path) throws InvalidConfigurationException;
-    List<String> getStringList(@NotNull String path, @NotNull StringFormatter formatter) throws InvalidConfigurationException;
-    List<Integer> getIntegerList(@NotNull String path) throws InvalidConfigurationException;
-    List<Long> getLongList(@NotNull String path) throws InvalidConfigurationException;
-    List<Float> getFloatList(@NotNull String path) throws InvalidConfigurationException;
-    List<Double> getDoubleList(@NotNull String path) throws InvalidConfigurationException;
-
-    <T> ConfigOptional<List<T>> getElements(@NotNull String path, Class<T> classType);
-    ConfigOptional<List<ConfigField>> getFields(@NotNull String path);
-    ConfigOptional<List<ConfigScalar>> getScalars(@NotNull String path);
-    ConfigOptional<List<ConfigSection>> getSections(@NotNull String path);
-    ConfigOptional<List<Boolean>> getBooleans(@NotNull String path);
-    ConfigOptional<List<Character>> getCharacters(@NotNull String path);
-    ConfigOptional<List<String>> getStrings(@NotNull String path);
-    ConfigOptional<List<String>> getStrings(@NotNull String path, @NotNull StringFormatter formatter);
-    ConfigOptional<List<Integer>> getIntegers(@NotNull String path);
-    ConfigOptional<List<Long>> getLongs(@NotNull String path);
-    ConfigOptional<List<Float>> getFloats(@NotNull String path);
-    ConfigOptional<List<Double>> getDoubles(@NotNull String path);
+    <T> ConfigList<T> getList(@NotNull String path, Class<T> classType);
+    ConfigList<ConfigField> getFieldList(@NotNull String path);
+    ConfigList<ConfigScalar> getScalarList(@NotNull String path);
+    ConfigList<ConfigSection> getSectionList(@NotNull String path);
+    ConfigList<Boolean> getBooleanList(@NotNull String path);
+    ConfigList<Character> getCharacterList(@NotNull String path);
+    ConfigList<String> getStringList(@NotNull String path);
+    ConfigList<String> getStringList(@NotNull String path, @NotNull StringFormatter formatter);
+    ConfigList<Integer> getIntegerList(@NotNull String path);
+    ConfigList<Long> getLongList(@NotNull String path);
+    ConfigList<Float> getFloatList(@NotNull String path);
+    ConfigList<Double> getDoubleList(@NotNull String path);
 
 }

@@ -22,6 +22,7 @@ public interface ConfigBranch extends ConfigField {
     Stream<? extends ConfigField> stream();
 
     Set<? extends ConfigField> getNestedFields();
+    Set<ConfigScalar> getNestedScalars();
     Set<ConfigSection> getNestedSections();
     Set<ConfigSequence> getNestedSequences();
 

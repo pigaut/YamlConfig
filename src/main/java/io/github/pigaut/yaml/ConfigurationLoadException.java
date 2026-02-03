@@ -9,20 +9,18 @@ public class ConfigurationLoadException extends ConfigurationException {
 
     private final @Nullable String prefix;
     private final @Nullable File file;
-    private final @NotNull String cause;
+    private final @NotNull String details;
 
-    public ConfigurationLoadException(ConfigRoot config, @NotNull String cause) {
-        super(null, null, false, config.isDebug());
+    public ConfigurationLoadException(ConfigRoot config, @NotNull String details) {
         this.prefix = config.getPrefix();
         this.file = config.getFile();
-        this.cause = cause;
+        this.details = details;
     }
 
     public ConfigurationLoadException(ConfigRoot config, Throwable cause) {
-        super(null, null, false, config.isDebug());
         this.prefix = config.getPrefix();
         this.file = config.getFile();
-        this.cause = cause.getMessage();
+        this.details = cause.getMessage();
     }
 
     public @Nullable String getPrefix() {
@@ -45,7 +43,7 @@ public class ConfigurationLoadException extends ConfigurationException {
     }
 
     public @NotNull String getDetails() {
-        return cause;
+        return details;
     }
 
     @Override
@@ -54,25 +52,14 @@ public class ConfigurationLoadException extends ConfigurationException {
     }
 
     @Override
-    public @NotNull String getLogMessage(String parentDirectory) {
-        final String optionalPrefix = prefix != null ? (prefix + " ") : "";
-        final String optionalFile = file != null ? ("File: " + file.getPath().replaceAll(Pattern.quote(parentDirectory), "") + "\n") : "";
-        final String details = "Details: " + cause + "\n";
-        final String logMessage = optionalPrefix + "Configuration: Invalid yaml format\n" +
-                optionalFile +
-                details +
-                "---------------------------------------------";
-        return logMessage;
-    }
-
-    @Override
     public String toString() {
-        final String optionalPrefix = prefix != null ? (prefix + " ") : "";
-        final String optionalFile = file != null ? (" File: " + file.getPath() + "\n") : "";
-        final String errorMessage = "%sYaml Parsing Error -> Unable to load yaml file\n" +
+        String optionalPrefix = prefix != null ? (prefix + " ") : "";
+        String optionalFile = file != null ? (" File >> " + file.getPath() + "\n") : "";
+
+        String errorMessage = "%sConfiguration: INVALID YAML FILE\n" +
                 "%s" +
-                " Details: %s";
-        return String.format(errorMessage, optionalPrefix, optionalFile, cause);
+                " Details >> %s";
+        return String.format(errorMessage, optionalPrefix, optionalFile, details);
     }
 
 }

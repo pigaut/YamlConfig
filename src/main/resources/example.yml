@@ -1,5 +1,19 @@
 
-line: givePlayerMoney 100 chance=0.5
+name: Josh
 
-do: chatMessage <Hello World> chance=0.5 delay=1.0 repetitions=3
+age: 20
+
+liked-things:
+  - Being lazy
+  - 80085
+
+wallet:
+  cash: 10
+  pokemon-cards:
+    - name: pickachu
+      attack: thunderbolt damage=1-5
+    - name: charizard
+      attack: fireAttack damage=10;20;30 chance=0.5
+
+
 

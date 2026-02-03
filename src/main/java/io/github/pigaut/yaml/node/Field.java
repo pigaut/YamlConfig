@@ -70,7 +70,7 @@ public abstract class Field implements ConfigField {
     }
 
     @Override
-    public <T> T loadRequired(Class<T> classType) {
+    public <T> T loadRequired(Class<T> classType) throws InvalidConfigurationException {
         return load(classType).orThrow();
     }
 

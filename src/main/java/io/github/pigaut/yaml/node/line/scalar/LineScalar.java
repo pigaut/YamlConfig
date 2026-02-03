@@ -5,7 +5,6 @@ import io.github.pigaut.yaml.configurator.*;
 import io.github.pigaut.yaml.configurator.load.*;
 import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
-import io.github.pigaut.yaml.optional.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.common.*;
 
@@ -104,7 +103,7 @@ public abstract class LineScalar implements ConfigScalar {
     }
 
     @Override
-    public <T> T loadRequired(Class<T> classType) {
+    public <T> T loadRequired(Class<T> classType) throws InvalidConfigurationException {
         return load(classType).orThrow();
     }
 

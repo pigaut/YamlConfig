@@ -4,7 +4,6 @@ import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.amount.*;
 import io.github.pigaut.yaml.configurator.load.*;
 import io.github.pigaut.yaml.convert.parse.*;
-import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -29,7 +28,7 @@ public class AmountLoader implements ConfigLoader<Amount> {
     public @NotNull Amount loadFromSection(@NotNull ConfigSection section) throws InvalidConfigurationException {
         final double min = section.getDouble("min|minimum").orThrow();
         final double max = section.getDouble("max|maximum")
-                .filter(Predicates.greaterThan(min), "Maximum value must be greater than the minimum value")
+                .require(Requirements.greaterThan(min), "Maximum value must be greater than the minimum value")
                 .orThrow();
         return Amount.ranged(min, max);
     }

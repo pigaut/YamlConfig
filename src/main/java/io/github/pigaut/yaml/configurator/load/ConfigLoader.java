@@ -65,7 +65,7 @@ public interface ConfigLoader<T> {
     interface Section<T> extends ConfigLoader<T> {
 
         @Override
-        @NotNull T loadFromSection(@NotNull ConfigSection section);
+        @NotNull T loadFromSection(@NotNull ConfigSection section) throws InvalidConfigurationException;
 
         @Override
         default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigurationException {
@@ -82,7 +82,7 @@ public interface ConfigLoader<T> {
     interface Sequence<T> extends ConfigLoader<T> {
 
         @Override
-        @NotNull T loadFromSequence(@NotNull ConfigSequence section);
+        @NotNull T loadFromSequence(@NotNull ConfigSequence section) throws InvalidConfigurationException;
 
         @Override
         default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigurationException {

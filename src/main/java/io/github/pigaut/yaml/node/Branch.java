@@ -64,6 +64,14 @@ public abstract class Branch extends Field implements ConfigBranch {
     }
 
     @Override
+    public Set<ConfigScalar> getNestedScalars() {
+        return stream()
+                .map(field -> field.toScalar().orElse(null))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    @Override
     public Set<ConfigSection> getNestedSections() {
         return stream()
                 .map(field -> field.toSection().orElse(null))
@@ -96,9 +104,11 @@ public abstract class Branch extends Field implements ConfigBranch {
 
     @Override
     public <T> List<T> getAll(@NotNull Class<T> classType) throws InvalidConfigurationException {
-        return stream()
-                .map(field -> field.load(classType).orThrow())
-                .toList();
+        List<T> elements = new ArrayList<>();
+        for (ConfigField nestedField : getNestedFields()) {
+            elements.add(nestedField.loadRequired(classType));
+        }
+        return elements;
     }
 
     @Override

@@ -7,7 +7,6 @@ import io.github.pigaut.yaml.configurator.map.*;
 import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.scalar.*;
-import io.github.pigaut.yaml.optional.*;
 import io.github.pigaut.yaml.path.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
@@ -166,22 +165,22 @@ public abstract class Section extends Branch implements ConfigSection {
 
     @Override
     public boolean contains(@NotNull String path) {
-        return getField(path).isSetInConfig();
+        return getField(path).isValid();
     }
 
     @Override
     public boolean isSet(@NotNull String path) {
-        return getScalar(path).isSetInConfig();
+        return getScalar(path).isValid();
     }
 
     @Override
     public boolean isSection(@NotNull String path) {
-        return getSection(path).isSetInConfig();
+        return getSection(path).isValid();
     }
 
     @Override
     public boolean isSequence(@NotNull String path) {
-        return getSequence(path).isSetInConfig();
+        return getSequence(path).isValid();
     }
 
     @Override
@@ -313,9 +312,8 @@ public abstract class Section extends Branch implements ConfigSection {
 
     @Override
     public <T> List<T> getAll(@NotNull String path, @NotNull Class<T> classType) throws InvalidConfigurationException {
-        return getBranch(path)
-                .map(branch -> branch.getAll(classType))
-                .orElse(List.of());
+        ConfigBranch branch = getBranch(path).orElse(null);
+        return branch != null ? branch.getAll(classType) : List.of();
     }
 
     @Override
@@ -336,7 +334,7 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     @Override
-    public ConfigScalar getRequiredScalar(@NotNull String path) {
+    public ConfigScalar getRequiredScalar(@NotNull String path) throws InvalidConfigurationException {
         return getScalar(path).orThrow();
     }
 
@@ -476,127 +474,67 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     @Override
-    public <T> List<T> getList(@NotNull String path, Class<T> classType) throws InvalidConfigurationException {
-        return getElements(path, classType).withDefault(List.of());
+    public <T> ConfigList<T> getList(@NotNull String path, Class<T> classType) {
+        return getSequence(path).mapToList(sequence -> sequence.toList(classType));
     }
 
     @Override
-    public List<ConfigField> getFieldList(@NotNull String path) throws InvalidConfigurationException {
-        return getFields(path).withDefault(List.of());
+    public ConfigList<ConfigField> getFieldList(@NotNull String path) {
+        return getSequence(path).mapToList(sequence -> ConfigList.of(sequence, sequence.toFieldList()));
     }
 
     @Override
-    public List<ConfigScalar> getScalarList(@NotNull String path) throws InvalidConfigurationException {
-        return getScalars(path).withDefault(List.of());
+    public ConfigList<ConfigScalar> getScalarList(@NotNull String path) {
+        return getSequence(path).mapToList(ConfigSequence::toScalarList);
     }
 
     @Override
-    public List<ConfigSection> getSectionList(@NotNull String path) throws InvalidConfigurationException {
-        return getSections(path).withDefault(List.of());
+    public ConfigList<ConfigSection> getSectionList(@NotNull String path) {
+        return getSequence(path).mapToList(ConfigSequence::toSectionList);
     }
 
     @Override
-    public List<Boolean> getBooleanList(@NotNull String path) throws InvalidConfigurationException {
-        return getBooleans(path).withDefault(List.of());
+    public ConfigList<Boolean> getBooleanList(@NotNull String path) {
+        return getSequence(path).mapToList(ConfigSequence::toBooleanList);
     }
 
     @Override
-    public List<Character> getCharacterList(@NotNull String path) throws InvalidConfigurationException {
-        return getCharacters(path).withDefault(List.of());
+    public ConfigList<Character> getCharacterList(@NotNull String path) {
+        return getSequence(path).mapToList(ConfigSequence::toCharacterList);
     }
 
     @Override
-    public List<String> getStringList(@NotNull String path) throws InvalidConfigurationException {
-        return getStrings(path).withDefault(List.of());
+    public ConfigList<String> getStringList(@NotNull String path) {
+        return getSequence(path).mapToList(ConfigSequence::toStringList);
     }
 
     @Override
-    public List<String> getStringList(@NotNull String path, @NotNull StringFormatter formatter) throws InvalidConfigurationException {
-        return getStrings(path, formatter).withDefault(List.of());
+    public ConfigList<String> getStringList(@NotNull String path, @NotNull StringFormatter formatter) {
+        return getSequence(path).mapToList(seq -> seq.toStringList(formatter));
     }
 
     @Override
-    public List<Integer> getIntegerList(@NotNull String path) throws InvalidConfigurationException {
-        return getIntegers(path).withDefault(List.of());
+    public ConfigList<Integer> getIntegerList(@NotNull String path) {
+        return getSequence(path).mapToList(ConfigSequence::toIntegerList);
     }
 
     @Override
-    public List<Long> getLongList(@NotNull String path) throws InvalidConfigurationException {
-        return getLongs(path).withDefault(List.of());
+    public ConfigList<Long> getLongList(@NotNull String path) {
+        return getSequence(path).mapToList(ConfigSequence::toLongList);
     }
 
     @Override
-    public List<Float> getFloatList(@NotNull String path) throws InvalidConfigurationException {
-        return getFloats(path).withDefault(List.of());
+    public ConfigList<Float> getFloatList(@NotNull String path) {
+        return getSequence(path).mapToList(ConfigSequence::toFloatList);
     }
 
     @Override
-    public List<Double> getDoubleList(@NotNull String path) throws InvalidConfigurationException {
-        return getDoubles(path).withDefault(List.of());
-    }
-
-    @Override
-    public <T> ConfigOptional<List<T>> getElements(@NotNull String path, Class<T> classType) {
-        return getSequence(path).flatMap(sequence -> sequence.toList(classType));
-    }
-
-    @Override
-    public ConfigOptional<List<ConfigField>> getFields(@NotNull String path) {
-        return getSequence(path).map(ConfigSequence::toFieldList);
-    }
-
-    @Override
-    public ConfigOptional<List<ConfigScalar>> getScalars(@NotNull String path) {
-        return getSequence(path).flatMap(ConfigSequence::toScalarList);
-    }
-
-    @Override
-    public ConfigOptional<List<ConfigSection>> getSections(@NotNull String path) {
-        return getSequence(path).flatMap(ConfigSequence::toSectionList);
-    }
-
-    @Override
-    public ConfigOptional<List<Boolean>> getBooleans(@NotNull String path) {
-        return getSequence(path).flatMap(ConfigSequence::toBooleanList);
-    }
-
-    @Override
-    public ConfigOptional<List<Character>> getCharacters(@NotNull String path) {
-        return getSequence(path).flatMap(ConfigSequence::toCharacterList);
-    }
-
-    @Override
-    public ConfigOptional<List<String>> getStrings(@NotNull String path) {
-        return getSequence(path).flatMap(ConfigSequence::toStringList);
-    }
-
-    @Override
-    public ConfigOptional<List<String>> getStrings(@NotNull String path, @NotNull StringFormatter formatter) {
-        return getSequence(path).flatMap(sequence -> sequence.toStringList(formatter));
-    }
-
-    @Override
-    public ConfigOptional<List<Integer>> getIntegers(@NotNull String path) {
-        return getSequence(path).flatMap(ConfigSequence::toIntegerList);
-    }
-
-    @Override
-    public ConfigOptional<List<Long>> getLongs(@NotNull String path) {
-        return getSequence(path).flatMap(ConfigSequence::toLongList);
-    }
-
-    @Override
-    public ConfigOptional<List<Float>> getFloats(@NotNull String path) {
-        return getSequence(path).flatMap(ConfigSequence::toFloatList);
-    }
-
-    @Override
-    public ConfigOptional<List<Double>> getDoubles(@NotNull String path) {
-        return getSequence(path).flatMap(ConfigSequence::toDoubleList);
+    public ConfigList<Double> getDoubleList(@NotNull String path) {
+        return getSequence(path).mapToList(ConfigSequence::toDoubleList);
     }
 
     private ConfigOptional<ConfigBranch> getBranch(@NotNull String path) {
-        final PathIterator iterator = PathIterator.of(this, path);
+        PathIterator iterator = PathIterator.of(this, path);
 
         ConfigField field = null;
         while (iterator.hasNext()) {

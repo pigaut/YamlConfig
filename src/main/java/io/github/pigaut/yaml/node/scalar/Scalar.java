@@ -7,7 +7,6 @@ import io.github.pigaut.yaml.configurator.map.*;
 import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.line.*;
-import io.github.pigaut.yaml.optional.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.common.*;

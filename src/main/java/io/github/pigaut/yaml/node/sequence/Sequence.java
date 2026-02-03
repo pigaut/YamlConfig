@@ -8,13 +8,11 @@ import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.scalar.*;
 import io.github.pigaut.yaml.node.section.*;
-import io.github.pigaut.yaml.optional.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.common.*;
 
 import java.util.*;
-import java.util.function.*;
 import java.util.stream.*;
 
 public abstract class Sequence extends Branch implements ConfigSequence {
@@ -239,7 +237,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     @Override
     public @NotNull ConfigSection getSectionOrCreate(int index) {
         var optionalSection = getSection(index);
-        if (optionalSection.isPresent()) {
+        if (optionalSection.isValid()) {
             return optionalSection.value();
         }
 
@@ -251,7 +249,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     @Override
     public @NotNull ConfigSequence getSequenceOrCreate(int index) {
         var optionalSequence = getSequence(index);
-        if (optionalSequence.isPresent()) {
+        if (optionalSequence.isValid()) {
             return optionalSequence.value();
         }
 
@@ -263,7 +261,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     @Override
     public @NotNull ConfigScalar getScalarOrCreate(int index) {
         var optionalScalar = getScalar(index);
-        if (optionalScalar.isPresent()) {
+        if (optionalScalar.isValid()) {
             return optionalScalar.value();
         }
 
@@ -442,75 +440,81 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     }
 
     @Override
-    public <T> ConfigOptional<List<T>> toList(Class<T> classType) {
+    public <T> ConfigList<T> toList(Class<T> classType) {
         return createList(field -> field.load(classType).orThrow());
     }
 
     @Override
-    public ConfigOptional<List<ConfigScalar>> toScalarList() throws InvalidConfigurationException {
+    public ConfigList<ConfigScalar> toScalarList() {
         return createList(field -> field.toScalar().orThrow());
     }
 
     @Override
-    public ConfigOptional<List<ConfigSection>> toSectionList() throws InvalidConfigurationException {
+    public ConfigList<ConfigSection> toSectionList() {
         return createList(field -> field.toSection().orThrow());
     }
 
     @Override
-    public ConfigOptional<List<ConfigSequence>> toSequenceList() throws InvalidConfigurationException {
+    public ConfigList<ConfigSequence> toSequenceList() {
         return createList(field -> field.toSequence().orThrow());
     }
 
     @Override
-    public ConfigOptional<List<Boolean>> toBooleanList() throws InvalidConfigurationException {
-        return createList(field -> field.toScalar().orThrow().toBoolean().orThrow());
+    public ConfigList<Boolean> toBooleanList() {
+        return createList(field -> field.toScalar().flatMap(ConfigScalar::toBoolean).orThrow());
     }
 
     @Override
-    public ConfigOptional<List<Character>> toCharacterList() throws InvalidConfigurationException {
-        return createList(field -> field.toScalar().orThrow().toCharacter().orThrow());
+    public ConfigList<Character> toCharacterList() {
+        return createList(field -> field.toScalar().flatMap(ConfigScalar::toCharacter).orThrow());
     }
 
     @Override
-    public ConfigOptional<List<String>> toStringList() throws InvalidConfigurationException {
-        return createList(field -> field.toScalar().orThrow().toString());
+    public ConfigList<String> toStringList() {
+        return createList(field -> field.toScalar().map(ConfigScalar::toString).orThrow());
     }
 
     @Override
-    public ConfigOptional<List<String>> toStringList(StringFormatter formatter) throws InvalidConfigurationException {
-        return createList(field -> field.toScalar().orThrow().toString(formatter));
+    public ConfigList<String> toStringList(StringFormatter formatter) {
+        return createList(field -> field.toScalar().map(scalar -> scalar.toString(formatter)).orThrow());
     }
 
     @Override
-    public ConfigOptional<List<Integer>> toIntegerList() throws InvalidConfigurationException {
-        return createList(field -> field.toScalar().orThrow().toInteger().orThrow());
+    public ConfigList<Integer> toIntegerList() {
+        return createList(field -> field.toScalar().flatMap(ConfigScalar::toInteger).orThrow());
     }
 
     @Override
-    public ConfigOptional<List<Long>> toLongList() throws InvalidConfigurationException {
-        return createList(field -> field.toScalar().orThrow().toLong().orThrow());
+    public ConfigList<Long> toLongList() {
+        return createList(field -> field.toScalar().flatMap(ConfigScalar::toLong).orThrow());
     }
 
     @Override
-    public ConfigOptional<List<Float>> toFloatList() throws InvalidConfigurationException {
-        return createList(field -> field.toScalar().orThrow().toFloat().orThrow());
+    public ConfigList<Float> toFloatList() {
+        return createList(field -> field.toScalar().flatMap(ConfigScalar::toFloat).orThrow());
     }
 
     @Override
-    public ConfigOptional<List<Double>> toDoubleList() throws InvalidConfigurationException {
-        return createList(field -> field.toScalar().orThrow().toDouble().orThrow());
+    public ConfigList<Double> toDoubleList() {
+        return createList(field -> field.toScalar().flatMap(ConfigScalar::toDouble).orThrow());
     }
 
-    private <T> ConfigOptional<List<T>> createList(Function<ConfigField, T> mapper) {
-        List<T> list = new ArrayList<>();
+    @FunctionalInterface
+    private interface ListMapper<T> {
+        T apply(ConfigField field) throws InvalidConfigurationException;
+    }
+
+    private <T> ConfigList<T> createList(ListMapper<T> mapper) {
+        List<T> elements = new ArrayList<>();
         for (ConfigField field : this) {
             try {
-                list.add(mapper.apply(field));
-            } catch (InvalidConfigurationException e) {
-                return ConfigOptional.invalid(e);
+                elements.add(mapper.apply(field));
+            }
+            catch (InvalidConfigurationException e) {
+                return ConfigList.invalid(e);
             }
         }
-        return ConfigOptional.of(this, list);
+        return ConfigList.of(this, elements);
     }
 
     @Override

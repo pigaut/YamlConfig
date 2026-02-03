@@ -1,5 +1,6 @@
 package io.github.pigaut.yaml;
 
+import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.line.scalar.*;
 import org.jetbrains.annotations.*;
 
@@ -14,11 +15,10 @@ public class InvalidConfigurationException extends ConfigurationException {
     private final @Nullable File file;
     private final @Nullable String path;
     private final @Nullable String line;
-    private final String cause;
-    private final boolean debug;
+    private final String details;
 
     public InvalidConfigurationException(ConfigField field, String cause) {
-        this(field.getRoot(), field, null, cause);
+        this(field.getRoot(), field, field.getSimplePath(), cause);
     }
 
     public InvalidConfigurationException(ConfigField field, String key, String cause) {
@@ -29,20 +29,17 @@ public class InvalidConfigurationException extends ConfigurationException {
         this(field.getRoot(), field, field.isRoot() ? "[" + (index + 1) + "]" : field.getSimplePath() + "[" + (index + 1) + "]" , cause);
     }
 
-    public InvalidConfigurationException(InvalidConfigurationException exception, String cause) {
-        super(null, null, false, exception.debug);
+    public InvalidConfigurationException(InvalidConfigurationException exception, String details) {
         this.field = exception.field;
         this.prefix = exception.prefix;
         this.problem = exception.problem;
         this.file = exception.file;
         this.path = exception.path;
         this.line = exception.line;
-        this.cause = cause;
-        this.debug = exception.debug;
+        this.details = details;
     }
 
-    private InvalidConfigurationException(ConfigRoot config, ConfigField field, String path, String cause) {
-        super(null, null, false, config.isDebug());
+    private InvalidConfigurationException(ConfigRoot config, ConfigField field, String path, String details) {
         this.field = field;
         this.prefix = config.getPrefix();
         this.file = config.getFile();
@@ -50,8 +47,7 @@ public class InvalidConfigurationException extends ConfigurationException {
         this.path = path;
         this.line = field instanceof ConfigLine configLine ? configLine.getValue() :
                 field instanceof LineScalar lineScalar ? lineScalar.toLine().getValue() : null;
-        this.cause = cause;
-        this.debug = config.isDebug();
+        this.details = details;
     }
 
     public @NotNull ConfigField getField() {
@@ -90,7 +86,7 @@ public class InvalidConfigurationException extends ConfigurationException {
     }
 
     public @NotNull String getDetails() {
-        return cause;
+        return details;
     }
 
     @Override
@@ -99,39 +95,20 @@ public class InvalidConfigurationException extends ConfigurationException {
     }
 
     @Override
-    public @NotNull String getLogMessage(String parentDirectory) {
-        String path = getPath();
-
-        final String optionalPrefix = prefix != null ? (prefix + " ") : "";
-        final String optionalProblem = problem != null ? (": &f" + problem.toUpperCase()) : "";
-        final String optionalFile = file != null ? ("  &c&lFile &c>> " + file + "\n") : "";
-        final String optionalPath = path != null ? ("  &c&lPath &c>> " + path + "\n") : "";
-        final String optionalLine = line != null ? ("  &f&lLine &f>> " + line + "\n") : "";
-        final String details = "  &e&lDetails &e>> " + cause + "\n";
-
-        return "&c&l" + optionalPrefix + "Configuration" + optionalProblem + "\n" +
-                optionalFile +
-                optionalPath +
-                optionalLine +
-                details +
-                "&c&l---------------------------------------------";
-    }
-
-    @Override
     public String toString() {
-        final String optionalPrefix = prefix != null ? (prefix + " ") : "";
-        final String optionalProblem = problem != null ? (" -> " + problem) : "";
-        final String optionalFile = file != null ? (" File: " + file.getPath() + "\n") : "";
-        final String optionalPath = path != null ? (" Path: " + path + "\n") : "";
-        final String optionalLine = line != null ? ("Line: " + line + "\n") : "";
+        String optionalPrefix = prefix != null ? (prefix + " ") : "";
+        String optionalProblem = problem != null ? (": " + CaseFormatter.toSpacedUpperCase(problem)) : "";
+        String optionalFile = file != null ? (" File >> " + file.getPath() + "\n") : "";
+        String optionalPath = path != null ? (" Path >> " + path + "\n") : "";
+        String optionalLine = line != null ? (" Line >> " + line + "\n") : "";
 
-        final String errorMessage = "%sConfiguration Error%s\n" +
+        String errorMessage = "%sConfiguration Error%s\n" +
                 "%s" +
                 "%s" +
                 "%s" +
-                " Details: %s." + (debug ? "\n\n" : "");
+                " Details >> %s.\n\n";
         return String.format(errorMessage, optionalPrefix, optionalProblem, optionalFile,
-                optionalPath, optionalLine, cause);
+                optionalPath, optionalLine, details);
     }
 
 }

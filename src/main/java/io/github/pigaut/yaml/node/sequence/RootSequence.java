@@ -13,6 +13,7 @@ import org.snakeyaml.engine.v2.exceptions.*;
 import java.io.*;
 import java.nio.charset.*;
 import java.util.*;
+import java.util.function.*;
 
 public class RootSequence extends Sequence implements ConfigRoot {
 
@@ -20,25 +21,18 @@ public class RootSequence extends Sequence implements ConfigRoot {
     private final @Nullable String name;
     private final Load loader = new ConfigLoad();
     private final Dump dumper = new ConfigDump();
+    private final Deque<String> problems = new LinkedList<>();
     private @NotNull Configurator configurator;
     private @Nullable String prefix;
-    private boolean debug;
     private @NotNull String header = "";
-    private final Deque<String> problems = new LinkedList<>();
 
-    public RootSequence(@Nullable File file, @NotNull Configurator configurator, @Nullable String prefix, boolean debug) {
+    public RootSequence(@Nullable File file, @NotNull Configurator configurator, @Nullable String prefix) {
         super(FlowStyle.BLOCK);
         Preconditions.checkNotNull(configurator, "Configurator cannot be null");
         this.file = file;
         this.name = file != null ? YamlConfig.getFileName(file) : null;
         this.configurator = configurator;
         this.prefix = prefix;
-        this.debug = debug;
-    }
-
-    @Override
-    public @NotNull String getKey() throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Root does not have a key");
     }
 
     @Override
@@ -49,6 +43,26 @@ public class RootSequence extends Sequence implements ConfigRoot {
     @Override
     public @NotNull RootSequence getRoot() {
         return this;
+    }
+
+    @Override
+    public @NotNull String getKey() throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Root does not have a key");
+    }
+
+    @Override
+    public @NotNull Branch getParent() throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Root does not have a parent");
+    }
+
+    @Override
+    public @Nullable String getPrefix() {
+        return prefix;
+    }
+
+    @Override
+    public void setPrefix(@Nullable String prefix) {
+        this.prefix = prefix;
     }
 
     @Override
@@ -68,31 +82,6 @@ public class RootSequence extends Sequence implements ConfigRoot {
         if (problemDescription != null) {
             problems.remove(problemDescription);
         }
-    }
-
-    @Override
-    public @NotNull Branch getParent() throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Root does not have a parent");
-    }
-
-    @Override
-    public @Nullable String getPrefix() {
-        return prefix;
-    }
-
-    @Override
-    public void setPrefix(@Nullable String prefix) {
-        this.prefix = prefix;
-    }
-
-    @Override
-    public boolean isDebug() {
-        return debug;
-    }
-
-    @Override
-    public void setDebug(boolean debug) {
-        this.debug = debug;
     }
 
     @Override
@@ -126,44 +115,55 @@ public class RootSequence extends Sequence implements ConfigRoot {
     }
 
     @Override
-    public boolean load() throws ConfigurationLoadException {
-        if (file == null) {
-            throw new IllegalStateException("You cannot load configuration from file because file is null");
-        }
+    public void load() throws ConfigurationLoadException {
+        Preconditions.checkState(file != null, "Cannot load configuration from file because file is null");
+        load(file);
+    }
+
+    @Override
+    public void load(@NotNull Consumer<ConfigurationLoadException> errorCollector) {
         try {
-            return load(file);
-        } catch (ParserException | ScannerException | ComposerException e) {
-            throw new ConfigurationLoadException(this, e);
+            load();
+        } catch (ConfigurationLoadException e) {
+            errorCollector.accept(e);
         }
     }
 
     @Override
-    public boolean load(@NotNull File file) {
+    public void load(@NotNull File file) throws ConfigurationLoadException {
         if (!file.exists()) {
-            return false;
+            throw new ConfigurationLoadException(this, "File does not exist");
         }
 
         try (FileInputStream fileInputStream = new FileInputStream(file);
              InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, StandardCharsets.UTF_8);
              BufferedReader reader = new BufferedReader(inputStreamReader)) {
-            return load(reader);
+            load(reader);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ConfigurationLoadException(this, e.getMessage());
         }
     }
 
     @Override
-    public boolean load(@NotNull InputStream inputStream) {
-        final List<Object> documents = new ArrayList<>();
-        loader.loadAllFromInputStream(inputStream).forEach(documents::add);
-        return loadDocuments(documents);
+    public void load(@NotNull InputStream inputStream) throws ConfigurationLoadException {
+        List<Object> documents = new ArrayList<>();
+        try {
+            loader.loadAllFromInputStream(inputStream).forEach(documents::add);
+        } catch (ParserException | ScannerException | ComposerException e) {
+            throw new ConfigurationLoadException(this, e.getMessage());
+        }
+        loadDocuments(documents);
     }
 
     @Override
-    public boolean load(@NotNull Reader reader) {
-        final List<Object> documents = new ArrayList<>();
-        loader.loadAllFromReader(reader).forEach(documents::add);
-        return loadDocuments(documents);
+    public void load(@NotNull Reader reader) throws ConfigurationLoadException {
+        List<Object> documents = new ArrayList<>();
+        try {
+            loader.loadAllFromReader(reader).forEach(documents::add);
+        } catch (ParserException | ScannerException | ComposerException e) {
+            throw new ConfigurationLoadException(this, e.getMessage());
+        }
+        loadDocuments(documents);
     }
 
     @Override
@@ -176,14 +176,17 @@ public class RootSequence extends Sequence implements ConfigRoot {
 
     @Override
     public boolean save(@NotNull File file) {
-        if (!YamlConfig.createFileIfNotExists(file))
+        if (!YamlConfig.createFileIfNotExists(file)) {
             return false;
-        final String yamlData = saveToString();
+        }
+
+        String yamlData = saveToString();
+
         try (FileWriter writer = new FileWriter(file)) {
             writer.write(yamlData);
             return true;
         } catch (IOException e) {
-            throw new InvalidConfigurationException(this, e.getMessage());
+            return false;
         }
     }
 
@@ -197,31 +200,31 @@ public class RootSequence extends Sequence implements ConfigRoot {
 
     @Override
     public @NotNull RootSection convertToSection() {
-        return new RootSection(file, configurator, prefix, debug);
+        return new RootSection(file, configurator, prefix);
     }
 
-    private boolean loadDocuments(List<Object> documents) {
-        this.clear();
+    private void loadDocuments(List<Object> documents) throws ConfigurationLoadException {
+        clear();
         if (documents.isEmpty()) {
-            return false;
-        }
-        if (documents.size() == 1) {
-            final Object data = documents.get(0);
-            if (data instanceof List<?> elements) {
-                elements.forEach(this::add);
-                setFlowStyle(FlowStyle.BLOCK);
-                return true;
-            }
-            return false;
+            return;
         }
 
-        for (Object data : documents) {
-            if (data != null) {
-                this.add(data);
+        if (documents.size() == 1) {
+            Object parsedNode = documents.get(0);
+            if (!(parsedNode instanceof List<?> elements)) {
+                throw new ConfigurationLoadException(this, "Expected a list but found another node");
+            }
+            elements.forEach(this::add);
+            setFlowStyle(FlowStyle.BLOCK);
+            return;
+        }
+
+        for (Object parsedNode : documents) {
+            if (parsedNode != null) {
+                add(parsedNode);
             }
         }
         setFlowStyle(FlowStyle.AUTO);
-        return true;
     }
 
 }

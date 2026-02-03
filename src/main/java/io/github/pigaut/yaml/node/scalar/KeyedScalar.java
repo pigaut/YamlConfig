@@ -6,7 +6,6 @@ import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.scalar.key.*;
 import io.github.pigaut.yaml.node.section.*;
 import io.github.pigaut.yaml.node.sequence.*;
-import io.github.pigaut.yaml.optional.*;
 import org.jetbrains.annotations.*;
 
 import java.util.*;

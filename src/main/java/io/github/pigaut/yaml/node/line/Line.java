@@ -6,7 +6,6 @@ import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.convert.parse.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.line.scalar.*;
-import io.github.pigaut.yaml.optional.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 
@@ -18,7 +17,7 @@ public class Line implements ConfigLine {
     private final List<ConfigScalar> values = new ArrayList<>();
     private final Map<String, ConfigScalar> valuesByKey = new LinkedHashMap<>();
 
-    public Line(ConfigScalar scalar) throws InvalidConfigurationException {
+    public Line(ConfigScalar scalar) {
         this.scalar = scalar;
         updateLine(scalar.toString());
     }
@@ -95,7 +94,13 @@ public class Line implements ConfigLine {
 
     @Override
     public boolean hasFlag(@NotNull String key) {
-        return valuesByKey.containsKey(key);
+        String[] aliases = key.split("\\|");
+        for (String alias : aliases) {
+            if (valuesByKey.containsKey(alias)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -177,10 +182,10 @@ public class Line implements ConfigLine {
 
     @Override
     public <T> List<T> getAllOrSkip(int startIndex, Class<T> classType) {
-        final List<T> elements = new ArrayList<>();
+        List<T> elements = new ArrayList<>();
         for (int i = startIndex; i < values.size(); i++) {
-            final ConfigScalar scalar = values.get(i);
-            scalar.load(classType).ifPresent(elements::add);
+            ConfigScalar scalar = values.get(i);
+            scalar.load(classType).ifValidOrElse(elements::add, error -> {});
         }
         return elements;
     }
@@ -213,7 +218,7 @@ public class Line implements ConfigLine {
     }
 
     @Override
-    public <T> T loadRequired(Class<T> classType) {
+    public <T> T loadRequired(Class<T> classType) throws InvalidConfigurationException {
         return scalar.loadRequired(classType);
     }
 

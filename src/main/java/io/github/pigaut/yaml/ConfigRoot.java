@@ -4,16 +4,13 @@ import io.github.pigaut.yaml.configurator.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.util.function.*;
 
 public interface ConfigRoot extends ConfigField {
 
     @Nullable String getPrefix();
 
     void setPrefix(@Nullable String prefix);
-
-    boolean isDebug();
-
-    void setDebug(boolean debug);
 
     @Nullable String getCurrentProblem();
 
@@ -34,13 +31,15 @@ public interface ConfigRoot extends ConfigField {
 
     void setHeader(@NotNull String... lines);
 
-    boolean load() throws ConfigurationLoadException;
+    void load() throws ConfigurationLoadException;
 
-    boolean load(@NotNull File file);
+    void load(@NotNull Consumer<ConfigurationLoadException> errorCollector);
 
-    boolean load(@NotNull InputStream inputStream);
+    void load(@NotNull File file) throws ConfigurationLoadException;
 
-    boolean load(@NotNull Reader reader);
+    void load(@NotNull InputStream inputStream) throws ConfigurationLoadException;
+
+    void load(@NotNull Reader reader) throws ConfigurationLoadException;
 
     boolean save();
 
