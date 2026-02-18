@@ -1,6 +1,5 @@
 package io.github.pigaut.yaml.convert.parse;
 
-import com.sun.security.jgss.*;
 import io.github.pigaut.yaml.amount.*;
 import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.util.*;
@@ -240,7 +239,7 @@ public class ParseUtil {
                 throw new StringParseException("Number range's min value must be less than max value");
             }
 
-            return Amount.ranged(min, max);
+            return Amount.between(min, max);
         }
 
         else if (string.contains(";")) {
@@ -248,7 +247,7 @@ public class ParseUtil {
             for (String unparsedValue : Patterns.SEMICOLON_SEPARATED.split(string)) {
                 values.add(ParseUtil.parseDouble(unparsedValue));
             }
-            return Amount.casual(values);
+            return Amount.random(values);
         }
 
         throw new StringParseException("Expected an amount but found: '" + string + "'");

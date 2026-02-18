@@ -9,11 +9,13 @@ import java.util.function.*;
 
 public interface Amount {
 
-    int getInteger();
+    int intValue();
 
-    double getDouble();
+    double doubleValue();
 
     boolean match(double amount);
+
+    boolean test(DoublePredicate predicate);
 
     Amount transform(DoubleFunction<Double> mapper);
 
@@ -21,21 +23,21 @@ public interface Amount {
         return new FixedAmount(amount);
     }
 
-    static Amount ranged(double min, double max) {
+    static Amount between(double min, double max) {
         if (min >= max) {
             throw new IllegalArgumentException("Minimum value must be less than maximum value.");
         }
         return new RangedAmount(min, max);
     }
 
-    static Amount casual(double... values) {
+    static Amount random(double... values) {
         if (values.length < 1) {
             throw new IllegalArgumentException("Values must contain at least one element.");
         }
-        return new CasualAmount(values);
+        return new RandomAmount(values);
     }
 
-    static Amount casual(@NotNull List<Double> values) {
+    static Amount random(@NotNull List<Double> values) {
         Preconditions.checkNotNull(values, "Values cannot be null.");
         final double[] arrayValues = new double[values.size()];
         for (int i = 0; i < values.size(); i++) {
@@ -43,7 +45,7 @@ public interface Amount {
             Preconditions.checkNotNull(values, "Values must not contain null elements.");
             arrayValues[i] = value;
         }
-        return casual(arrayValues);
+        return random(arrayValues);
     }
 
     static @NotNull Amount fromString(String string) {
@@ -59,18 +61,23 @@ public interface Amount {
 
     Amount ANY = new Amount() {
         @Override
-        public int getInteger() {
+        public int intValue() {
             return 0;
         }
 
         @Override
-        public double getDouble() {
+        public double doubleValue() {
             return 0;
         }
 
         @Override
         public boolean match(double amount) {
             return true;
+        }
+
+        @Override
+        public boolean test(DoublePredicate predicate) {
+            return predicate.test(0);
         }
 
         @Override

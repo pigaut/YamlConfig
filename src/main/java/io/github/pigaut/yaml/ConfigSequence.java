@@ -2,6 +2,9 @@ package io.github.pigaut.yaml;
 
 import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
+import io.github.pigaut.yaml.node.scalar.*;
+import io.github.pigaut.yaml.node.section.*;
+import io.github.pigaut.yaml.node.sequence.*;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -15,6 +18,9 @@ public interface ConfigSequence extends ConfigBranch, Iterable<KeylessField> {
 
     Stream<KeylessField> stream();
     Set<KeylessField> getNestedFields();
+    Set<KeylessScalar> getNestedScalars();
+    Set<KeylessSection> getNestedSections();
+    Set<KeylessSequence> getNestedSequences();
 
     @NotNull ConfigSection getSectionOrCreate(int index);
     @NotNull ConfigSequence getSequenceOrCreate(int index);
@@ -24,20 +30,20 @@ public interface ConfigSequence extends ConfigBranch, Iterable<KeylessField> {
     @NotNull ConfigSequence addEmptySequence();
     @NotNull ConfigScalar addEmptyScalar();
 
-    <T> @NotNull T getRequired(int index, Class<T> classType) throws InvalidConfigurationException;
-    @NotNull ConfigField getRequiredField(int index) throws InvalidConfigurationException;
-    @NotNull ConfigScalar getRequiredScalar(int index) throws InvalidConfigurationException;
-    @NotNull ConfigSection getRequiredSection(int index) throws InvalidConfigurationException;
-    @NotNull ConfigSequence getRequiredSequence(int index) throws InvalidConfigurationException;
-    @NotNull ConfigLine getRequiredLine(int index) throws InvalidConfigurationException;
-    @NotNull Boolean getRequiredBoolean(int index) throws InvalidConfigurationException;
-    @NotNull Character getRequiredCharacter(int index) throws InvalidConfigurationException;
-    @NotNull String getRequiredString(int index) throws InvalidConfigurationException;
-    @NotNull String getRequiredString(int index, @NotNull StringFormatter formatter) throws InvalidConfigurationException;
-    @NotNull Integer getRequiredInteger(int index) throws InvalidConfigurationException;
-    @NotNull Long getRequiredLong(int index) throws InvalidConfigurationException;
-    @NotNull Float getRequiredFloat(int index) throws InvalidConfigurationException;
-    @NotNull Double getRequiredDouble(int index) throws InvalidConfigurationException;
+    <T> @NotNull T getRequired(int index, Class<T> classType) throws InvalidConfigException;
+    @NotNull ConfigField getRequiredField(int index) throws InvalidConfigException;
+    @NotNull ConfigScalar getRequiredScalar(int index) throws InvalidConfigException;
+    @NotNull ConfigSection getRequiredSection(int index) throws InvalidConfigException;
+    @NotNull ConfigSequence getRequiredSequence(int index) throws InvalidConfigException;
+    @NotNull ConfigLine getRequiredLine(int index) throws InvalidConfigException;
+    @NotNull Boolean getRequiredBoolean(int index) throws InvalidConfigException;
+    @NotNull Character getRequiredCharacter(int index) throws InvalidConfigException;
+    @NotNull String getRequiredString(int index) throws InvalidConfigException;
+    @NotNull String getRequiredString(int index, @NotNull StringFormatter formatter) throws InvalidConfigException;
+    @NotNull Integer getRequiredInteger(int index) throws InvalidConfigException;
+    @NotNull Long getRequiredLong(int index) throws InvalidConfigException;
+    @NotNull Float getRequiredFloat(int index) throws InvalidConfigException;
+    @NotNull Double getRequiredDouble(int index) throws InvalidConfigException;
 
     <T> ConfigOptional<T> get(int index, Class<T> classType);
     ConfigOptional<ConfigField> getField(int index);

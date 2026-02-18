@@ -63,8 +63,8 @@ public class Line implements ConfigLine {
     }
 
     @Override
-    public <T> ConfigOptional<T> load(Class<T> classType) {
-        return scalar.load(classType);
+    public <T> ConfigOptional<T> get(@NotNull Class<T> classType) {
+        return scalar.get(classType);
     }
 
     @Override
@@ -146,53 +146,57 @@ public class Line implements ConfigLine {
     }
 
     @Override
-    public <T> T getRequired(int index, Class<T> classType) throws InvalidConfigurationException {
+    public <T> T getRequired(int index, @NotNull Class<T> classType) throws InvalidConfigException {
         return get(index, classType).orThrow();
     }
 
     @Override
-    public <T> ConfigOptional<T> get(int index, Class<T> classType) {
-        return getScalar(index).flatMap(scalar -> scalar.load(classType));
+    public <T> ConfigOptional<T> get(int index, @NotNull Class<T> classType) {
+        return getScalar(index).flatMap(scalar -> scalar.get(classType));
     }
 
     @Override
-    public <T> T getRequired(String key, Class<T> classType) throws InvalidConfigurationException {
+    public <T> T getRequired(@NotNull String key, @NotNull Class<T> classType) throws InvalidConfigException {
         return get(key, classType).orThrow();
     }
 
     @Override
-    public <T> List<T> getAll(Class<T> classType) throws InvalidConfigurationException {
+    public <T> ConfigList<T> getAll(@NotNull Class<T> classType) {
         return getAll(0, classType);
     }
 
     @Override
-    public <T> List<T> getAllOrSkip(Class<T> classType) {
-        return getAllOrSkip(0, classType);
-    }
-
-    @Override
-    public <T> List<T> getAll(int startIndex, Class<T> classType) throws InvalidConfigurationException {
-        final List<T> elements = new ArrayList<>();
-        for (int i = startIndex; i < values.size(); i++) {
-            final ConfigScalar scalar = values.get(i);
-            elements.add(scalar.load(classType).orThrow());
-        }
-        return elements;
-    }
-
-    @Override
-    public <T> List<T> getAllOrSkip(int startIndex, Class<T> classType) {
+    public <T> ConfigList<T> getAll(int startIndex, @NotNull Class<T> classType) {
         List<T> elements = new ArrayList<>();
         for (int i = startIndex; i < values.size(); i++) {
             ConfigScalar scalar = values.get(i);
-            scalar.load(classType).ifValidOrElse(elements::add, error -> {});
+            try {
+                elements.add(scalar.getRequired(classType));
+            } catch (InvalidConfigException e) {
+                return ConfigList.invalid(e);
+            }
+        }
+        return ConfigList.of(this, elements);
+    }
+
+    @Override
+    public <T> List<T> getAllRequired(@NotNull Class<T> classType) throws InvalidConfigException {
+        return getAllRequired(0, classType);
+    }
+
+    @Override
+    public <T> List<T> getAllRequired(int startIndex, @NotNull Class<T> classType) throws InvalidConfigException {
+        List<T> elements = new ArrayList<>();
+        for (int i = startIndex; i < values.size(); i++) {
+            ConfigScalar scalar = values.get(i);
+            elements.add(scalar.getRequired(classType));
         }
         return elements;
     }
 
     @Override
-    public <T> ConfigOptional<T> get(String key, Class<T> classType) {
-        return getScalar(key).flatMap(scalar -> scalar.load(classType));
+    public <T> ConfigOptional<T> get(@NotNull String key, @NotNull Class<T> classType) {
+        return getScalar(key).flatMap(scalar -> scalar.get(classType));
     }
 
     private ConfigOptional<ConfigScalar> getScalar(String flag) {
@@ -218,87 +222,87 @@ public class Line implements ConfigLine {
     }
 
     @Override
-    public <T> T loadRequired(Class<T> classType) throws InvalidConfigurationException {
-        return scalar.loadRequired(classType);
+    public <T> T getRequired(@NotNull Class<T> classType) throws InvalidConfigException {
+        return scalar.getRequired(classType);
     }
 
     @Override
-    public @NotNull Boolean getRequiredBoolean(@NotNull String modifier) throws InvalidConfigurationException {
+    public @NotNull Boolean getRequiredBoolean(@NotNull String modifier) throws InvalidConfigException {
         return getBoolean(modifier).orThrow();
     }
 
     @Override
-    public @NotNull Character getRequiredCharacter(@NotNull String modifier) throws InvalidConfigurationException {
+    public @NotNull Character getRequiredCharacter(@NotNull String modifier) throws InvalidConfigException {
         return getCharacter(modifier).orThrow();
     }
 
     @Override
-    public @NotNull String getRequiredString(@NotNull String modifier) throws InvalidConfigurationException {
+    public @NotNull String getRequiredString(@NotNull String modifier) throws InvalidConfigException {
         return getString(modifier).orThrow();
     }
 
     @Override
-    public @NotNull String getRequiredString(@NotNull String modifier, @NotNull StringFormatter formatter) throws InvalidConfigurationException {
+    public @NotNull String getRequiredString(@NotNull String modifier, @NotNull StringFormatter formatter) throws InvalidConfigException {
         return getString(modifier, formatter).orThrow();
     }
 
     @Override
-    public @NotNull Integer getRequiredInteger(@NotNull String modifier) throws InvalidConfigurationException {
+    public @NotNull Integer getRequiredInteger(@NotNull String modifier) throws InvalidConfigException {
         return getInteger(modifier).orThrow();
     }
 
     @Override
-    public @NotNull Long getRequiredLong(@NotNull String modifier) throws InvalidConfigurationException {
+    public @NotNull Long getRequiredLong(@NotNull String modifier) throws InvalidConfigException {
         return getLong(modifier).orThrow();
     }
 
     @Override
-    public @NotNull Float getRequiredFloat(@NotNull String modifier) throws InvalidConfigurationException {
+    public @NotNull Float getRequiredFloat(@NotNull String modifier) throws InvalidConfigException {
         return getFloat(modifier).orThrow();
     }
 
     @Override
-    public @NotNull Double getRequiredDouble(@NotNull String modifier) throws InvalidConfigurationException {
+    public @NotNull Double getRequiredDouble(@NotNull String modifier) throws InvalidConfigException {
         return getDouble(modifier).orThrow();
     }
 
     @Override
-    public @NotNull Boolean getRequiredBoolean(int index) throws InvalidConfigurationException {
+    public @NotNull Boolean getRequiredBoolean(int index) throws InvalidConfigException {
         return getBoolean(index).orThrow();
     }
 
     @Override
-    public @NotNull Character getRequiredCharacter(int index) throws InvalidConfigurationException {
+    public @NotNull Character getRequiredCharacter(int index) throws InvalidConfigException {
         return getCharacter(index).orThrow();
     }
 
     @Override
-    public @NotNull String getRequiredString(int index) throws InvalidConfigurationException {
+    public @NotNull String getRequiredString(int index) throws InvalidConfigException {
         return getString(index).orThrow();
     }
 
     @Override
-    public @NotNull String getRequiredString(int index, @NotNull StringFormatter formatter) throws InvalidConfigurationException {
+    public @NotNull String getRequiredString(int index, @NotNull StringFormatter formatter) throws InvalidConfigException {
         return getString(index, formatter).orThrow();
     }
 
     @Override
-    public @NotNull Integer getRequiredInteger(int index) throws InvalidConfigurationException {
+    public @NotNull Integer getRequiredInteger(int index) throws InvalidConfigException {
         return getInteger(index).orThrow();
     }
 
     @Override
-    public @NotNull Long getRequiredLong(int index) throws InvalidConfigurationException {
+    public @NotNull Long getRequiredLong(int index) throws InvalidConfigException {
         return getLong(index).orThrow();
     }
 
     @Override
-    public @NotNull Float getRequiredFloat(int index) throws InvalidConfigurationException {
+    public @NotNull Float getRequiredFloat(int index) throws InvalidConfigException {
         return getFloat(index).orThrow();
     }
 
     @Override
-    public @NotNull Double getRequiredDouble(int index) throws InvalidConfigurationException {
+    public @NotNull Double getRequiredDouble(int index) throws InvalidConfigException {
         return getDouble(index).orThrow();
     }
 

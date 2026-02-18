@@ -10,32 +10,32 @@ public interface ConfigLoader<T> {
         return null;
     }
 
-    default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigurationException {
-        throw new InvalidConfigurationException(scalar, "Value is not supported here");
+    default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigException {
+        throw new InvalidConfigException(scalar, "Value is not supported here");
     }
 
-    default @NotNull T loadFromSection(@NotNull ConfigSection section) throws InvalidConfigurationException {
-        throw new InvalidConfigurationException(section, "Section is not supported here");
+    default @NotNull T loadFromSection(@NotNull ConfigSection section) throws InvalidConfigException {
+        throw new InvalidConfigException(section, "Section is not supported here");
     }
 
-    default @NotNull T loadFromSequence(@NotNull ConfigSequence sequence) throws InvalidConfigurationException {
-        throw new InvalidConfigurationException(sequence, "Sequence (list) is not supported here");
+    default @NotNull T loadFromSequence(@NotNull ConfigSequence sequence) throws InvalidConfigException {
+        throw new InvalidConfigException(sequence, "Sequence (list) is not supported here");
     }
 
     @FunctionalInterface
     interface Scalar<T> extends ConfigLoader<T> {
 
         @NotNull
-        T loadFromScalar(ConfigScalar line) throws InvalidConfigurationException;
+        T loadFromScalar(ConfigScalar line) throws InvalidConfigException;
 
         @Override
-        default @NotNull T loadFromSection(@NotNull ConfigSection section) throws InvalidConfigurationException {
-            throw new InvalidConfigurationException(section, "Section not supported for scalar loader");
+        default @NotNull T loadFromSection(@NotNull ConfigSection section) throws InvalidConfigException {
+            throw new InvalidConfigException(section, "Section not supported for scalar loader");
         }
 
         @Override
-        default @NotNull T loadFromSequence(@NotNull ConfigSequence sequence) throws InvalidConfigurationException {
-            throw new InvalidConfigurationException(sequence, "Sequence not supported for scalar loader");
+        default @NotNull T loadFromSequence(@NotNull ConfigSequence sequence) throws InvalidConfigException {
+            throw new InvalidConfigException(sequence, "Sequence not supported for scalar loader");
         }
     }
 
@@ -43,21 +43,21 @@ public interface ConfigLoader<T> {
     interface Line<T> extends ConfigLoader<T> {
 
         @NotNull
-        T loadFromLine(ConfigLine line) throws InvalidConfigurationException;
+        T loadFromLine(ConfigLine line) throws InvalidConfigException;
 
         @Override
-        default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigurationException {
+        default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigException {
             return loadFromLine(scalar.toLine());
         }
 
         @Override
-        default @NotNull T loadFromSection(@NotNull ConfigSection section) throws InvalidConfigurationException {
-            throw new InvalidConfigurationException(section, "loadFromSection is not supported for line loader");
+        default @NotNull T loadFromSection(@NotNull ConfigSection section) throws InvalidConfigException {
+            throw new InvalidConfigException(section, "loadFromSection is not supported for line loader");
         }
 
         @Override
-        default @NotNull T loadFromSequence(@NotNull ConfigSequence sequence) throws InvalidConfigurationException {
-            throw new InvalidConfigurationException(sequence, "loadFromSequence is not supported for line loader");
+        default @NotNull T loadFromSequence(@NotNull ConfigSequence sequence) throws InvalidConfigException {
+            throw new InvalidConfigException(sequence, "loadFromSequence is not supported for line loader");
         }
     }
 
@@ -65,16 +65,16 @@ public interface ConfigLoader<T> {
     interface Section<T> extends ConfigLoader<T> {
 
         @Override
-        @NotNull T loadFromSection(@NotNull ConfigSection section) throws InvalidConfigurationException;
+        @NotNull T loadFromSection(@NotNull ConfigSection section) throws InvalidConfigException;
 
         @Override
-        default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigurationException {
-            throw new InvalidConfigurationException(scalar, "Scalar not supported for section loader");
+        default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigException {
+            throw new InvalidConfigException(scalar, "Scalar not supported for section loader");
         }
 
         @Override
-        default @NotNull T loadFromSequence(@NotNull ConfigSequence sequence) throws InvalidConfigurationException {
-            throw new InvalidConfigurationException(sequence, "Sequence not supported for section loader");
+        default @NotNull T loadFromSequence(@NotNull ConfigSequence sequence) throws InvalidConfigException {
+            throw new InvalidConfigException(sequence, "Sequence not supported for section loader");
         }
     }
 
@@ -82,50 +82,50 @@ public interface ConfigLoader<T> {
     interface Sequence<T> extends ConfigLoader<T> {
 
         @Override
-        @NotNull T loadFromSequence(@NotNull ConfigSequence section) throws InvalidConfigurationException;
+        @NotNull T loadFromSequence(@NotNull ConfigSequence section) throws InvalidConfigException;
 
         @Override
-        default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigurationException {
-            throw new InvalidConfigurationException(scalar, "Scalar not supported for sequence loader");
+        default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigException {
+            throw new InvalidConfigException(scalar, "Scalar not supported for sequence loader");
         }
 
         @Override
-        default @NotNull T loadFromSection(@NotNull ConfigSection section) throws InvalidConfigurationException {
-            throw new InvalidConfigurationException(section, "Section not supported for sequence loader");
+        default @NotNull T loadFromSection(@NotNull ConfigSection section) throws InvalidConfigException {
+            throw new InvalidConfigException(section, "Section not supported for sequence loader");
         }
     }
 
     @FunctionalInterface
     interface Branch<T> extends ConfigLoader<T> {
-        @NotNull T loadFromBranch(@NotNull ConfigBranch branch) throws InvalidConfigurationException;
+        @NotNull T loadFromBranch(@NotNull ConfigBranch branch) throws InvalidConfigException;
 
         @Override
-        default @NotNull T loadFromSection(@NotNull ConfigSection section) throws InvalidConfigurationException {
+        default @NotNull T loadFromSection(@NotNull ConfigSection section) throws InvalidConfigException {
             return loadFromBranch(section);
         }
 
         @Override
-        default @NotNull T loadFromSequence(@NotNull ConfigSequence sequence) throws InvalidConfigurationException {
+        default @NotNull T loadFromSequence(@NotNull ConfigSequence sequence) throws InvalidConfigException {
             return loadFromBranch(sequence);
         }
     }
 
     @FunctionalInterface
     interface Any<T> extends ConfigLoader<T> {
-        @NotNull T loadFromField(@NotNull ConfigField field) throws InvalidConfigurationException;
+        @NotNull T loadFromField(@NotNull ConfigField field) throws InvalidConfigException;
 
         @Override
-        default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigurationException {
+        default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigException {
             return loadFromField(scalar);
         }
 
         @Override
-        default @NotNull T loadFromSection(@NotNull ConfigSection section) throws InvalidConfigurationException {
+        default @NotNull T loadFromSection(@NotNull ConfigSection section) throws InvalidConfigException {
             return loadFromField(section);
         }
 
         @Override
-        default @NotNull T loadFromSequence(@NotNull ConfigSequence sequence) throws InvalidConfigurationException {
+        default @NotNull T loadFromSequence(@NotNull ConfigSequence sequence) throws InvalidConfigException {
             return loadFromField(sequence);
         }
 

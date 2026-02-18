@@ -27,8 +27,8 @@ public class SimpleKey implements FieldKey {
 
     @Override
     public Section createSection(@NotNull Branch branch) {
-        final Section section = branch.convertToSection();
-        final Object field = section.getNode(key);
+        Section section = branch.convertToSection();
+        Object field = section.getNode(key);
 
         if (field instanceof Section foundSection) {
             return foundSection;
@@ -41,8 +41,8 @@ public class SimpleKey implements FieldKey {
 
     @Override
     public Sequence createSequence(@NotNull Branch branch) {
-        final Section section = branch.convertToSection();
-        final Object field = section.getNode(key);
+        Section section = branch.convertToSection();
+        Object field = section.getNode(key);
 
         if (field instanceof Sequence foundSequence) {
             return foundSequence;
@@ -63,7 +63,7 @@ public class SimpleKey implements FieldKey {
 
     @Override
     public void remove(@NotNull Branch branch) {
-        final Section section = branch.convertToSection();
+        Section section = branch.convertToSection();
         section.removeNode(key);
     }
 

@@ -26,6 +26,14 @@ public class RootSequence extends Sequence implements ConfigRoot {
     private @Nullable String prefix;
     private @NotNull String header = "";
 
+    public RootSequence(@NotNull Configurator configurator) {
+        this(null, configurator, null);
+    }
+
+    public RootSequence(@Nullable File file, @NotNull Configurator configurator) {
+        this(file, configurator, null);
+    }
+
     public RootSequence(@Nullable File file, @NotNull Configurator configurator, @Nullable String prefix) {
         super(FlowStyle.BLOCK);
         Preconditions.checkNotNull(configurator, "Configurator cannot be null");
@@ -115,24 +123,24 @@ public class RootSequence extends Sequence implements ConfigRoot {
     }
 
     @Override
-    public void load() throws ConfigurationLoadException {
+    public void load() throws ConfigLoadException {
         Preconditions.checkState(file != null, "Cannot load configuration from file because file is null");
         load(file);
     }
 
     @Override
-    public void load(@NotNull Consumer<ConfigurationLoadException> errorCollector) {
+    public void load(@NotNull Consumer<ConfigLoadException> errorCollector) {
         try {
             load();
-        } catch (ConfigurationLoadException e) {
+        } catch (ConfigLoadException e) {
             errorCollector.accept(e);
         }
     }
 
     @Override
-    public void load(@NotNull File file) throws ConfigurationLoadException {
+    public void load(@NotNull File file) throws ConfigLoadException {
         if (!file.exists()) {
-            throw new ConfigurationLoadException(this, "File does not exist");
+            throw new ConfigLoadException(this, "File does not exist");
         }
 
         try (FileInputStream fileInputStream = new FileInputStream(file);
@@ -140,28 +148,28 @@ public class RootSequence extends Sequence implements ConfigRoot {
              BufferedReader reader = new BufferedReader(inputStreamReader)) {
             load(reader);
         } catch (IOException e) {
-            throw new ConfigurationLoadException(this, e.getMessage());
+            throw new ConfigLoadException(this, e.getMessage());
         }
     }
 
     @Override
-    public void load(@NotNull InputStream inputStream) throws ConfigurationLoadException {
+    public void load(@NotNull InputStream inputStream) throws ConfigLoadException {
         List<Object> documents = new ArrayList<>();
         try {
             loader.loadAllFromInputStream(inputStream).forEach(documents::add);
         } catch (ParserException | ScannerException | ComposerException e) {
-            throw new ConfigurationLoadException(this, e.getMessage());
+            throw new ConfigLoadException(this, e.getMessage());
         }
         loadDocuments(documents);
     }
 
     @Override
-    public void load(@NotNull Reader reader) throws ConfigurationLoadException {
+    public void load(@NotNull Reader reader) throws ConfigLoadException {
         List<Object> documents = new ArrayList<>();
         try {
             loader.loadAllFromReader(reader).forEach(documents::add);
         } catch (ParserException | ScannerException | ComposerException e) {
-            throw new ConfigurationLoadException(this, e.getMessage());
+            throw new ConfigLoadException(this, e.getMessage());
         }
         loadDocuments(documents);
     }
@@ -203,7 +211,7 @@ public class RootSequence extends Sequence implements ConfigRoot {
         return new RootSection(file, configurator, prefix);
     }
 
-    private void loadDocuments(List<Object> documents) throws ConfigurationLoadException {
+    private void loadDocuments(List<Object> documents) throws ConfigLoadException {
         clear();
         if (documents.isEmpty()) {
             return;
@@ -212,7 +220,7 @@ public class RootSequence extends Sequence implements ConfigRoot {
         if (documents.size() == 1) {
             Object parsedNode = documents.get(0);
             if (!(parsedNode instanceof List<?> elements)) {
-                throw new ConfigurationLoadException(this, "Expected a list but found another node");
+                throw new ConfigLoadException(this, "Expected a list but found another node");
             }
             elements.forEach(this::add);
             setFlowStyle(FlowStyle.BLOCK);

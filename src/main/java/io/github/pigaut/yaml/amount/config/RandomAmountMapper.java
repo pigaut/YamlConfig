@@ -6,7 +6,7 @@ import io.github.pigaut.yaml.configurator.*;
 import io.github.pigaut.yaml.configurator.map.*;
 import org.jetbrains.annotations.*;
 
-public class CasualAmountMapper implements ConfigMapper<CasualAmount> {
+public class RandomAmountMapper implements ConfigMapper<RandomAmount> {
 
     @Override
     public @NotNull FieldType getDefaultMappingType() {
@@ -14,7 +14,7 @@ public class CasualAmountMapper implements ConfigMapper<CasualAmount> {
     }
 
     @Override
-    public void mapToSequence(@NotNull ConfigSequence sequence, @NotNull CasualAmount casualAmount) {
+    public void mapToSequence(@NotNull ConfigSequence sequence, @NotNull RandomAmount casualAmount) {
         for (double value : casualAmount.values) {
             sequence.add(value);
         }

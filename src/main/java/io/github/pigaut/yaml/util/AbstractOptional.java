@@ -10,7 +10,7 @@ public class AbstractOptional<T> {
 
     protected final ConfigField field;
     protected final T value;
-    protected final InvalidConfigurationException exception;
+    protected final InvalidConfigException exception;
     protected final boolean existsInConfig;
 
     protected AbstractOptional(@NotNull ConfigField field, @NotNull T value, boolean existsInConfig) {
@@ -20,7 +20,7 @@ public class AbstractOptional<T> {
         this.existsInConfig = existsInConfig;
     }
 
-    protected AbstractOptional(@NotNull ConfigField field, @NotNull InvalidConfigurationException exception, boolean existsInConfig) {
+    protected AbstractOptional(@NotNull ConfigField field, @NotNull InvalidConfigException exception, boolean existsInConfig) {
         this.field = field;
         this.value = null;
         this.exception = exception;
@@ -38,7 +38,7 @@ public class AbstractOptional<T> {
         return value;
     }
 
-    public @NotNull InvalidConfigurationException error() throws NoSuchElementException {
+    public @NotNull InvalidConfigException error() throws NoSuchElementException {
         if (exception == null) {
             throw new NoSuchElementException("No exception is present in config optional.");
         }
@@ -57,7 +57,7 @@ public class AbstractOptional<T> {
         return exception != null;
     }
 
-    public void ifValidOrThrow(Consumer<? super T> action) throws InvalidConfigurationException {
+    public void ifValid(Consumer<? super T> action) throws InvalidConfigException {
         if (isValid()) {
             action.accept(value);
         }
@@ -66,7 +66,7 @@ public class AbstractOptional<T> {
         }
     }
 
-    public void ifValidOrElse(Consumer<? super T> action, Consumer<InvalidConfigurationException> errorCollector) {
+    public void ifValidOrElse(Consumer<? super T> action, Consumer<InvalidConfigException> errorCollector) {
         if (isValid()) {
             action.accept(value);
         }
@@ -83,21 +83,21 @@ public class AbstractOptional<T> {
         return value != null ? value : supplier.get();
     }
 
-    public void collectError(Consumer<InvalidConfigurationException> errorCollector) throws IllegalStateException {
+    public void collectError(Consumer<InvalidConfigException> errorCollector) throws IllegalStateException {
         if (isValid()) {
             throw new IllegalStateException("There is no error in this config optional.");
         }
         errorCollector.accept(exception);
     }
 
-    public @NotNull T orThrow() throws InvalidConfigurationException {
+    public @NotNull T orThrow() throws InvalidConfigException {
         if (exception != null) {
             throw exception;
         }
         return value;
     }
 
-    public T withDefaultOrThrow(T defaultValue) throws InvalidConfigurationException {
+    public T withDefault(T defaultValue) throws InvalidConfigException {
         if (isValid()) {
             return value;
         }
@@ -107,7 +107,7 @@ public class AbstractOptional<T> {
         return defaultValue;
     }
 
-    public T withDefaultOrElse(T defaultValue, Consumer<InvalidConfigurationException> errorCollector) {
+    public T withDefaultOrElse(T defaultValue, Consumer<InvalidConfigException> errorCollector) {
         if (isValid()) {
             return value;
         }

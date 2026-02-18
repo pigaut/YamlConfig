@@ -13,7 +13,7 @@ public class ConfigList<E> extends AbstractOptional<List<E>> {
         super(field, elements, existsInConfig);
     }
 
-    protected ConfigList(@NotNull ConfigField field, @NotNull InvalidConfigurationException exception, boolean existsInConfig) {
+    protected ConfigList(@NotNull ConfigField field, @NotNull InvalidConfigException exception, boolean existsInConfig) {
         super(field, exception, existsInConfig);
     }
 
@@ -21,11 +21,11 @@ public class ConfigList<E> extends AbstractOptional<List<E>> {
         return new ConfigList<>(field, elements, true);
     }
 
-    public static <E> ConfigList<E> invalid(@NotNull InvalidConfigurationException exception) {
+    public static <E> ConfigList<E> invalid(@NotNull InvalidConfigException exception) {
         return new ConfigList<>(exception.getField(), exception, true);
     }
 
-    public List<E> orEmpty() throws InvalidConfigurationException {
+    public List<E> orEmpty() throws InvalidConfigException {
         if (isValid()) {
             return value;
         }
@@ -66,7 +66,24 @@ public class ConfigList<E> extends AbstractOptional<List<E>> {
             if (requirement.test(value)) {
                 return this;
             }
-            return new ConfigList<>(field, new InvalidConfigurationException(field, errorDetails), existsInConfig);
+            return new ConfigList<>(field, new InvalidConfigException(field, errorDetails), existsInConfig);
+        }
+    }
+
+    public List<E> requireOrThrow(@NotNull Requirement<? super List<E>> requirement) throws InvalidConfigException {
+        return requireOrThrow(requirement, requirement.getErrorDetails());
+    }
+
+    public List<E> requireOrThrow(@NotNull Requirement<? super List<E>> requirement, @NotNull String errorDetails) throws InvalidConfigException {
+        Objects.requireNonNull(requirement);
+        Objects.requireNonNull(errorDetails);
+        if (isInvalid()) {
+            throw exception;
+        } else {
+            if (requirement.test(value)) {
+                return value;
+            }
+            throw new InvalidConfigException(field, errorDetails);
         }
     }
 
@@ -83,10 +100,35 @@ public class ConfigList<E> extends AbstractOptional<List<E>> {
         else {
             for (E element : value) {
                 if (!requirement.test(element)) {
-                    return new ConfigList<>(field, new InvalidConfigurationException(field, errorDetails), existsInConfig);
+                    return new ConfigList<>(field, new InvalidConfigException(field, errorDetails), existsInConfig);
                 }
             }
             return this;
+        }
+    }
+
+    public void forEach(@NotNull Consumer<E> action) throws InvalidConfigException {
+        Objects.requireNonNull(action);
+        if (isValid()) {
+            for (E element : value) {
+                action.accept(element);
+            }
+        }
+        else if (existsInConfig()) {
+            throw exception;
+        }
+    }
+
+    public void forEachOrElse(@NotNull Consumer<E> action, @NotNull Consumer<InvalidConfigException> errorCollector) {
+        Objects.requireNonNull(action);
+        Objects.requireNonNull(errorCollector);
+        if (isValid()) {
+            for (E element : value) {
+                action.accept(element);
+            }
+        }
+        else if (existsInConfig()) {
+            errorCollector.accept(exception);
         }
     }
 
@@ -99,7 +141,7 @@ public class ConfigList<E> extends AbstractOptional<List<E>> {
             if (condition) {
                 return this;
             }
-            return new ConfigList<>(field, new InvalidConfigurationException(field, errorDetails), existsInConfig);
+            return new ConfigList<>(field, new InvalidConfigException(field, errorDetails), existsInConfig);
         }
     }
 

@@ -103,12 +103,12 @@ public abstract class LineScalar implements ConfigScalar {
     }
 
     @Override
-    public <T> T loadRequired(Class<T> classType) throws InvalidConfigurationException {
-        return load(classType).orThrow();
+    public <T> T getRequired(@NotNull Class<T> classType) throws InvalidConfigException {
+        return get(classType).orThrow();
     }
 
     @Override
-    public <T> ConfigOptional<T> load(@NotNull Class<T> classType) {
+    public <T> ConfigOptional<T> get(@NotNull Class<T> classType) {
         final ConfigRoot root = this.getRoot();
         final Configurator configurator = root.getConfigurator();
 
@@ -124,7 +124,7 @@ public abstract class LineScalar implements ConfigScalar {
             loader.loadFromScalar(this);
             return ConfigOptional.of(this, loader.loadFromScalar(this));
         }
-        catch (InvalidConfigurationException e) {
+        catch (InvalidConfigException e) {
             return ConfigOptional.invalid(e);
         }
         finally {

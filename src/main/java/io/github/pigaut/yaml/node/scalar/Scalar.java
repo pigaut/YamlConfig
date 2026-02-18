@@ -129,7 +129,7 @@ public abstract class Scalar extends Field implements ConfigScalar {
     }
 
     @Override
-    public <T> ConfigOptional<T> load(Class<T> classType) {
+    public <T> ConfigOptional<T> get(@NotNull Class<T> classType) {
         final ConfigRoot root = this.getRoot();
         final Configurator configurator = root.getConfigurator();
 
@@ -144,7 +144,7 @@ public abstract class Scalar extends Field implements ConfigScalar {
         try {
             return ConfigOptional.of(this, loader.loadFromScalar(this));
         }
-        catch (InvalidConfigurationException e) {
+        catch (InvalidConfigException e) {
             return ConfigOptional.invalid(e);
         }
         finally {

@@ -4,21 +4,21 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
 
-public class CasualAmount implements Amount {
+public class RandomAmount implements Amount {
 
     public final double[] values;
 
-    protected CasualAmount(double[] values) {
+    protected RandomAmount(double[] values) {
         this.values = values;
     }
 
     @Override
-    public int getInteger() {
-        return (int) this.getDouble();
+    public int intValue() {
+        return (int) this.doubleValue();
     }
 
     @Override
-    public double getDouble() {
+    public double doubleValue() {
         final int randomIndex = ThreadLocalRandom.current().nextInt(0, values.length);
         return values[randomIndex];
     }
@@ -34,11 +34,21 @@ public class CasualAmount implements Amount {
     }
 
     @Override
+    public boolean test(DoublePredicate predicate) {
+        for (double value : values) {
+            if (!predicate.test(value)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
     public Amount transform(DoubleFunction<Double> mapper) {
         final double[] mappedValues = Arrays.stream(values)
                 .map(mapper::apply)
                 .toArray();
-        return new CasualAmount(mappedValues);
+        return new RandomAmount(mappedValues);
     }
 
 }

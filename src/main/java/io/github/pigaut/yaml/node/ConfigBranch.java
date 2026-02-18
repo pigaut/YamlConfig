@@ -22,16 +22,17 @@ public interface ConfigBranch extends ConfigField {
     Stream<? extends ConfigField> stream();
 
     Set<? extends ConfigField> getNestedFields();
-    Set<ConfigScalar> getNestedScalars();
-    Set<ConfigSection> getNestedSections();
-    Set<ConfigSequence> getNestedSequences();
+    Set<? extends ConfigScalar> getNestedScalars();
+    Set<? extends ConfigSection> getNestedSections();
+    Set<? extends ConfigSequence> getNestedSequences();
 
     @NotNull ConfigSection convertToSection();
     @NotNull ConfigSequence convertToSequence();
 
     <T> void add(@NotNull T value);
     <T> void addAll(Collection<T> elements);
-    <T> List<@NotNull T> getAll(@NotNull Class<T> classType) throws InvalidConfigurationException;
-    <T> List<T> getAllOrSkip(@NotNull Class<T> classType);
+
+    <T> ConfigList<T> getAll(@NotNull Class<T> classType);
+    <T> List<T> getAllRequired(@NotNull Class<T> classType) throws InvalidConfigException;
 
 }

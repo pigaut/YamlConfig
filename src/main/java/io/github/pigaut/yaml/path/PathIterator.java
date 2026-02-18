@@ -37,8 +37,7 @@ public class PathIterator implements Iterator<Object> {
             return null;
         }
 
-        final ConfigField field = keys.get(pointer++).getField(currentBranch);
-
+        ConfigField field = keys.get(pointer++).getField(currentBranch);
         if (field instanceof Branch branch) {
             currentBranch = branch;
         }
@@ -56,10 +55,10 @@ public class PathIterator implements Iterator<Object> {
             throw new IllegalStateException("Current branch is null.");
         }
 
-        final FieldKey currentKey = keys.get(pointer);
+        FieldKey currentKey = keys.get(pointer);
         pointer++;
 
-        final ConfigField existingField = currentKey.getField(currentBranch);
+        ConfigField existingField = currentKey.getField(currentBranch);
         if (existingField instanceof Branch existingBranch) {
             currentBranch = existingBranch;
             return existingBranch;

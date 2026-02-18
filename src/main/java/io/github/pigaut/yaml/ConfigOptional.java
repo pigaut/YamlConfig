@@ -13,7 +13,7 @@ public class ConfigOptional<T> extends AbstractOptional<T> {
         super(field, value, existsInConfig);
     }
 
-    protected ConfigOptional(@NotNull ConfigField field, @NotNull InvalidConfigurationException exception, boolean existsInConfig) {
+    protected ConfigOptional(@NotNull ConfigField field, @NotNull InvalidConfigException exception, boolean existsInConfig) {
         super(field, exception, existsInConfig);
     }
 
@@ -26,22 +26,22 @@ public class ConfigOptional<T> extends AbstractOptional<T> {
     }
 
     public static <T> ConfigOptional<T> notSet(@NotNull ConfigField field, @NotNull String cause) {
-        return new ConfigOptional<>(field, new InvalidConfigurationException(field, cause), false);
+        return new ConfigOptional<>(field, new InvalidConfigException(field, cause), false);
     }
 
     public static <T> ConfigOptional<T> notSet(@NotNull ConfigField field, @NotNull String key, @NotNull String cause) {
-        return new ConfigOptional<>(field, new InvalidConfigurationException(field, key, cause), false);
+        return new ConfigOptional<>(field, new InvalidConfigException(field, key, cause), false);
     }
 
     public static <T> ConfigOptional<T> notSet(@NotNull ConfigField field, int index, @NotNull String cause) {
-        return new ConfigOptional<>(field, new InvalidConfigurationException(field, index, cause), false);
+        return new ConfigOptional<>(field, new InvalidConfigException(field, index, cause), false);
     }
 
     public static <T> ConfigOptional<T> invalid(@NotNull ConfigField field, @NotNull String cause) {
-        return new ConfigOptional<>(field, new InvalidConfigurationException(field, cause), true);
+        return new ConfigOptional<>(field, new InvalidConfigException(field, cause), true);
     }
 
-    public static <T> ConfigOptional<T> invalid(@NotNull InvalidConfigurationException exception) {
+    public static <T> ConfigOptional<T> invalid(@NotNull InvalidConfigException exception) {
         return new ConfigOptional<>(exception.getField(), exception, true);
     }
 
@@ -74,7 +74,24 @@ public class ConfigOptional<T> extends AbstractOptional<T> {
             if (requirement.test(value)) {
                 return this;
             }
-            return new ConfigOptional<>(field, new InvalidConfigurationException(field, errorDetails), existsInConfig);
+            return new ConfigOptional<>(field, new InvalidConfigException(field, errorDetails), existsInConfig);
+        }
+    }
+
+    public T requireOrThrow(@NotNull Requirement<? super T> requirement) throws InvalidConfigException {
+        return requireOrThrow(requirement, requirement.getErrorDetails());
+    }
+
+    public T requireOrThrow(@NotNull Requirement<? super T> requirement, @NotNull String errorDetails) throws InvalidConfigException {
+        Objects.requireNonNull(requirement);
+        Objects.requireNonNull(errorDetails);
+        if (isInvalid()) {
+            throw exception;
+        } else {
+            if (requirement.test(value)) {
+                return value;
+            }
+            throw new InvalidConfigException(field, errorDetails);
         }
     }
 
@@ -85,7 +102,7 @@ public class ConfigOptional<T> extends AbstractOptional<T> {
             if (condition) {
                 return this;
             }
-            return new ConfigOptional<>(field, new InvalidConfigurationException(field, errorMessage), existsInConfig);
+            return new ConfigOptional<>(field, new InvalidConfigException(field, errorMessage), existsInConfig);
         }
     }
 

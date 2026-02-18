@@ -1,4 +1,4 @@
-package io.github.pigaut.yaml;
+package io.github.pigaut.yaml.util;
 
 import org.jetbrains.annotations.*;
 
@@ -12,7 +12,7 @@ public class Checks {
         return value == null;
     }
 
-    public static <T> boolean isInstance(@NotNull Class<T> classType, @NotNull Object object) {
+    public static <T> boolean isInstance(@NotNull Class<T> classType, Object object) {
         return classType.isInstance(object);
     }
 

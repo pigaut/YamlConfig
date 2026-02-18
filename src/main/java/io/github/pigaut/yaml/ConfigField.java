@@ -16,8 +16,8 @@ public interface ConfigField {
     @NotNull String getSimplePath();
     @NotNull FieldType getFieldType();
 
-    <T> T loadRequired(Class<T> classType) throws InvalidConfigurationException;
-    <T> ConfigOptional<T> load(Class<T> classType);
+    <T> T getRequired(@NotNull Class<T> classType) throws InvalidConfigException;
+    <T> ConfigOptional<T> get(@NotNull Class<T> classType);
 
     <T> void map(T value);
 

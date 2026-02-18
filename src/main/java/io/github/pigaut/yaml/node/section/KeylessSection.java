@@ -60,7 +60,7 @@ public class KeylessSection extends Section implements KeylessField {
 
     @Override
     public @NotNull Sequence convertToSequence() {
-        final Sequence sequence = new KeylessSequence(parent, index);
+        Sequence sequence = new KeylessSequence(parent, index);
         parent.set(index, sequence);
         return sequence;
     }

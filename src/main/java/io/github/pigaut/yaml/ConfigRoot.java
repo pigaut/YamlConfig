@@ -31,15 +31,15 @@ public interface ConfigRoot extends ConfigField {
 
     void setHeader(@NotNull String... lines);
 
-    void load() throws ConfigurationLoadException;
+    void load() throws ConfigLoadException;
 
-    void load(@NotNull Consumer<ConfigurationLoadException> errorCollector);
+    void load(@NotNull Consumer<ConfigLoadException> errorCollector);
 
-    void load(@NotNull File file) throws ConfigurationLoadException;
+    void load(@NotNull File file) throws ConfigLoadException;
 
-    void load(@NotNull InputStream inputStream) throws ConfigurationLoadException;
+    void load(@NotNull InputStream inputStream) throws ConfigLoadException;
 
-    void load(@NotNull Reader reader) throws ConfigurationLoadException;
+    void load(@NotNull Reader reader) throws ConfigLoadException;
 
     boolean save();
 

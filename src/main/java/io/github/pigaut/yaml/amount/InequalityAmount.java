@@ -16,6 +16,11 @@ public abstract class InequalityAmount implements Amount {
             public boolean match(double amount) {
                 return amount < max;
             }
+
+            @Override
+            public boolean test(DoublePredicate predicate) {
+                return predicate.test(max);
+            }
         };
     }
 
@@ -24,6 +29,11 @@ public abstract class InequalityAmount implements Amount {
             @Override
             public boolean match(double amount) {
                 return amount <= max;
+            }
+
+            @Override
+            public boolean test(DoublePredicate predicate) {
+                return predicate.test(max);
             }
         };
     }
@@ -34,6 +44,10 @@ public abstract class InequalityAmount implements Amount {
             public boolean match(double amount) {
                 return amount > min;
             }
+            @Override
+            public boolean test(DoublePredicate predicate) {
+                return predicate.test(min);
+            }
         };
     }
 
@@ -43,16 +57,20 @@ public abstract class InequalityAmount implements Amount {
             public boolean match(double amount) {
                 return amount >= min;
             }
+            @Override
+            public boolean test(DoublePredicate predicate) {
+                return predicate.test(min);
+            }
         };
     }
 
     @Override
-    public int getInteger() {
+    public int intValue() {
         return (int) amount;
     }
 
     @Override
-    public double getDouble() {
+    public double doubleValue() {
         return amount;
     }
 

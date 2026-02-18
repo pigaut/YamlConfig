@@ -7,6 +7,7 @@ import io.github.pigaut.yaml.configurator.map.*;
 import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.scalar.*;
+import io.github.pigaut.yaml.node.sequence.*;
 import io.github.pigaut.yaml.path.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
@@ -52,7 +53,7 @@ public abstract class Section extends Branch implements ConfigSection {
 
     @Override
     public <T> void map(@NotNull T value) {
-        final Configurator configurator = getRoot().getConfigurator();
+        Configurator configurator = getRoot().getConfigurator();
         @SuppressWarnings("unchecked")
         var mapper = (ConfigMapper<? super T>) configurator.getMapper(value.getClass());
         if (mapper == null) {
@@ -64,19 +65,20 @@ public abstract class Section extends Branch implements ConfigSection {
     @Override
     public <T> void add(@NotNull T value) {
         Preconditions.checkNotNull(value, "Value cannot be null");
-        final var classType = value.getClass();
+        var classType = value.getClass();
         if (YamlConfig.isScalarType(classType)) {
             createScalar(YamlConfig.generateRandomKey(), value);
             return;
         }
 
-        @SuppressWarnings("unchecked") final var mapper = (ConfigMapper<? super T>) getRoot().getConfigurator().getMapper(classType);
+        @SuppressWarnings("unchecked")
+        var mapper = (ConfigMapper<? super T>) getRoot().getConfigurator().getMapper(classType);
         if (mapper == null) {
             throw new IllegalArgumentException("No config mapper found for value of class type: " + classType.getSimpleName());
         }
 
-        final String key = mapper.createKey(value);
-        final ConfigField existingField = getField(key).orElse(null);
+        String key = mapper.createKey(value);
+        ConfigField existingField = getField(key).orElse(null);
         if (existingField != null) {
             if (mapper.clearExistingFields()) {
                 existingField.clear();
@@ -98,21 +100,21 @@ public abstract class Section extends Branch implements ConfigSection {
         try {
             switch (mapper.getDefaultMappingType()) {
                 case SCALAR -> {
-                    final ConfigScalar scalar = getScalarOrCreate(key);
+                    ConfigScalar scalar = getScalarOrCreate(key);
                     if (mapper.clearExistingFields()) {
                         scalar.clear();
                     }
                     mapper.mapToScalar(scalar, value);
                 }
                 case SECTION -> {
-                    final ConfigSection section = getSectionOrCreate(key);
+                    ConfigSection section = getSectionOrCreate(key);
                     if (mapper.clearExistingFields()) {
                         section.clear();
                     }
                     mapper.mapToSection(section, value);
                 }
                 case SEQUENCE -> {
-                    final ConfigSequence sequence = getSequenceOrCreate(key);
+                    ConfigSequence sequence = getSequenceOrCreate(key);
                     if (mapper.clearExistingFields()) {
                         sequence.clear();
                     }
@@ -156,6 +158,39 @@ public abstract class Section extends Branch implements ConfigSection {
     @Override
     public Set<KeyedField> getNestedFields() {
         return new LinkedHashSet<>(fieldsByKey.values());
+    }
+
+    @Override
+    public Set<KeyedScalar> getNestedScalars() {
+        Set<KeyedScalar> nestedScalars = new LinkedHashSet<>();
+        for (KeyedField field : this) {
+            if (field instanceof KeyedScalar keyedScalar) {
+                nestedScalars.add(keyedScalar);
+            }
+        }
+        return nestedScalars;
+    }
+
+    @Override
+    public Set<KeyedSection> getNestedSections() {
+        Set<KeyedSection> nestedSections = new LinkedHashSet<>();
+        for (KeyedField field : this) {
+            if (field instanceof KeyedSection keyedSection) {
+                nestedSections.add(keyedSection);
+            }
+        }
+        return nestedSections;
+    }
+
+    @Override
+    public Set<KeyedSequence> getNestedSequences() {
+        Set<KeyedSequence> nestedSequences = new LinkedHashSet<>();
+        for (KeyedField field : this) {
+            if (field instanceof KeyedSequence keyedSequence) {
+                nestedSequences.add(keyedSequence);
+            }
+        }
+        return nestedSequences;
     }
 
     @Override
@@ -265,7 +300,7 @@ public abstract class Section extends Branch implements ConfigSection {
 
     @Override
     public @NotNull Section getSectionOrCreate(@NotNull String path) {
-        final PathIterator iterator = PathIterator.of(this, path);
+        PathIterator iterator = PathIterator.of(this, path);
         Branch currentBranch = this;
         while (iterator.hasNext()) {
             currentBranch = iterator.nextBranch();
@@ -274,8 +309,8 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     @Override
-    public @NotNull ConfigSequence getSequenceOrCreate(@NotNull String path) {
-        final PathIterator iterator = PathIterator.of(this, path);
+    public @NotNull Sequence getSequenceOrCreate(@NotNull String path) {
+        PathIterator iterator = PathIterator.of(this, path);
         Branch currentBranch = this;
         while (iterator.hasNext()) {
             currentBranch = iterator.nextBranch();
@@ -285,117 +320,93 @@ public abstract class Section extends Branch implements ConfigSection {
 
     @Override
     public ConfigScalar getScalarOrCreate(@NotNull String path) {
-        final ConfigScalar scalar = getScalar(path).orElse(null);
+        ConfigScalar scalar = getScalar(path).orElse(null);
         return scalar != null ? scalar : createScalar(path, "");
     }
 
     @Override
-    public @NotNull Set<? extends ConfigField> getNestedFields(@NotNull String path) {
-        return getBranch(path)
-                .map(ConfigBranch::getNestedFields)
-                .orElse(Set.of());
+    public <T> ConfigList<T> getAll(@NotNull String path, @NotNull Class<T> classType) {
+        return getBranch(path).mapToList(branch -> branch.getAll(classType));
     }
 
     @Override
-    public @NotNull Set<ConfigSection> getNestedSections(@NotNull String path) {
-        return getBranch(path)
-                .map(ConfigBranch::getNestedSections)
-                .orElse(Set.of());
+    public <T> List<T> getAllRequired(@NotNull String path, @NotNull Class<T> classType) throws InvalidConfigException {
+        return getAll(path, classType).withDefault(List.of());
     }
 
     @Override
-    public Set<ConfigSequence> getNestedSequences(@NotNull String path) {
-        return getBranch(path)
-                .map(ConfigBranch::getNestedSequences)
-                .orElse(Set.of());
-    }
-
-    @Override
-    public <T> List<T> getAll(@NotNull String path, @NotNull Class<T> classType) throws InvalidConfigurationException {
-        ConfigBranch branch = getBranch(path).orElse(null);
-        return branch != null ? branch.getAll(classType) : List.of();
-    }
-
-    @Override
-    public <T> List<T> getAllOrSkip(@NotNull String path, @NotNull Class<T> classType) {
-        return getBranch(path)
-                .map(branch -> branch.getAllOrSkip(classType))
-                .orElse(List.of());
-    }
-
-    @Override
-    public <T> @NotNull T getRequired(@NotNull String path, @NotNull Class<T> classType) throws InvalidConfigurationException {
+    public <T> @NotNull T getRequired(@NotNull String path, @NotNull Class<T> classType) throws InvalidConfigException {
         return get(path, classType).orThrow();
     }
 
     @Override
-    public ConfigField getRequiredField(@NotNull String path) throws InvalidConfigurationException {
+    public @NotNull ConfigField getRequiredField(@NotNull String path) throws InvalidConfigException {
         return getField(path).orThrow();
     }
 
     @Override
-    public ConfigScalar getRequiredScalar(@NotNull String path) throws InvalidConfigurationException {
+    public @NotNull ConfigScalar getRequiredScalar(@NotNull String path) throws InvalidConfigException {
         return getScalar(path).orThrow();
     }
 
     @Override
-    public ConfigSection getRequiredSection(@NotNull String path) throws InvalidConfigurationException {
+    public @NotNull ConfigSection getRequiredSection(@NotNull String path) throws InvalidConfigException {
         return getSection(path).orThrow();
     }
 
     @Override
-    public ConfigSequence getRequiredSequence(@NotNull String path) throws InvalidConfigurationException {
+    public @NotNull ConfigSequence getRequiredSequence(@NotNull String path) throws InvalidConfigException {
         return getSequence(path).orThrow();
     }
 
     @Override
-    public ConfigLine getRequiredLine(@NotNull String path) throws InvalidConfigurationException {
+    public @NotNull ConfigLine getRequiredLine(@NotNull String path) throws InvalidConfigException {
         return getLine(path).orThrow();
     }
 
     @Override
-    public @NotNull Boolean getRequiredBoolean(@NotNull String path) throws InvalidConfigurationException {
+    public @NotNull Boolean getRequiredBoolean(@NotNull String path) throws InvalidConfigException {
         return getBoolean(path).orThrow();
     }
 
     @Override
-    public @NotNull Character getRequiredCharacter(@NotNull String path) throws InvalidConfigurationException {
+    public @NotNull Character getRequiredCharacter(@NotNull String path) throws InvalidConfigException {
         return getCharacter(path).orThrow();
     }
 
     @Override
-    public @NotNull String getRequiredString(@NotNull String path) throws InvalidConfigurationException {
+    public @NotNull String getRequiredString(@NotNull String path) throws InvalidConfigException {
         return getString(path).orThrow();
     }
 
     @Override
-    public @NotNull String getRequiredString(@NotNull String path, @NotNull StringFormatter formatter) throws InvalidConfigurationException {
+    public @NotNull String getRequiredString(@NotNull String path, @NotNull StringFormatter formatter) throws InvalidConfigException {
         return getString(path, formatter).orThrow();
     }
 
     @Override
-    public @NotNull Integer getRequiredInteger(@NotNull String path) throws InvalidConfigurationException {
+    public @NotNull Integer getRequiredInteger(@NotNull String path) throws InvalidConfigException {
         return getInteger(path).orThrow();
     }
 
     @Override
-    public @NotNull Long getRequiredLong(@NotNull String path) throws InvalidConfigurationException {
+    public @NotNull Long getRequiredLong(@NotNull String path) throws InvalidConfigException {
         return getLong(path).orThrow();
     }
 
     @Override
-    public @NotNull Float getRequiredFloat(@NotNull String path) throws InvalidConfigurationException {
+    public @NotNull Float getRequiredFloat(@NotNull String path) throws InvalidConfigException {
         return getFloat(path).orThrow();
     }
 
     @Override
-    public @NotNull Double getRequiredDouble(@NotNull String path) throws InvalidConfigurationException {
+    public @NotNull Double getRequiredDouble(@NotNull String path) throws InvalidConfigException {
         return getDouble(path).orThrow();
     }
 
     @Override
     public <T> ConfigOptional<T> get(@NotNull String path, @NotNull Class<T> classType) {
-        return getField(path).flatMap(field -> field.load(classType));
+        return getField(path).flatMap(field -> field.get(classType));
     }
 
     public ConfigOptional<ConfigField> getField(@NotNull String path) {
@@ -583,7 +594,7 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     @Override
-    public <T> ConfigOptional<T> load(@NotNull Class<T> classType) {
+    public <T> ConfigOptional<T> get(@NotNull Class<T> classType) {
         final ConfigRoot root = getRoot();
         final Configurator configurator = root.getConfigurator();
 
@@ -597,7 +608,7 @@ public abstract class Section extends Branch implements ConfigSection {
 
         try {
             return ConfigOptional.of(this, loader.loadFromSection(this));
-        } catch (InvalidConfigurationException e) {
+        } catch (InvalidConfigException e) {
             return ConfigOptional.invalid(e);
         } finally {
             root.removeProblem(problemDescription);

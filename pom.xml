@@ -6,7 +6,7 @@
 
     <groupId>io.github.pigaut.yaml</groupId>
     <artifactId>YamlConfig</artifactId>
-    <version>3.7.2</version>
+    <version>3.7.5</version>
     <packaging>jar</packaging>
     <name>YamlConfig</name>
     <description>A library to map/load objects from/to yaml with a user-friendly error system.</description>

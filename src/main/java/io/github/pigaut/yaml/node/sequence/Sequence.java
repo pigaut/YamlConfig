@@ -148,6 +148,39 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     }
 
     @Override
+    public Set<KeylessScalar> getNestedScalars() {
+        Set<KeylessScalar> nestedScalars = new LinkedHashSet<>();
+        for (KeylessField field : this) {
+            if (field instanceof KeylessScalar keylessScalar) {
+                nestedScalars.add(keylessScalar);
+            }
+        }
+        return nestedScalars;
+    }
+
+    @Override
+    public Set<KeylessSection> getNestedSections() {
+        Set<KeylessSection> nestedSections = new LinkedHashSet<>();
+        for (KeylessField field : this) {
+            if (field instanceof KeylessSection keylessSection) {
+                nestedSections.add(keylessSection);
+            }
+        }
+        return nestedSections;
+    }
+
+    @Override
+    public Set<KeylessSequence> getNestedSequences() {
+        Set<KeylessSequence> nestedSequence = new LinkedHashSet<>();
+        for (KeylessField field : this) {
+            if (field instanceof KeylessSequence keylessSequence) {
+                nestedSequence.add(keylessSequence);
+            }
+        }
+        return nestedSequence;
+    }
+
+    @Override
     public boolean isSet(int index) {
         if (index < 0) {
             throw new IllegalArgumentException("Index must be greater than 0");
@@ -292,78 +325,78 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     }
 
     @Override
-    public <T> @NotNull T getRequired(int index, Class<T> classType) throws InvalidConfigurationException {
+    public <T> @NotNull T getRequired(int index, Class<T> classType) throws InvalidConfigException {
         return get(index, classType).orThrow();
     }
 
     @Override
-    public @NotNull ConfigField getRequiredField(int index) throws InvalidConfigurationException {
+    public @NotNull ConfigField getRequiredField(int index) throws InvalidConfigException {
         return getField(index).orThrow();
     }
 
     @Override
-    public @NotNull ConfigScalar getRequiredScalar(int index) throws InvalidConfigurationException {
+    public @NotNull ConfigScalar getRequiredScalar(int index) throws InvalidConfigException {
         return getScalar(index).orThrow();
     }
 
     @Override
-    public @NotNull ConfigSection getRequiredSection(int index) throws InvalidConfigurationException {
+    public @NotNull ConfigSection getRequiredSection(int index) throws InvalidConfigException {
         return getSection(index).orThrow();
     }
 
     @Override
-    public @NotNull ConfigSequence getRequiredSequence(int index) throws InvalidConfigurationException {
+    public @NotNull ConfigSequence getRequiredSequence(int index) throws InvalidConfigException {
         return getSequence(index).orThrow();
     }
 
     @Override
-    public @NotNull ConfigLine getRequiredLine(int index) throws InvalidConfigurationException {
+    public @NotNull ConfigLine getRequiredLine(int index) throws InvalidConfigException {
         return getLine(index).orThrow();
     }
 
     @Override
-    public @NotNull Boolean getRequiredBoolean(int index) throws InvalidConfigurationException {
+    public @NotNull Boolean getRequiredBoolean(int index) throws InvalidConfigException {
         return getBoolean(index).orThrow();
     }
 
     @Override
-    public @NotNull Character getRequiredCharacter(int index) throws InvalidConfigurationException {
+    public @NotNull Character getRequiredCharacter(int index) throws InvalidConfigException {
         return getCharacter(index).orThrow();
     }
 
     @Override
-    public @NotNull String getRequiredString(int index) throws InvalidConfigurationException {
+    public @NotNull String getRequiredString(int index) throws InvalidConfigException {
         return getString(index).orThrow();
     }
 
     @Override
-    public @NotNull String getRequiredString(int index, @NotNull StringFormatter formatter) throws InvalidConfigurationException {
+    public @NotNull String getRequiredString(int index, @NotNull StringFormatter formatter) throws InvalidConfigException {
         return getString(index, formatter).orThrow();
     }
 
     @Override
-    public @NotNull Integer getRequiredInteger(int index) throws InvalidConfigurationException {
+    public @NotNull Integer getRequiredInteger(int index) throws InvalidConfigException {
         return getInteger(index).orThrow();
     }
 
     @Override
-    public @NotNull Long getRequiredLong(int index) throws InvalidConfigurationException {
+    public @NotNull Long getRequiredLong(int index) throws InvalidConfigException {
         return getLong(index).orThrow();
     }
 
     @Override
-    public @NotNull Float getRequiredFloat(int index) throws InvalidConfigurationException {
+    public @NotNull Float getRequiredFloat(int index) throws InvalidConfigException {
         return getFloat(index).orThrow();
     }
 
     @Override
-    public @NotNull Double getRequiredDouble(int index) throws InvalidConfigurationException {
+    public @NotNull Double getRequiredDouble(int index) throws InvalidConfigException {
         return getDouble(index).orThrow();
     }
 
     @Override
     public <T> @NotNull ConfigOptional<T> get(int index, Class<T> classType) {
-        return getField(index).flatMap(field -> field.load(classType));
+        return getField(index).flatMap(field -> field.get(classType));
     }
 
     @Override
@@ -441,7 +474,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
 
     @Override
     public <T> ConfigList<T> toList(Class<T> classType) {
-        return createList(field -> field.load(classType).orThrow());
+        return createList(field -> field.get(classType).orThrow());
     }
 
     @Override
@@ -501,7 +534,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
 
     @FunctionalInterface
     private interface ListMapper<T> {
-        T apply(ConfigField field) throws InvalidConfigurationException;
+        T apply(ConfigField field) throws InvalidConfigException;
     }
 
     private <T> ConfigList<T> createList(ListMapper<T> mapper) {
@@ -510,7 +543,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
             try {
                 elements.add(mapper.apply(field));
             }
-            catch (InvalidConfigurationException e) {
+            catch (InvalidConfigException e) {
                 return ConfigList.invalid(e);
             }
         }
@@ -533,7 +566,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     }
 
     @Override
-    public <T> ConfigOptional<T> load(@NotNull Class<T> classType) {
+    public <T> ConfigOptional<T> get(@NotNull Class<T> classType) {
         final ConfigRoot root = getRoot();
         final Configurator configurator = root.getConfigurator();
 
@@ -547,7 +580,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
 
         try {
             return ConfigOptional.of(this, loader.loadFromSequence(this));
-        } catch (InvalidConfigurationException e) {
+        } catch (InvalidConfigException e) {
             return ConfigOptional.invalid(e);
         } finally {
             root.removeProblem(problemDescription);

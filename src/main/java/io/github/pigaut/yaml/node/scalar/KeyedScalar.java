@@ -44,7 +44,7 @@ public class KeyedScalar extends Scalar implements KeyedField {
 
     @Override
     public <T> ConfigOptional<T> getKeyAs(Class<T> classType) {
-        return getKeyAsScalar().load(classType);
+        return getKeyAsScalar().get(classType);
     }
 
     @Override

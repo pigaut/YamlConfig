@@ -63,29 +63,29 @@ public abstract class Branch extends Field implements ConfigBranch {
         this.nestedScalarStyle = scalarStyle;
     }
 
-    @Override
-    public Set<ConfigScalar> getNestedScalars() {
-        return stream()
-                .map(field -> field.toScalar().orElse(null))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-    }
-
-    @Override
-    public Set<ConfigSection> getNestedSections() {
-        return stream()
-                .map(field -> field.toSection().orElse(null))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-    }
-
-    @Override
-    public Set<ConfigSequence> getNestedSequences() {
-        return stream()
-                .map(field -> field.toSequence().orElse(null))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-    }
+//    @Override
+//    public Set<ConfigScalar> getNestedScalars() {
+//        return stream()
+//                .map(field -> field.toScalar().orElse(null))
+//                .filter(Objects::nonNull)
+//                .collect(Collectors.toCollection(LinkedHashSet::new));
+//    }
+//
+//    @Override
+//    public Set<ConfigSection> getNestedSections() {
+//        return stream()
+//                .map(field -> field.toSection().orElse(null))
+//                .filter(Objects::nonNull)
+//                .collect(Collectors.toCollection(LinkedHashSet::new));
+//    }
+//
+//    @Override
+//    public Set<ConfigSequence> getNestedSequences() {
+//        return stream()
+//                .map(field -> field.toSequence().orElse(null))
+//                .filter(Objects::nonNull)
+//                .collect(Collectors.toCollection(LinkedHashSet::new));
+//    }
 
     @NotNull
     public abstract Section convertToSection();
@@ -103,20 +103,25 @@ public abstract class Branch extends Field implements ConfigBranch {
     public abstract <T> void addAll(Collection<T> elements);
 
     @Override
-    public <T> List<T> getAll(@NotNull Class<T> classType) throws InvalidConfigurationException {
+    public <T> ConfigList<T> getAll(@NotNull Class<T> classType) {
         List<T> elements = new ArrayList<>();
         for (ConfigField nestedField : getNestedFields()) {
-            elements.add(nestedField.loadRequired(classType));
+            try {
+                elements.add(nestedField.getRequired(classType));
+            } catch (InvalidConfigException e) {
+                return ConfigList.invalid(e);
+            }
         }
-        return elements;
+        return ConfigList.of(this, elements);
     }
 
     @Override
-    public <T> List<T> getAllOrSkip(@NotNull Class<T> classType) {
-        return stream()
-                .map(field -> field.load(classType).orElse(null))
-                .filter(Objects::nonNull)
-                .toList();
+    public <T> List<T> getAllRequired(@NotNull Class<T> classType) throws InvalidConfigException {
+        List<T> elements = new ArrayList<>();
+        for (ConfigField nestedField : getNestedFields()) {
+            elements.add(nestedField.getRequired(classType));
+        }
+        return elements;
     }
 
     public abstract @NotNull List<@NotNull Object> toList();

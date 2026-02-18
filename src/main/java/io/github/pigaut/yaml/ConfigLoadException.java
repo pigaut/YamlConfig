@@ -5,19 +5,19 @@ import org.jetbrains.annotations.*;
 import java.io.*;
 import java.util.regex.*;
 
-public class ConfigurationLoadException extends ConfigurationException {
+public class ConfigLoadException extends ConfigException {
 
     private final @Nullable String prefix;
     private final @Nullable File file;
     private final @NotNull String details;
 
-    public ConfigurationLoadException(ConfigRoot config, @NotNull String details) {
+    public ConfigLoadException(ConfigRoot config, @NotNull String details) {
         this.prefix = config.getPrefix();
         this.file = config.getFile();
         this.details = details;
     }
 
-    public ConfigurationLoadException(ConfigRoot config, Throwable cause) {
+    public ConfigLoadException(ConfigRoot config, Throwable cause) {
         this.prefix = config.getPrefix();
         this.file = config.getFile();
         this.details = cause.getMessage();

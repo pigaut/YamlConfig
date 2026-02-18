@@ -11,18 +11,23 @@ public class FixedAmount implements Amount {
     }
 
     @Override
-    public int getInteger() {
+    public int intValue() {
         return (int) value;
     }
 
     @Override
-    public double getDouble() {
+    public double doubleValue() {
         return value;
     }
 
     @Override
     public boolean match(double amount) {
         return this.value == amount;
+    }
+
+    @Override
+    public boolean test(DoublePredicate predicate) {
+        return predicate.test(value);
     }
 
     @Override

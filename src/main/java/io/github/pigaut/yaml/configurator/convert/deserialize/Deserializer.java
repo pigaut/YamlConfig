@@ -11,19 +11,19 @@ public interface Deserializer<T> extends ConfigLoader.Scalar<T> {
     T deserialize(String string) throws StringParseException;
 
     @Override
-    default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigurationException {
+    default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigException {
         try {
             return deserialize(scalar.toString());
         } catch (StringParseException e) {
-            throw new InvalidConfigurationException(scalar, e.getMessage());
+            throw new InvalidConfigException(scalar, e.getMessage());
         }
     }
 
-    default @NotNull T loadFromKey(ConfigSection section, String key) throws InvalidConfigurationException {
+    default @NotNull T loadFromKey(ConfigSection section, String key) throws InvalidConfigException {
         try {
             return deserialize(key);
         } catch (StringParseException e) {
-            throw new InvalidConfigurationException(section, e.getMessage());
+            throw new InvalidConfigException(section, e.getMessage());
         }
     }
 

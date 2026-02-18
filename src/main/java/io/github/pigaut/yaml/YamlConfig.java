@@ -17,40 +17,39 @@ public class YamlConfig {
     private YamlConfig() {}
 
     @NotNull
-    public static RootSection loadSection(File file) throws ConfigurationLoadException {
-        return loadSection(file, new StandardConfigurator(), (String) null);
+    public static RootSection loadSection(@NotNull File file) throws ConfigLoadException {
+        return loadSection(file, new StandardConfigurator(), null);
     }
 
     @NotNull
-    public static RootSection loadSection(File file, Consumer<ConfigurationLoadException> errorCollector) {
-        return loadSection(file, new StandardConfigurator(), null, errorCollector);
+    public static RootSection loadSectionOrEmpty(@NotNull File file) {
+        return loadSectionOrEmpty(file, new StandardConfigurator(), null);
     }
 
     @NotNull
-    public static RootSection loadSection(File file, Configurator configurator) throws ConfigurationLoadException {
-        return loadSection(file, configurator, (String) null);
+    public static RootSection loadSection(@NotNull File file, @NotNull Configurator configurator) throws ConfigLoadException {
+        return loadSection(file, configurator, null);
     }
 
    @NotNull
-    public static RootSection loadSection(File file, Configurator configurator, Consumer<ConfigurationLoadException> errorCollector) {
-        return loadSection(file, configurator, null, errorCollector);
+    public static RootSection loadSectionOrEmpty(@NotNull File file, @NotNull Configurator configurator) {
+        return loadSectionOrEmpty(file, configurator, null);
     }
 
     @NotNull
-    public static RootSection loadSection(File file, Configurator configurator, String prefix) throws ConfigurationLoadException {
+    public static RootSection loadSection(@NotNull File file, @NotNull Configurator configurator, String prefix) throws ConfigLoadException {
         RootSection section = createEmptySection(file, configurator, prefix);
         section.load();
         return section;
     }
 
     @NotNull
-    public static RootSection loadSection(File file, Configurator configurator, String prefix, Consumer<ConfigurationLoadException> errorCollector) {
+    public static RootSection loadSectionOrEmpty(@NotNull File file, @NotNull Configurator configurator, String prefix) {
         RootSection section = createEmptySection(file, configurator, prefix);
         try {
             section.load();
-        }
-        catch (ConfigurationLoadException e) {
-            errorCollector.accept(e);
+        } catch (ConfigLoadException e) {
+            // ignored
         }
         return section;
     }
@@ -61,55 +60,54 @@ public class YamlConfig {
     }
 
     @NotNull
-    public static RootSection createEmptySection(File file) {
+    public static RootSection createEmptySection(@NotNull File file) {
         return new RootSection(file, new StandardConfigurator(), null);
     }
 
     @NotNull
-    public static RootSection createEmptySection(File file, Configurator configurator) {
+    public static RootSection createEmptySection(@NotNull File file, @NotNull Configurator configurator) {
         return new RootSection(file, configurator, null);
     }
 
     @NotNull
-    public static RootSection createEmptySection(File file, Configurator configurator, String prefix) {
+    public static RootSection createEmptySection(@NotNull File file, @NotNull Configurator configurator, String prefix) {
         return new RootSection(file, configurator, prefix);
     }
 
     @NotNull
-    public static RootSequence loadSequence(File file) throws ConfigurationLoadException {
-        return loadSequence(file, new StandardConfigurator(), (String) null);
+    public static RootSequence loadSequence(@NotNull File file) throws ConfigLoadException {
+        return loadSequence(file, new StandardConfigurator(), null);
     }
 
     @NotNull
-    public static RootSequence loadSequence(File file, Consumer<ConfigurationLoadException> errorCollector) {
-        return loadSequence(file, new StandardConfigurator(), null, errorCollector);
+    public static RootSequence loadSequenceOrEmpty(@NotNull File file) {
+        return loadSequenceOrEmpty(file, new StandardConfigurator(), null);
     }
 
     @NotNull
-    public static RootSequence loadSequence(File file, Configurator configurator) throws ConfigurationLoadException {
-        return loadSequence(file, configurator, (String) null);
+    public static RootSequence loadSequence(@NotNull File file, @NotNull Configurator configurator) throws ConfigLoadException {
+        return loadSequence(file, configurator, null);
     }
 
     @NotNull
-    public static RootSequence loadSequence(File file, Configurator configurator, Consumer<ConfigurationLoadException> errorCollector) {
-        return loadSequence(file, configurator, null, errorCollector);
+    public static RootSequence loadSequenceOrEmpty(@NotNull File file, @NotNull Configurator configurator) {
+        return loadSequenceOrEmpty(file, configurator, null);
     }
 
     @NotNull
-    public static RootSequence loadSequence(File file, Configurator configurator, String prefix) throws ConfigurationLoadException {
+    public static RootSequence loadSequence(@NotNull File file, @NotNull Configurator configurator, String prefix) throws ConfigLoadException {
         RootSequence sequence = createEmptySequence(file, configurator, prefix);
         sequence.load();
         return sequence;
     }
 
     @NotNull
-    public static RootSequence loadSequence(File file, Configurator configurator, String prefix, Consumer<ConfigurationLoadException> errorCollector) {
+    public static RootSequence loadSequenceOrEmpty(@NotNull File file, @NotNull Configurator configurator, String prefix) {
         RootSequence sequence = createEmptySequence(file, configurator, prefix);
         try {
             sequence.load();
-        }
-        catch (ConfigurationLoadException e) {
-            errorCollector.accept(e);
+        } catch (ConfigLoadException e) {
+            // ignored
         }
         return sequence;
     }
@@ -120,54 +118,54 @@ public class YamlConfig {
     }
 
     @NotNull
-    public static RootSequence createEmptySequence(File file) {
+    public static RootSequence createEmptySequence(@NotNull File file) {
         return new RootSequence(file, new StandardConfigurator(), null);
     }
 
     @NotNull
-    public static RootSequence createEmptySequence(File file, Configurator configurator) {
+    public static RootSequence createEmptySequence(@NotNull File file, @NotNull Configurator configurator) {
         return new RootSequence(file, configurator, null);
     }
 
     @NotNull
-    public static RootSequence createEmptySequence(File file, Configurator configurator, String prefix) {
+    public static RootSequence createEmptySequence(@NotNull File file, @NotNull Configurator configurator, String prefix) {
         return new RootSequence(file, configurator, prefix);
     }
 
     @NotNull
-    public static RootScalar loadScalar(File file) throws ConfigurationLoadException {
+    public static RootScalar loadScalar(@NotNull File file) throws ConfigLoadException {
         return loadScalar(file, new StandardConfigurator(), (String) null);
     }
 
     @NotNull
-    public static RootScalar loadScalar(File file, Consumer<ConfigurationLoadException> errorCollector) {
-        return loadScalar(file, new StandardConfigurator(), null, errorCollector);
+    public static RootScalar loadScalarOrEmpty(@NotNull File file) {
+        return loadScalarOrEmpty(file, new StandardConfigurator(), null);
     }
 
     @NotNull
-    public static RootScalar loadScalar(File file, Configurator configurator) throws ConfigurationLoadException {
+    public static RootScalar loadScalar(@NotNull File file, @NotNull Configurator configurator) throws ConfigLoadException {
         return loadScalar(file, configurator, (String) null);
     }
 
     @NotNull
-    public static RootScalar loadScalar(File file, Configurator configurator, Consumer<ConfigurationLoadException> errorCollector) {
-        return loadScalar(file, configurator, null, errorCollector);
+    public static RootScalar loadScalarOrEmpty(@NotNull File file, @NotNull Configurator configurator) {
+        return loadScalarOrEmpty(file, configurator, null);
     }
 
     @NotNull
-    public static RootScalar loadScalar(File file, Configurator configurator, String prefix) throws ConfigurationLoadException {
+    public static RootScalar loadScalar(@NotNull File file, @NotNull Configurator configurator, String prefix) throws ConfigLoadException {
         RootScalar scalar = createEmptyScalar(file, configurator, prefix);
         scalar.load();
         return scalar;
     }
 
     @NotNull
-    public static RootScalar loadScalar(File file, Configurator configurator, String prefix, Consumer<ConfigurationLoadException> errorCollector) {
+    public static RootScalar loadScalarOrEmpty(@NotNull File file, @NotNull Configurator configurator, String prefix) {
         RootScalar scalar = createEmptyScalar(file, configurator, prefix);
         try {
             scalar.load();
-        } catch (ConfigurationLoadException e) {
-            errorCollector.accept(e);
+        } catch (ConfigLoadException e) {
+            // ignored
         }
         return scalar;
     }
@@ -178,17 +176,17 @@ public class YamlConfig {
     }
 
     @NotNull
-    public static RootScalar createEmptyScalar(File file) {
+    public static RootScalar createEmptyScalar(@NotNull File file) {
         return new RootScalar(file, new StandardConfigurator(), null);
     }
 
     @NotNull
-    public static RootScalar createEmptyScalar(File file, Configurator configurator) {
+    public static RootScalar createEmptyScalar(@NotNull File file, @NotNull Configurator configurator) {
         return new RootScalar(file, configurator, null);
     }
 
     @NotNull
-    public static RootScalar createEmptyScalar(File file, Configurator configurator, String prefix) {
+    public static RootScalar createEmptyScalar(@NotNull File file, @NotNull Configurator configurator, String prefix) {
         return new RootScalar(file, configurator, prefix);
     }
 

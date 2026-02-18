@@ -7,7 +7,7 @@ import org.jetbrains.annotations.*;
 import java.io.*;
 import java.util.regex.*;
 
-public class InvalidConfigurationException extends ConfigurationException {
+public class InvalidConfigException extends ConfigException {
 
     private final ConfigField field;
     private final @Nullable String prefix;
@@ -17,19 +17,19 @@ public class InvalidConfigurationException extends ConfigurationException {
     private final @Nullable String line;
     private final String details;
 
-    public InvalidConfigurationException(ConfigField field, String cause) {
+    public InvalidConfigException(ConfigField field, String cause) {
         this(field.getRoot(), field, field.getSimplePath(), cause);
     }
 
-    public InvalidConfigurationException(ConfigField field, String key, String cause) {
+    public InvalidConfigException(ConfigField field, String key, String cause) {
         this(field.getRoot(), field, field.isRoot() ? key : field.getSimplePath() + "." + key, cause);
     }
 
-    public InvalidConfigurationException(ConfigField field, int index, String cause) {
+    public InvalidConfigException(ConfigField field, int index, String cause) {
         this(field.getRoot(), field, field.isRoot() ? "[" + (index + 1) + "]" : field.getSimplePath() + "[" + (index + 1) + "]" , cause);
     }
 
-    public InvalidConfigurationException(InvalidConfigurationException exception, String details) {
+    public InvalidConfigException(InvalidConfigException exception, String details) {
         this.field = exception.field;
         this.prefix = exception.prefix;
         this.problem = exception.problem;
@@ -39,7 +39,7 @@ public class InvalidConfigurationException extends ConfigurationException {
         this.details = details;
     }
 
-    private InvalidConfigurationException(ConfigRoot config, ConfigField field, String path, String details) {
+    private InvalidConfigException(ConfigRoot config, ConfigField field, String path, String details) {
         this.field = field;
         this.prefix = config.getPrefix();
         this.file = config.getFile();

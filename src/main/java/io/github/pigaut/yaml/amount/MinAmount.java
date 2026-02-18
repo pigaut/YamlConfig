@@ -11,18 +11,23 @@ public class MinAmount implements Amount {
     }
 
     @Override
-    public int getInteger() {
+    public int intValue() {
         return (int) min;
     }
 
     @Override
-    public double getDouble() {
+    public double doubleValue() {
         return min;
     }
 
     @Override
     public boolean match(double amount) {
         return min >= amount;
+    }
+
+    @Override
+    public boolean test(DoublePredicate predicate) {
+        return predicate.test(min);
     }
 
     @Override

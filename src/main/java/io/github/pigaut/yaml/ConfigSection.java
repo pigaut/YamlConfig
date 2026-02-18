@@ -2,6 +2,9 @@ package io.github.pigaut.yaml;
 
 import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
+import io.github.pigaut.yaml.node.scalar.*;
+import io.github.pigaut.yaml.node.section.*;
+import io.github.pigaut.yaml.node.sequence.*;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -23,28 +26,27 @@ public interface ConfigSection extends ConfigBranch, Iterable<KeyedField> {
 
     Stream<KeyedField> stream();
     Set<KeyedField> getNestedFields();
+    Set<KeyedScalar> getNestedScalars();
+    Set<KeyedSection> getNestedSections();
+    Set<KeyedSequence> getNestedSequences();
+    
+    <T> ConfigList<T> getAll(@NotNull String path, @NotNull Class<T> classType);
+    <T> List<T> getAllRequired(@NotNull String path, @NotNull Class<T> classType) throws InvalidConfigException;
 
-    Set<? extends ConfigField> getNestedFields(@NotNull String path);
-    Set<ConfigSection> getNestedSections(@NotNull String path);
-    Set<ConfigSequence> getNestedSequences(@NotNull String path);
-
-    <T> List<T> getAll(@NotNull String path, @NotNull Class<T> classType) throws InvalidConfigurationException;
-    <T> List<T> getAllOrSkip(@NotNull String path, @NotNull Class<T> classType);
-
-    <T> @NotNull T getRequired(@NotNull String path, @NotNull Class<T> classType) throws InvalidConfigurationException;
-    ConfigField getRequiredField(@NotNull String path) throws InvalidConfigurationException;
-    ConfigScalar getRequiredScalar(@NotNull String path) throws InvalidConfigurationException;
-    ConfigSection getRequiredSection(@NotNull String path) throws InvalidConfigurationException;
-    ConfigSequence getRequiredSequence(@NotNull String path) throws InvalidConfigurationException;
-    ConfigLine getRequiredLine(@NotNull String path) throws InvalidConfigurationException;
-    @NotNull Boolean getRequiredBoolean(@NotNull String path) throws InvalidConfigurationException;
-    @NotNull Character getRequiredCharacter(@NotNull String path) throws InvalidConfigurationException;
-    @NotNull String getRequiredString(@NotNull String path) throws InvalidConfigurationException;
-    @NotNull String getRequiredString(@NotNull String path, @NotNull StringFormatter formatter) throws InvalidConfigurationException;
-    @NotNull Integer getRequiredInteger(@NotNull String path) throws InvalidConfigurationException;
-    @NotNull Long getRequiredLong(@NotNull String path) throws InvalidConfigurationException;
-    @NotNull Float getRequiredFloat(@NotNull String path) throws InvalidConfigurationException;
-    @NotNull Double getRequiredDouble(@NotNull String path) throws InvalidConfigurationException;
+    <T> @NotNull T getRequired(@NotNull String path, @NotNull Class<T> classType) throws InvalidConfigException;
+    @NotNull ConfigField getRequiredField(@NotNull String path) throws InvalidConfigException;
+    @NotNull ConfigScalar getRequiredScalar(@NotNull String path) throws InvalidConfigException;
+    @NotNull ConfigSection getRequiredSection(@NotNull String path) throws InvalidConfigException;
+    @NotNull ConfigSequence getRequiredSequence(@NotNull String path) throws InvalidConfigException;
+    @NotNull ConfigLine getRequiredLine(@NotNull String path) throws InvalidConfigException;
+    @NotNull Boolean getRequiredBoolean(@NotNull String path) throws InvalidConfigException;
+    @NotNull Character getRequiredCharacter(@NotNull String path) throws InvalidConfigException;
+    @NotNull String getRequiredString(@NotNull String path) throws InvalidConfigException;
+    @NotNull String getRequiredString(@NotNull String path, @NotNull StringFormatter formatter) throws InvalidConfigException;
+    @NotNull Integer getRequiredInteger(@NotNull String path) throws InvalidConfigException;
+    @NotNull Long getRequiredLong(@NotNull String path) throws InvalidConfigException;
+    @NotNull Float getRequiredFloat(@NotNull String path) throws InvalidConfigException;
+    @NotNull Double getRequiredDouble(@NotNull String path) throws InvalidConfigException;
 
     <T> ConfigOptional<T> get(@NotNull String path, @NotNull Class<T> classType);
     ConfigOptional<ConfigField> getField(@NotNull String path);

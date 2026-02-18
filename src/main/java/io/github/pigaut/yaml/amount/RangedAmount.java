@@ -13,18 +13,23 @@ public class RangedAmount implements Amount {
     }
 
     @Override
-    public int getInteger() {
-        return (int) this.getDouble();
+    public int intValue() {
+        return (int) this.doubleValue();
     }
 
     @Override
-    public double getDouble() {
+    public double doubleValue() {
         return ThreadLocalRandom.current().nextDouble(min, max + 1);
     }
 
     @Override
     public boolean match(double amount) {
         return amount >= min && amount <= max;
+    }
+
+    @Override
+    public boolean test(DoublePredicate predicate) {
+        return predicate.test(min) && predicate.test(max);
     }
 
     @Override

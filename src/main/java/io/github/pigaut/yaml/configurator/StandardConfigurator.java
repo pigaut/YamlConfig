@@ -57,7 +57,7 @@ public class StandardConfigurator extends Configurator {
         addLoader(Amount.class, new AmountLoader());
         addMapper(FixedAmount.class, new FixedAmountMapper());
         addMapper(RangedAmount.class, new RangedAmountMapper());
-        addMapper(CasualAmount.class, new CasualAmountMapper());
+        addMapper(RandomAmount.class, new RandomAmountMapper());
 
         addMapper(Map.class, new ConfigSectionMapper());
         addMapper(Iterable.class, new ConfigSequenceMapper());
