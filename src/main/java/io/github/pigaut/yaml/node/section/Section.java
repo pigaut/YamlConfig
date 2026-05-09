@@ -6,6 +6,7 @@ import io.github.pigaut.yaml.configurator.load.*;
 import io.github.pigaut.yaml.configurator.map.*;
 import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
+import io.github.pigaut.yaml.node.line.*;
 import io.github.pigaut.yaml.node.scalar.*;
 import io.github.pigaut.yaml.node.sequence.*;
 import io.github.pigaut.yaml.path.*;
@@ -98,7 +99,7 @@ public abstract class Section extends Branch implements ConfigSection {
 
         // Fallback to the default field mapping type if the value could not be mapped
         try {
-            switch (mapper.getDefaultMappingType()) {
+            switch (mapper.getDefaultMappingType(value)) {
                 case SCALAR -> {
                     ConfigScalar scalar = getScalarOrCreate(key);
                     if (mapper.clearExistingFields()) {
@@ -256,7 +257,7 @@ public abstract class Section extends Branch implements ConfigSection {
 
         // Fallback to the default field mapping type if the value could not be mapped
         try {
-            switch (mapper.getDefaultMappingType()) {
+            switch (mapper.getDefaultMappingType(value)) {
                 case SCALAR -> {
                     final ConfigScalar scalar = getScalarOrCreate(path);
                     if (mapper.clearExistingFields()) {
@@ -445,6 +446,11 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     @Override
+    public ConfigOptional<ConfigLine> getLine(@NotNull String path, @NotNull LineStyle lineStyle) {
+        return getScalar(path).map(scalar -> scalar.toLine(lineStyle));
+    }
+
+    @Override
     public ConfigOptional<Boolean> getBoolean(@NotNull String path) {
         return getScalar(path).flatMap(ConfigScalar::toBoolean);
     }
@@ -595,23 +601,19 @@ public abstract class Section extends Branch implements ConfigSection {
 
     @Override
     public <T> ConfigOptional<T> get(@NotNull Class<T> classType) {
-        final ConfigRoot root = getRoot();
-        final Configurator configurator = root.getConfigurator();
+        ConfigRoot root = getRoot();
+        Configurator configurator = root.getConfigurator();
 
-        final ConfigLoader<? extends T> loader = configurator.getLoader(classType);
+        ConfigLoader<? extends T> loader = configurator.getLoader(classType);
         if (loader == null) {
             throw new IllegalArgumentException("No config loader found for class: " + classType.getSimpleName());
         }
 
-        final String problemDescription = loader.getProblemDescription();
-        root.addProblem(problemDescription);
-
         try {
             return ConfigOptional.of(this, loader.loadFromSection(this));
         } catch (InvalidConfigException e) {
+            e.setError(loader.getErrorDescription());
             return ConfigOptional.invalid(e);
-        } finally {
-            root.removeProblem(problemDescription);
         }
     }
 

@@ -25,7 +25,7 @@ public class Requirements {
         return new Requirement<String>() {
             @Override
             public boolean test(String value) {
-                return value.length() > min;
+                return value.length() >= min;
             }
 
             @Override
@@ -35,16 +35,16 @@ public class Requirements {
         };
     }
 
-    public static Requirement<String> maxLength(int min) {
+    public static Requirement<String> maxLength(int max) {
         return new Requirement<String>() {
             @Override
             public boolean test(String value) {
-                return value.length() > min;
+                return value.length() <= max;
             }
 
             @Override
             public String getErrorDetails() {
-                return "string cannot be larger than " + min + " characters";
+                return "string cannot be larger than " + max + " characters";
             }
         };
     }
@@ -53,7 +53,7 @@ public class Requirements {
         return new Requirement<String>() {
             @Override
             public boolean test(String value) {
-                return value.length() > min;
+                return value.length() >= min && value.length() <= max;
             }
 
             @Override
@@ -109,7 +109,7 @@ public class Requirements {
         return new Requirement<Amount>() {
             @Override
             public boolean test(Amount amount) {
-                return amount.test(value -> value > min);
+                return amount.test(value -> value >= min);
             }
 
             @Override
@@ -123,7 +123,7 @@ public class Requirements {
         return new Requirement<Amount>() {
             @Override
             public boolean test(Amount amount) {
-                return amount.test(value -> value < max);
+                return amount.test(value -> value <= max);
             }
 
             @Override
@@ -179,7 +179,7 @@ public class Requirements {
         return new Requirement<>() {
             @Override
             public boolean test(T value) {
-                return value.doubleValue() > min.doubleValue();
+                return value.doubleValue() >= min.doubleValue();
             }
 
             @Override
@@ -193,7 +193,7 @@ public class Requirements {
         return new Requirement<>() {
             @Override
             public boolean test(T value) {
-                return value.doubleValue() < max.doubleValue();
+                return value.doubleValue() <= max.doubleValue();
             }
 
             @Override

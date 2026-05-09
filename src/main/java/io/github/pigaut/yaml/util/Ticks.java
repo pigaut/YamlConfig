@@ -1,5 +1,8 @@
 package io.github.pigaut.yaml.util;
 
+import io.github.pigaut.yaml.*;
+import io.github.pigaut.yaml.node.section.*;
+
 public class Ticks {
 
     public static final int SECOND = 20;

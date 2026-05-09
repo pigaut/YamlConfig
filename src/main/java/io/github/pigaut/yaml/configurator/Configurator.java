@@ -9,7 +9,7 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 
-public class Configurator {
+public abstract class Configurator {
 
     private final Map<Class<?>, ConfigLoader<?>> loadersByType = new HashMap<>();
     private final Map<Class<?>, ConfigMapper<?>> mappersByType = new HashMap<>();

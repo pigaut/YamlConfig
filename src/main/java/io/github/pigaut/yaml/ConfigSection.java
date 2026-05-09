@@ -2,6 +2,7 @@ package io.github.pigaut.yaml;
 
 import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
+import io.github.pigaut.yaml.node.line.*;
 import io.github.pigaut.yaml.node.scalar.*;
 import io.github.pigaut.yaml.node.section.*;
 import io.github.pigaut.yaml.node.sequence.*;
@@ -54,6 +55,7 @@ public interface ConfigSection extends ConfigBranch, Iterable<KeyedField> {
     ConfigOptional<ConfigSection> getSection(@NotNull String path);
     ConfigOptional<ConfigSequence> getSequence(@NotNull String path);
     ConfigOptional<ConfigLine> getLine(@NotNull String path);
+    ConfigOptional<ConfigLine> getLine(@NotNull String path, @NotNull LineStyle lineStyle);
     ConfigOptional<Boolean> getBoolean(@NotNull String path);
     ConfigOptional<Character> getCharacter(@NotNull String path);
     ConfigOptional<String> getString(@NotNull String path);

@@ -5,6 +5,8 @@ import io.github.pigaut.yaml.node.scalar.*;
 import io.github.pigaut.yaml.node.section.*;
 import io.github.pigaut.yaml.node.sequence.*;
 import org.jetbrains.annotations.*;
+import org.snakeyaml.engine.v2.comments.*;
+import org.snakeyaml.engine.v2.nodes.*;
 
 import java.io.*;
 import java.math.*;
@@ -205,7 +207,7 @@ public class YamlConfig {
     public static String generateRandomKey() {
         return UUID.randomUUID().toString();
     }
-
+    
     public static boolean isScalarType(Class<?> classType) {
         return SCALARS.contains(classType);
     }
@@ -241,8 +243,37 @@ public class YamlConfig {
     }
 
     public static boolean isYamlFile(@NotNull File file) {
-        final String fileName = file.getName();
-        return file.isFile() && (fileName.endsWith(".yml") || fileName.endsWith(".yaml"));
+        return isYamlFile(file.getName());
+    }
+
+    public static boolean isYamlFile(@NotNull String fileName) {
+        String lower = fileName.toLowerCase(Locale.ROOT);
+        return lower.endsWith(".yml") || lower.endsWith(".yaml");
+    }
+
+    public static @NotNull String ensureYamlExtension(@NotNull String fileName) {
+        if (fileName.isEmpty()) {
+            throw new IllegalArgumentException("Invalid file name");
+        }
+
+        String lower = fileName.toLowerCase(Locale.ROOT);
+        if (lower.endsWith(".yml") || lower.endsWith(".yaml")) {
+            return fileName;
+        }
+
+        return fileName + ".yml";
+    }
+
+    // Handle lists and sections as keys one day
+    public static @NotNull String getNodeKey(@NotNull NodeTuple nodeTuple) {
+        if (nodeTuple.getKeyNode() instanceof ScalarNode keyNode) {
+            return keyNode.getValue();
+        }
+        return generateRandomKey();
+    }
+
+    public static @NotNull CommentLine createComment(@NotNull String value) {
+
     }
 
 }

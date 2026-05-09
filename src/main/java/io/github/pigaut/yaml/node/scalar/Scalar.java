@@ -27,6 +27,18 @@ public abstract class Scalar extends Field implements ConfigScalar {
     }
 
     @Override
+    public boolean equals(@NotNull String value) {
+        String string = toString();
+        return string.equals(value);
+    }
+
+    @Override
+    public boolean equalsIgnoreCase(@NotNull String value) {
+        String string = toString();
+        return string.equalsIgnoreCase(value);
+    }
+
+    @Override
     public boolean contains(String value) {
         String string = toString();
         return string.contains(value);
@@ -130,31 +142,25 @@ public abstract class Scalar extends Field implements ConfigScalar {
 
     @Override
     public <T> ConfigOptional<T> get(@NotNull Class<T> classType) {
-        final ConfigRoot root = this.getRoot();
-        final Configurator configurator = root.getConfigurator();
+        ConfigRoot root = this.getRoot();
+        Configurator configurator = root.getConfigurator();
 
-        final ConfigLoader<? extends T> loader = configurator.getLoader(classType);
+        ConfigLoader<? extends T> loader = configurator.getLoader(classType);
         if (loader == null) {
             throw new IllegalArgumentException("No config loader found for class type: " + classType.getSimpleName());
         }
 
-        final String problemDescription = loader.getProblemDescription();
-        root.addProblem(problemDescription);
-
         try {
             return ConfigOptional.of(this, loader.loadFromScalar(this));
-        }
-        catch (InvalidConfigException e) {
+        } catch (InvalidConfigException e) {
+            e.setError(loader.getErrorDescription());
             return ConfigOptional.invalid(e);
-        }
-        finally {
-            root.removeProblem(problemDescription);
         }
     }
 
     @Override
     public <T> void map(T value) {
-        final Configurator configurator = getRoot().getConfigurator();
+        Configurator configurator = getRoot().getConfigurator();
         @SuppressWarnings("unchecked")
         var mapper = (ConfigMapper<? super T>) configurator.getMapper(value.getClass());
         if (mapper == null) {
@@ -180,7 +186,12 @@ public abstract class Scalar extends Field implements ConfigScalar {
 
     @Override
     public ConfigLine toLine() {
-        return line != null ? line : (line = new Line(this));
+        return toLine(LineStyle.LABELED);
+    }
+
+    @Override
+    public ConfigLine toLine(@NotNull LineStyle lineStyle) {
+        return line != null ? line : (line = new Line(this, lineStyle));
     }
 
     @Override

@@ -1,13 +1,13 @@
 package io.github.pigaut.yaml.configurator;
 
-import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.amount.*;
 import io.github.pigaut.yaml.amount.config.*;
 import io.github.pigaut.yaml.configurator.convert.deserialize.*;
 import io.github.pigaut.yaml.configurator.convert.serialize.*;
+import io.github.pigaut.yaml.configurator.load.*;
 import io.github.pigaut.yaml.configurator.map.*;
 import io.github.pigaut.yaml.util.*;
-import org.jetbrains.annotations.*;
+import org.snakeyaml.engine.v2.nodes.*;
 
 import java.io.*;
 import java.math.*;
@@ -59,54 +59,17 @@ public class StandardConfigurator extends Configurator {
         addMapper(RangedAmount.class, new RangedAmountMapper());
         addMapper(RandomAmount.class, new RandomAmountMapper());
 
-        addMapper(Map.class, new ConfigSectionMapper());
-        addMapper(Iterable.class, new ConfigSequenceMapper());
-    }
+        addMapper(Map.class, new MapMapper());
+        addMapper(Iterable.class, new IterableMapper());
 
-    protected static class ConfigSectionMapper implements ConfigMapper.Section<Map> {
-        @Override
-        public void mapToSection(@NotNull ConfigSection section, @NotNull Map mappings) {
-            section.clear();
-            mappings.forEach((key, value) -> {
-                final String keyAsString = String.valueOf(key);
-                if (value == null) {
-                    section.getSectionOrCreate(keyAsString);
-                    return;
-                }
-                section.set(keyAsString, value);
-            });
-        }
-    }
+        addMapper(MappingNode.class, new MappingNodeMapper());
+        addMapper(SequenceNode.class, new SequenceNodeMapper());
+        addMapper(ScalarNode.class, new ScalarNodeMapper());
+        addMapper(NodeTuple.class, new NodeTupleMapper());
 
-    protected static class ConfigSequenceMapper implements ConfigMapper.Sequence<Iterable> {
-
-        @Override
-        public void mapToSequence(@NotNull ConfigSequence sequence, @NotNull Iterable elements) {
-            sequence.clear();
-            for (Object element : elements) {
-                sequence.add(element);
-            }
-        }
-
-        @Override
-        public void mapToSection(@NotNull ConfigSection section, @NotNull Iterable elements) {
-            section.clear();
-            int count = 0;
-            for (Object element : elements) {
-                final String indexAsKey = Integer.toString(count++);
-                section.set(indexAsKey, element);
-            }
-        }
-
-        @Override
-        public void mapToScalar(@NotNull ConfigScalar scalar, @NotNull Iterable elements) {
-            StringJoiner joiner = new StringJoiner(" ,");
-            for (Object element : elements) {
-                joiner.add(element.toString());
-            }
-            scalar.setValue(joiner.toString());
-        }
-
+        addLoader(MappingNode.class, new MappingNodeLoader());
+        addLoader(SequenceNode.class, new SequenceNodeLoader());
+        addLoader(ScalarNode.class, new ScalarNodeLoader());
     }
 
 }

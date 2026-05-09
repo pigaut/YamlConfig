@@ -207,14 +207,14 @@ public class ParseUtil {
             if (amount == null) {
                 throw new StringParseException("Expected an inequality amount but found: '" + string + "'");
             }
-            return InequalityAmount.greaterThanOrEqualTo(amount);
+            return Amount.greaterThanOrEqual(amount);
         }
         else if (string.endsWith("-")) {
             Double amount = parseDoubleOrNull(string.replace("-", ""));
             if (amount == null) {
                 throw new StringParseException("Expected an inequality amount but found: '" + string + "'");
             }
-            return InequalityAmount.lessThanOrEqualTo(amount);
+            return Amount.lessThanOrEqual(amount);
         }
 
         final Double value = parseDoubleOrNull(string);

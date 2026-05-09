@@ -1,5 +1,8 @@
 package io.github.pigaut.yaml.amount;
 
+import org.jetbrains.annotations.*;
+
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
 
@@ -10,6 +13,14 @@ public class RangedAmount implements Amount {
     protected RangedAmount(double min, double max) {
         this.min = min;
         this.max = max;
+    }
+
+    public double getMin() {
+        return min;
+    }
+
+    public double getMax() {
+        return max;
     }
 
     @Override

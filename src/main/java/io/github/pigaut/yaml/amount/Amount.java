@@ -1,5 +1,6 @@
 package io.github.pigaut.yaml.amount;
 
+import io.github.pigaut.yaml.amount.inequality.*;
 import io.github.pigaut.yaml.convert.parse.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
@@ -21,6 +22,22 @@ public interface Amount {
 
     static Amount fixed(double amount) {
         return new FixedAmount(amount);
+    }
+
+    static Amount lessThan(double max) {
+        return new LessThanAmount(max);
+    }
+
+    static Amount lessThanOrEqual(double max) {
+        return new LessThanOrEqualAmount(max);
+    }
+
+    static Amount greaterThan(double min) {
+        return new GreaterThanAmount(min);
+    }
+
+    static Amount greaterThanOrEqual(double min) {
+        return new GreaterThanOrEqualAmount(min);
     }
 
     static Amount between(double min, double max) {

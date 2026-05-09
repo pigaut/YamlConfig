@@ -20,8 +20,7 @@ public class RootScalar extends Scalar implements ConfigRoot {
 
     private final @Nullable File file;
     private final @Nullable String name;
-    private final Load loader = new ConfigLoad();
-    private final Deque<String> problems = new LinkedList<>();
+    private final ConfigLoad loader = new ConfigLoad();
     private @NotNull Configurator configurator;
     private @Nullable String prefix;
     private @NotNull String header = "";
@@ -74,25 +73,6 @@ public class RootScalar extends Scalar implements ConfigRoot {
     }
 
     @Override
-    public @Nullable String getCurrentProblem() {
-        return problems.peekLast();
-    }
-
-    @Override
-    public void addProblem(String problemDescription) {
-        if (problemDescription != null) {
-            problems.add(problemDescription);
-        }
-    }
-
-    @Override
-    public void removeProblem(String problemDescription) {
-        if (problemDescription != null) {
-            problems.remove(problemDescription);
-        }
-    }
-
-    @Override
     public @NotNull Configurator getConfigurator() {
         return configurator;
     }
@@ -100,6 +80,11 @@ public class RootScalar extends Scalar implements ConfigRoot {
     @Override
     public void setConfigurator(@NotNull Configurator configurator) {
         this.configurator = configurator;
+    }
+
+    @Override
+    public boolean hasFile() {
+        return file != null;
     }
 
     @Override
@@ -125,7 +110,7 @@ public class RootScalar extends Scalar implements ConfigRoot {
     @Override
     public void load() throws ConfigLoadException {
         Preconditions.checkState(file != null, "Cannot load configuration from file because file is null");
-        load(file);
+        loadFromFile(file);
     }
 
     @Override
@@ -138,7 +123,7 @@ public class RootScalar extends Scalar implements ConfigRoot {
     }
 
     @Override
-    public void load(@NotNull File file) throws ConfigLoadException {
+    public void loadFromFile(@NotNull File file) throws ConfigLoadException {
         if (!file.exists()) {
             throw new ConfigLoadException(this, "File does not exist");
         }
@@ -146,29 +131,29 @@ public class RootScalar extends Scalar implements ConfigRoot {
         try (FileInputStream fileInputStream = new FileInputStream(file);
              InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, StandardCharsets.UTF_8);
              BufferedReader reader = new BufferedReader(inputStreamReader)) {
-            load(reader);
+            loadFromReader(reader);
         } catch (IOException e) {
             throw new ConfigLoadException(this, e.getMessage());
         }
     }
 
     @Override
-    public void load(@NotNull InputStream inputStream) throws ConfigLoadException {
+    public void loadFromStream(@NotNull InputStream inputStream) throws ConfigLoadException {
         Object parsedNode;
         try {
             parsedNode = loader.loadFromInputStream(inputStream);
-        } catch (ParserException | ScannerException | ComposerException e) {
+        } catch (YamlEngineException e) {
             throw new ConfigLoadException(this, e.getMessage());
         }
         load(parsedNode);
     }
 
     @Override
-    public void load(@NotNull Reader reader) throws ConfigLoadException {
+    public void loadFromReader(@NotNull Reader reader) throws ConfigLoadException {
         Object parsedNode;
         try {
             parsedNode = loader.loadFromReader(reader);
-        } catch (ParserException | ScannerException | ComposerException e) {
+        } catch (YamlEngineException e) {
             throw new ConfigLoadException(this, e.getMessage());
         }
         load(parsedNode);

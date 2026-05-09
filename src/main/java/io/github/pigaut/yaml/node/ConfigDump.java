@@ -8,6 +8,7 @@ public class ConfigDump extends Dump {
 
     static {
         settings = DumpSettings.builder()
+                .setDumpComments(true)
                 .setIndentWithIndicator(true)
                 .setIndicatorIndent(2)
                 .setWidth(100)

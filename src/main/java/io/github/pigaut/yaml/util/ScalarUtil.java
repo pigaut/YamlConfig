@@ -1,6 +1,25 @@
 package io.github.pigaut.yaml.util;
 
+import org.jetbrains.annotations.*;
+import org.snakeyaml.engine.v2.nodes.*;
+
 public class ScalarUtil {
+
+    public static @NotNull Tag getTag(Object object) {
+        if (isBoolean(object)) {
+            return Tag.BOOL;
+        }
+
+        if (isLong(object)) {
+            return Tag.INT;
+        }
+
+        if (isDouble(object)) {
+            return Tag.FLOAT;
+        }
+
+        return Tag.STR;
+    }
 
     public static boolean isBoolean(Object object) {
         return object instanceof Boolean;

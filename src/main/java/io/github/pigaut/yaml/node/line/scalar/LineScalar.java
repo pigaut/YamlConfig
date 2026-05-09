@@ -5,6 +5,7 @@ import io.github.pigaut.yaml.configurator.*;
 import io.github.pigaut.yaml.configurator.load.*;
 import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
+import io.github.pigaut.yaml.node.line.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.common.*;
 
@@ -43,6 +44,18 @@ public abstract class LineScalar implements ConfigScalar {
     }
 
     @Override
+    public boolean equals(@NotNull String value) {
+        String string = toString();
+        return string.equals(value);
+    }
+
+    @Override
+    public boolean equalsIgnoreCase(@NotNull String value) {
+        String string = toString();
+        return string.equalsIgnoreCase(value);
+    }
+
+    @Override
     public @NotNull ScalarStyle getScalarStyle() {
         return line.asScalar().getScalarStyle();
     }
@@ -59,6 +72,11 @@ public abstract class LineScalar implements ConfigScalar {
 
     @Override
     public ConfigLine toLine() {
+        return line;
+    }
+
+    @Override
+    public ConfigLine toLine(@NotNull LineStyle lineStyle) {
         return line;
     }
 
@@ -109,26 +127,20 @@ public abstract class LineScalar implements ConfigScalar {
 
     @Override
     public <T> ConfigOptional<T> get(@NotNull Class<T> classType) {
-        final ConfigRoot root = this.getRoot();
-        final Configurator configurator = root.getConfigurator();
+        ConfigRoot root = this.getRoot();
+        Configurator configurator = root.getConfigurator();
 
-        final ConfigLoader<? extends T> loader = configurator.getLoader(classType);
+        ConfigLoader<? extends T> loader = configurator.getLoader(classType);
         if (loader == null) {
             throw new IllegalArgumentException("No config loader found for class type: " + classType.getSimpleName());
         }
 
-        final String problemDescription = loader.getProblemDescription();
-        root.addProblem(problemDescription);
-
         try {
             loader.loadFromScalar(this);
             return ConfigOptional.of(this, loader.loadFromScalar(this));
-        }
-        catch (InvalidConfigException e) {
+        } catch (InvalidConfigException e) {
+            e.setError(loader.getErrorDescription());
             return ConfigOptional.invalid(e);
-        }
-        finally {
-            root.removeProblem(problemDescription);
         }
     }
 

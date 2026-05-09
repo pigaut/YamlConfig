@@ -7,7 +7,13 @@ import org.jetbrains.annotations.*;
 public interface ConfigMapper<T> {
 
     @NotNull
-    FieldType getDefaultMappingType();
+    default FieldType getDefaultMappingType() {
+        throw new IllegalStateException("Mapper does not override getDefaultMappingType()");
+    }
+
+    default @NotNull FieldType getDefaultMappingType(T value) {
+        return getDefaultMappingType();
+    }
 
     default boolean clearExistingFields() {
         return true;

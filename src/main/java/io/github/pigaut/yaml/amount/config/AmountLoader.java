@@ -11,7 +11,7 @@ import java.util.*;
 public class AmountLoader implements ConfigLoader<Amount> {
 
     @Override
-    public @Nullable String getProblemDescription() {
+    public @Nullable String getErrorDescription() {
         return "invalid amount";
     }
 

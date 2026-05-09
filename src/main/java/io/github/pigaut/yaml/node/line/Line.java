@@ -16,9 +16,11 @@ public class Line implements ConfigLine {
     private final ConfigScalar scalar;
     private final List<ConfigScalar> values = new ArrayList<>();
     private final Map<String, ConfigScalar> valuesByKey = new LinkedHashMap<>();
+    private final LineStyle lineStyle;
 
-    public Line(ConfigScalar scalar) {
+    public Line(@NotNull ConfigScalar scalar, LineStyle lineStyle) {
         this.scalar = scalar;
+        this.lineStyle = lineStyle;
         updateLine(scalar.toString());
     }
 
@@ -88,6 +90,16 @@ public class Line implements ConfigLine {
     }
 
     @Override
+    public boolean equals(@NotNull String value) {
+        return scalar.equals(value);
+    }
+
+    @Override
+    public boolean equalsIgnoreCase(@NotNull String value) {
+        return scalar.equalsIgnoreCase(value);
+    }
+
+    @Override
     public boolean contains(@NotNull String value) {
         return scalar.contains(value);
     }
@@ -106,6 +118,12 @@ public class Line implements ConfigLine {
     @Override
     public @NotNull ConfigScalar asScalar() {
         return scalar;
+    }
+
+    @Override
+    public @NotNull String toString(@NotNull StringFormatter formatter) {
+        String string = this.toString();
+        return formatter.format(string);
     }
 
     @Override
@@ -386,81 +404,190 @@ public class Line implements ConfigLine {
         return getScalar(key).flatMap(ConfigScalar::toDouble);
     }
 
-    private List<String> tokenize(String line) {
-        List<String> tokens = new ArrayList<>();
+    private record Token(String raw, TokenType type) {}
+
+    enum TokenType {
+        VALUE,
+        KEY_VALUE
+    }
+
+    private List<Token> tokenize(String line) {
+        if (line == null || line.isEmpty()) {
+            return List.of();
+        }
+
+        List<Token> parts = new ArrayList<>();
+
         StringBuilder current = new StringBuilder();
-        boolean inBrackets = false;
+        char[] chars = line.toCharArray();
 
-        for (char c : line.toCharArray()) {
-            if (c == '<' && !inBrackets) {
-                inBrackets = true;
+        boolean foundLabel = lineStyle != LineStyle.LABELED;
+        for (int i = 0; i < chars.length; i++) {
+            char c = chars[i];
+
+            if (c == ',' && i + 1 < chars.length && chars[i + 1] == ',') {
+                current.append(',');
+                i++;
+                continue;
             }
 
-            if (c == '>' && inBrackets) {
-                inBrackets = false;
-            }
+            if (c == ',') {
+                // Commas separate standard VALUEs
+                parts.add(new Token(current.toString(), TokenType.VALUE));
+                current.setLength(0);
 
-            if ((c == ' ' || c == ',') && !inBrackets) {
-                if (!current.isEmpty()) {
-                    tokens.add(current.toString());
-                    current.setLength(0);
+                if (i + 1 < chars.length && chars[i + 1] == ' ') {
+                    i++;
                 }
+                continue;
             }
-            else {
-                current.append(c);
+
+            if (c == ' ' && !foundLabel) {
+                String finalRaw = current.toString();
+                parts.add(new Token(finalRaw, TokenType.VALUE));
+                current.setLength(0);
+                foundLabel = true;
+                continue;
             }
+
+            if (c == ' ' && isNextTokenAFlag(chars, i + 1)) {
+                String finalRaw = current.toString();
+                TokenType finalType = finalRaw.contains("=") && !finalRaw.contains("==")
+                        ? TokenType.KEY_VALUE
+                        : TokenType.VALUE;
+                parts.add(new Token(finalRaw, finalType));
+                current.setLength(0);
+                continue;
+            }
+
+            current.append(c);
         }
 
         if (!current.isEmpty()) {
-            tokens.add(current.toString());
+            String finalRaw = current.toString();
+            TokenType finalType = finalRaw.contains("=") && !finalRaw.contains("==")
+                    ? TokenType.KEY_VALUE
+                    : TokenType.VALUE;
+            parts.add(new Token(finalRaw, finalType));
         }
 
-        return tokens;
+        return parts;
+    }
+
+//    private static List<Token> tokenize(String line) {
+//        if (line == null || line.isEmpty()) {
+//            return List.of();
+//        }
+//
+//        List<Token> parts = new ArrayList<>();
+//
+//        // Handle the id
+//        int firstSpace = line.indexOf(' ');
+//        if (firstSpace == -1) {
+//            return List.of(new Token(line, TokenType.VALUE));
+//        }
+//        parts.add(new Token(line.substring(0, firstSpace), TokenType.VALUE));
+//
+//        StringBuilder current = new StringBuilder();
+//        char[] chars = line.toCharArray();
+//
+//        for (int i = firstSpace + 1; i < chars.length; i++) {
+//            char c = chars[i];
+//
+//            if (c == ',' && i + 1 < chars.length && chars[i + 1] == ',') {
+//                current.append(',');
+//                i++;
+//                continue;
+//            }
+//
+//            if (c == ',') {
+//                // Commas separate standard VALUEs
+//                parts.add(new Token(current.toString(), TokenType.VALUE));
+//                current.setLength(0);
+//
+//                if (i + 1 < chars.length && chars[i + 1] == ' ') {
+//                    i++;
+//                }
+//                continue;
+//            }
+//
+//            if (c == ' ' && isNextTokenAFlag(chars, i + 1)) {
+//                String finalRaw = current.toString();
+//                TokenType finalType = finalRaw.contains("=") && !finalRaw.contains("==")
+//                        ? TokenType.KEY_VALUE
+//                        : TokenType.VALUE;
+//                parts.add(new Token(finalRaw, finalType));
+//                current.setLength(0);
+//                continue;
+//            }
+//
+//            current.append(c);
+//        }
+//
+//        if (!current.isEmpty()) {
+//            String finalRaw = current.toString();
+//            TokenType finalType = finalRaw.contains("=") && !finalRaw.contains("==")
+//                    ? TokenType.KEY_VALUE
+//                    : TokenType.VALUE;
+//            parts.add(new Token(finalRaw, finalType));
+//        }
+//
+//        return parts;
+//    }
+
+    private static boolean isNextTokenAFlag(char[] chars, int start) {
+        for (int j = start; j < chars.length; j++) {
+            if (chars[j] == ' ') return false; // Found another space before an '='
+            if (chars[j] == '=') {
+                // Ensure it's '=' and not '=='
+                boolean notEscaped = (j + 1 >= chars.length || chars[j + 1] != '=');
+                return notEscaped;
+            }
+        }
+        return false;
     }
 
     public void updateLine(String line) {
         values.clear();
         valuesByKey.clear();
 
-        for (String token : tokenize(line)) {
-            if (token.startsWith("<") && token.endsWith(">")) {
-                Object value = ParseUtil.parseAsScalar(token.substring(1, token.length() - 1));
-                values.add(new KeylessLineScalar(this, values.size(), value));
-                continue;
-            }
+        List<Token> tokens = tokenize(line);
+        for (Token token : tokens) {
+            switch (token.type()) {
+                case KEY_VALUE -> {
+                    String raw = token.raw();
 
-            if (token.contains("=")) {
-                String[] keyValuePair = token.split("=", 2);
-                String key = keyValuePair[0];
-                Object value = ParseUtil.parseAsScalar(keyValuePair[1]);
-                valuesByKey.put(key, new KeyedLineScalar(this, key, value));
-                continue;
-            }
+                    int separatorIndex = raw.indexOf('=');
+                    String key = raw.substring(0, separatorIndex);
+                    String value = raw.substring(separatorIndex + 1);
 
-            Object value = ParseUtil.parseAsScalar(token);
-            values.add(new KeylessLineScalar(this, values.size(), value));
+                    Object parsedValue = ParseUtil.parseAsScalar(value);
+                    valuesByKey.put(key, new KeyedLineScalar(this, key, parsedValue));
+                }
+
+                case VALUE -> {
+                    Object value = ParseUtil.parseAsScalar(token.raw());
+                    values.add(new KeylessLineScalar(this, values.size(), value));
+                }
+            }
         }
     }
 
     @Override
-    public String toString() {
-        final StringJoiner joiner = new StringJoiner(" ");
-
+    public @NotNull String toString() {
+        StringJoiner valueJoiner = new StringJoiner(", ");
         for (Object value : values) {
-            final String string = value.toString();
-            if (string.contains(" ")) {
-                joiner.add("<" + string + ">");
-            }
-            else {
-                joiner.add(string);
-            }
+            valueJoiner.add(value.toString());
         }
+
+        StringJoiner flagJoiner = new StringJoiner(" ");
+        flagJoiner.add(valueJoiner.toString());
 
         for (Map.Entry<String, ConfigScalar> parameter : valuesByKey.entrySet()) {
-            joiner.add(parameter.getKey() + "=" + parameter.getValue().toString());
+            valueJoiner.add(parameter.getKey() + "=" + parameter.getValue().toString());
         }
 
-        return joiner.toString();
+        return flagJoiner.toString();
     }
 
     @NotNull

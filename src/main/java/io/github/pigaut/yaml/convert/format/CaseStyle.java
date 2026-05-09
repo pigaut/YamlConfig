@@ -77,7 +77,7 @@ public enum CaseStyle implements StringFormatter {
         }
     };
 
-    public static @Nullable StringFormatter getByName(String tagName) {
+    public static @Nullable CaseStyle getByName(String tagName) {
         for (CaseStyle style : values()) {
             if (style.getTagName().equalsIgnoreCase(tagName)) {
                 return style;
@@ -86,7 +86,7 @@ public enum CaseStyle implements StringFormatter {
         return null;
     }
 
-    public static @Nullable StringFormatter getByTag(String tag) {
+    public static @Nullable CaseStyle getByTag(String tag) {
         for (CaseStyle style : values()) {
             if (style.getTag().equalsIgnoreCase(tag)) {
                 return style;

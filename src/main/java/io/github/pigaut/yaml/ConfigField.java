@@ -3,6 +3,9 @@ package io.github.pigaut.yaml;
 import io.github.pigaut.yaml.configurator.FieldType;
 import io.github.pigaut.yaml.node.*;
 import org.jetbrains.annotations.*;
+import org.snakeyaml.engine.v2.comments.*;
+
+import java.util.*;
 
 public interface ConfigField {
 
@@ -20,6 +23,17 @@ public interface ConfigField {
     <T> ConfigOptional<T> get(@NotNull Class<T> classType);
 
     <T> void map(T value);
+
+    List<CommentLine> getBlockComments();
+    void setBlockComments(@NotNull List<CommentLine> blockComments);
+    void clearBlockComments();
+    void addBlockComment(@NotNull String value);
+    void addBlankLine();
+
+    List<CommentLine> getInLineComments();
+    void setInLineComments(@NotNull List<CommentLine> inLineComments);
+    void clearInlineComments();
+    void addInlineComment(@NotNull String value);
 
     ConfigOptional<ConfigScalar> toScalar();
     ConfigOptional<ConfigSection> toSection();

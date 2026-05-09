@@ -7,10 +7,15 @@ import java.util.*;
 
 public interface ConfigLine extends ConfigField, Iterable<ConfigScalar> {
 
+    boolean equals(@NotNull String value);
+    boolean equalsIgnoreCase(@NotNull String value);
     boolean contains(@NotNull String value);
     boolean hasFlag(@NotNull String key);
 
     @NotNull ConfigScalar asScalar();
+
+    @NotNull String toString();
+    @NotNull String toString(@NotNull StringFormatter formatter);
 
     @NotNull String getValue();
     void setValue(@NotNull String line) throws InvalidConfigException;

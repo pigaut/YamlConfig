@@ -8,7 +8,9 @@ import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.api.*;
 import org.snakeyaml.engine.v2.common.*;
+import org.snakeyaml.engine.v2.composer.*;
 import org.snakeyaml.engine.v2.exceptions.*;
+import org.snakeyaml.engine.v2.nodes.*;
 
 import java.io.*;
 import java.nio.charset.*;
@@ -19,12 +21,11 @@ public class RootSection extends Section implements ConfigRoot {
 
     private final @Nullable File file;
     private final String name;
-    private final Load loader = new ConfigLoad();
+    private final ConfigLoad loader = new ConfigLoad();
     private final Dump dumper = new ConfigDump();
     private @NotNull Configurator configurator;
     private @Nullable String prefix;
     private @NotNull String header = "";
-    private final Deque<String> problems = new LinkedList<>();
 
     public RootSection(@NotNull Configurator configurator) {
         this(null, configurator, null);
@@ -44,11 +45,6 @@ public class RootSection extends Section implements ConfigRoot {
     }
 
     @Override
-    public @NotNull String getKey() throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Root does not have a key");
-    }
-
-    @Override
     public boolean isRoot() {
         return true;
     }
@@ -59,22 +55,8 @@ public class RootSection extends Section implements ConfigRoot {
     }
 
     @Override
-    public @Nullable String getCurrentProblem() {
-        return problems.peekLast();
-    }
-
-    @Override
-    public void addProblem(String problemDescription) {
-        if (problemDescription != null) {
-            problems.add(problemDescription);
-        }
-    }
-
-    @Override
-    public void removeProblem(String problemDescription) {
-        if (problemDescription != null) {
-            problems.remove(problemDescription);
-        }
+    public @NotNull String getKey() throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Root does not have a key");
     }
 
     @Override
@@ -103,6 +85,11 @@ public class RootSection extends Section implements ConfigRoot {
     }
 
     @Override
+    public boolean hasFile() {
+        return file != null;
+    }
+
+    @Override
     public @Nullable File getFile() {
         return file;
     }
@@ -125,7 +112,7 @@ public class RootSection extends Section implements ConfigRoot {
     @Override
     public void load() throws ConfigLoadException {
         Preconditions.checkState(file != null, "Cannot load configuration from file because file is null");
-        load(file);
+        loadFromFile(file);
     }
 
     @Override
@@ -138,7 +125,7 @@ public class RootSection extends Section implements ConfigRoot {
     }
 
     @Override
-    public void load(@NotNull File file) throws ConfigLoadException {
+    public void loadFromFile(@NotNull File file) throws ConfigLoadException {
         if (!file.exists()) {
             throw new ConfigLoadException(this, "File does not exist");
         }
@@ -146,42 +133,32 @@ public class RootSection extends Section implements ConfigRoot {
         try (FileInputStream fileInputStream = new FileInputStream(file);
              InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, StandardCharsets.UTF_8);
              BufferedReader reader = new BufferedReader(inputStreamReader)) {
-            load(reader);
+            loadFromReader(reader);
         } catch (IOException e) {
             throw new ConfigLoadException(this, e.getMessage());
         }
     }
 
     @Override
-    public void load(@NotNull InputStream inputStream) throws ConfigLoadException {
+    public void loadFromStream(@NotNull InputStream inputStream) throws ConfigLoadException {
         Object parsedNode;
         try {
             parsedNode = loader.loadFromInputStream(inputStream);
-        } catch (ParserException | ScannerException | ComposerException e) {
+        } catch (YamlEngineException e) {
             throw new ConfigLoadException(this, e.getMessage());
         }
         load(parsedNode);
     }
 
     @Override
-    public void load(@NotNull Reader reader) throws ConfigLoadException {
+    public void loadFromReader(@NotNull Reader reader) throws ConfigLoadException {
         Object parsedNode;
         try {
             parsedNode = loader.loadFromReader(reader);
-        } catch (ParserException | ScannerException | ComposerException e) {
+        } catch (YamlEngineException e) {
             throw new ConfigLoadException(this, e.getMessage());
         }
         load(parsedNode);
-    }
-
-    private void load(Object parsedNode) throws ConfigLoadException {
-        if (!(parsedNode instanceof Map<?, ?> map)) {
-            throw new ConfigLoadException(this, "Expected a section but found another node");
-        }
-        clear();
-        map.forEach((key, value) -> {
-            set(String.valueOf(key), value);
-        });
     }
 
     @Override
@@ -203,8 +180,7 @@ public class RootSection extends Section implements ConfigRoot {
         try (FileWriter writer = new FileWriter(file)) {
             writer.write(yamlData);
             return true;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             return false;
         }
     }
@@ -212,6 +188,16 @@ public class RootSection extends Section implements ConfigRoot {
     @Override
     public String saveToString() {
         return header + dumper.dumpToString(this);
+    }
+
+    private void load(Object parsedNode) throws ConfigLoadException {
+        if (!(parsedNode instanceof Map<?, ?> map)) {
+            throw new ConfigLoadException(this, "Expected a section but found another node");
+        }
+        clear();
+        map.forEach((key, value) -> {
+            set(String.valueOf(key), value);
+        });
     }
 
     @Override

@@ -3,10 +3,15 @@ package io.github.pigaut.yaml.node;
 import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.node.sequence.*;
 import org.jetbrains.annotations.*;
+import org.snakeyaml.engine.v2.comments.*;
 
+import java.lang.runtime.*;
 import java.util.*;
 
 public abstract class Field implements ConfigField {
+
+    private List<CommentLine> inLineComments = List.of();
+    private List<CommentLine> blockComments = List.of();
 
     @NotNull
     public abstract Branch getParent() throws UnsupportedOperationException;
@@ -72,6 +77,51 @@ public abstract class Field implements ConfigField {
     @Override
     public <T> T getRequired(@NotNull Class<T> classType) throws InvalidConfigException {
         return get(classType).orThrow();
+    }
+
+    @Override
+    public List<CommentLine> getInLineComments() {
+        return inLineComments;
+    }
+
+    @Override
+    public void setInLineComments(@NotNull List<CommentLine> inLineComments) {
+        this.inLineComments = inLineComments;
+    }
+
+    @Override
+    public void clearInlineComments() {
+        inLineComments.clear();
+    }
+
+    @Override
+    public void addInlineComment(@NotNull String value) {
+        inLineComments.add(new CommentLine(Optional.empty(), Optional.empty(), value, CommentType.IN_LINE));
+    }
+
+    @Override
+    public List<CommentLine> getBlockComments() {
+        return blockComments;
+    }
+
+    @Override
+    public void setBlockComments(@NotNull List<CommentLine> blockComments) {
+        this.blockComments = blockComments;
+    }
+
+    @Override
+    public void clearBlockComments() {
+        blockComments.clear();
+    }
+
+    @Override
+    public void addBlockComment(@NotNull String value) {
+        blockComments.add(new CommentLine(Optional.empty(), Optional.empty(), value, CommentType.BLOCK));
+    }
+
+    @Override
+    public void addBlankLine() {
+        blockComments.add(new CommentLine(Optional.empty(), Optional.empty(), "", CommentType.BLANK_LINE));
     }
 
 }

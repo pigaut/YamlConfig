@@ -2,6 +2,7 @@ package io.github.pigaut.yaml;
 
 import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
+import io.github.pigaut.yaml.node.line.*;
 import io.github.pigaut.yaml.node.scalar.*;
 import io.github.pigaut.yaml.node.section.*;
 import io.github.pigaut.yaml.node.sequence.*;
@@ -51,6 +52,7 @@ public interface ConfigSequence extends ConfigBranch, Iterable<KeylessField> {
     ConfigOptional<ConfigSection> getSection(int index);
     ConfigOptional<ConfigSequence> getSequence(int index);
     ConfigOptional<ConfigLine> getLine(int index);
+    ConfigOptional<ConfigLine> getLine(int index, @NotNull LineStyle lineStyle);
     ConfigOptional<Boolean> getBoolean(int index);
     ConfigOptional<Character> getCharacter(int index);
     ConfigOptional<String> getString(int index);

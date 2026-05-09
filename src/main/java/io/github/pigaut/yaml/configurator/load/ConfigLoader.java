@@ -6,7 +6,7 @@ import org.jetbrains.annotations.*;
 
 public interface ConfigLoader<T> {
 
-    default @Nullable String getProblemDescription() {
+    default @Nullable String getErrorDescription() {
         return null;
     }
 

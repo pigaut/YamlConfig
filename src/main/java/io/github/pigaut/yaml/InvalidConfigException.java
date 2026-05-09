@@ -11,14 +11,14 @@ public class InvalidConfigException extends ConfigException {
 
     private final ConfigField field;
     private final @Nullable String prefix;
-    private final @Nullable String problem;
+    private @Nullable String error;
     private final @Nullable File file;
     private final @Nullable String path;
     private final @Nullable String line;
     private final String details;
 
     public InvalidConfigException(ConfigField field, String cause) {
-        this(field.getRoot(), field, field.getSimplePath(), cause);
+        this(field.getRoot(), field, field.isRoot() ? null : field.getSimplePath(), cause);
     }
 
     public InvalidConfigException(ConfigField field, String key, String cause) {
@@ -32,18 +32,17 @@ public class InvalidConfigException extends ConfigException {
     public InvalidConfigException(InvalidConfigException exception, String details) {
         this.field = exception.field;
         this.prefix = exception.prefix;
-        this.problem = exception.problem;
+        this.error = exception.error;
         this.file = exception.file;
         this.path = exception.path;
         this.line = exception.line;
         this.details = details;
     }
 
-    private InvalidConfigException(ConfigRoot config, ConfigField field, String path, String details) {
+    private InvalidConfigException(ConfigRoot config, ConfigField field, @Nullable String path, String details) {
         this.field = field;
         this.prefix = config.getPrefix();
         this.file = config.getFile();
-        this.problem = config.getCurrentProblem();
         this.path = path;
         this.line = field instanceof ConfigLine configLine ? configLine.getValue() :
                 field instanceof LineScalar lineScalar ? lineScalar.toLine().getValue() : null;
@@ -58,8 +57,12 @@ public class InvalidConfigException extends ConfigException {
         return prefix;
     }
 
-    public @Nullable String getProblem() {
-        return problem;
+    public @Nullable String getError() {
+        return error;
+    }
+
+    public void setError(@Nullable String error) {
+        this.error = error;
     }
 
     public @Nullable File getFile() {
@@ -97,7 +100,7 @@ public class InvalidConfigException extends ConfigException {
     @Override
     public String toString() {
         String optionalPrefix = prefix != null ? (prefix + " ") : "";
-        String optionalProblem = problem != null ? (": " + CaseFormatter.toSpacedUpperCase(problem)) : "";
+        String optionalError = error != null ? (": " + CaseFormatter.toSpacedUpperCase(error)) : "";
         String optionalFile = file != null ? (" File >> " + file.getPath() + "\n") : "";
         String optionalPath = path != null ? (" Path >> " + path + "\n") : "";
         String optionalLine = line != null ? (" Line >> " + line + "\n") : "";
@@ -107,7 +110,7 @@ public class InvalidConfigException extends ConfigException {
                 "%s" +
                 "%s" +
                 " Details >> %s.\n\n";
-        return String.format(errorMessage, optionalPrefix, optionalProblem, optionalFile,
+        return String.format(errorMessage, optionalPrefix, optionalError, optionalFile,
                 optionalPath, optionalLine, details);
     }
 

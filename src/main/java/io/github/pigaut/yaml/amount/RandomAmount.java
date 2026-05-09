@@ -3,6 +3,7 @@ package io.github.pigaut.yaml.amount;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
+import java.util.stream.*;
 
 public class RandomAmount implements Amount {
 
@@ -49,6 +50,15 @@ public class RandomAmount implements Amount {
                 .map(mapper::apply)
                 .toArray();
         return new RandomAmount(mappedValues);
+    }
+
+    @Override
+    public String toString() {
+        StringJoiner joiner = new StringJoiner(";");
+        for (double value : values) {
+            joiner.add(Double.toString(value));
+        }
+        return joiner.toString();
     }
 
 }
