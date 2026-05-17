@@ -14,12 +14,12 @@ import java.util.regex.*;
 public class KeyedScalar extends Scalar implements KeyedField {
 
     private final Section parent;
-    private final String key;
+    private final KeyScalar key;
 
     public KeyedScalar(@NotNull Section parent, @NotNull String key, @NotNull Object value) {
         super(value);
         this.parent = parent;
-        this.key = key;
+        this.key = new KeyScalar(parent, key);
     }
 
     @Override
@@ -33,52 +33,52 @@ public class KeyedScalar extends Scalar implements KeyedField {
     }
 
     @Override
-    public @NotNull String getKey() throws UnsupportedOperationException {
+    public @NotNull String getKey() {
+        return key.getKey();
+    }
+
+    @Override
+    public @NotNull ConfigScalar getKeyScalar() {
         return key;
     }
 
     @Override
-    public @NotNull ConfigScalar getKeyAsScalar() {
-        return new KeyScalar(parent, key);
-    }
-
-    @Override
     public <T> ConfigOptional<T> getKeyAs(Class<T> classType) {
-        return getKeyAsScalar().get(classType);
+        return key.get(classType);
     }
 
     @Override
     public ConfigOptional<Boolean> getBooleanKey() {
-        return getKeyAsScalar().toBoolean();
+        return key.toBoolean();
     }
 
     @Override
     public ConfigOptional<Character> getCharacterKey() {
-        return getKeyAsScalar().toCharacter();
+        return key.toCharacter();
     }
 
     @Override
     public ConfigOptional<Integer> getIntegerKey() {
-        return getKeyAsScalar().toInteger();
+        return key.toInteger();
     }
 
     @Override
     public ConfigOptional<Long> getLongKey() {
-        return getKeyAsScalar().toLong();
+        return key.toLong();
     }
 
     @Override
     public ConfigOptional<Float> getFloatKey() {
-        return getKeyAsScalar().toFloat();
+        return key.toFloat();
     }
 
     @Override
     public ConfigOptional<Double> getDoubleKey() {
-        return getKeyAsScalar().toDouble();
+        return key.toDouble();
     }
 
     @Override
-    public @NotNull Section getParent() throws UnsupportedOperationException {
+    public @NotNull Section getParent() {
         return parent;
     }
 

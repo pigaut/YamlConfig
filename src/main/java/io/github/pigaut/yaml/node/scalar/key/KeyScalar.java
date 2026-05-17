@@ -11,7 +11,7 @@ import java.util.regex.*;
 
 public class KeyScalar extends Scalar {
 
-    private Section parent;
+    private final Section parent;
 
     public KeyScalar(@NotNull Section parent, @NotNull String key) {
         super(ParseUtil.parseAsScalar(key));

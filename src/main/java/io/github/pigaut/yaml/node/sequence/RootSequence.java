@@ -6,9 +6,9 @@ import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.section.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
-import org.snakeyaml.engine.v2.api.*;
 import org.snakeyaml.engine.v2.common.*;
 import org.snakeyaml.engine.v2.exceptions.*;
+import org.snakeyaml.engine.v2.nodes.*;
 
 import java.io.*;
 import java.nio.charset.*;
@@ -17,13 +17,15 @@ import java.util.function.*;
 
 public class RootSequence extends Sequence implements ConfigRoot {
 
+    private final ConfigLoad loader = new ConfigLoad();
+    private final ConfigDump dumper = new ConfigDump();
+    private Configurator configurator;
+    private String header = "";
+    private boolean multiDocument = false;
+
     private final @Nullable File file;
     private final @Nullable String name;
-    private final ConfigLoad loader = new ConfigLoad();
-    private final Dump dumper = new ConfigDump();
-    private @NotNull Configurator configurator;
     private @Nullable String prefix;
-    private @NotNull String header = "";
 
     public RootSequence(@NotNull Configurator configurator) {
         this(null, configurator, null);
@@ -93,7 +95,7 @@ public class RootSequence extends Sequence implements ConfigRoot {
     }
 
     @Override
-    public @NotNull String getName() {
+    public @Nullable String getName() {
         return name;
     }
 
@@ -139,7 +141,7 @@ public class RootSequence extends Sequence implements ConfigRoot {
 
     @Override
     public void loadFromStream(@NotNull InputStream inputStream) throws ConfigLoadException {
-        List<Object> documents = new ArrayList<>();
+        List<Node> documents = new ArrayList<>();
         try {
             loader.loadAllFromInputStream(inputStream).forEach(documents::add);
         } catch (YamlEngineException e) {
@@ -150,7 +152,7 @@ public class RootSequence extends Sequence implements ConfigRoot {
 
     @Override
     public void loadFromReader(@NotNull Reader reader) throws ConfigLoadException {
-        List<Object> documents = new ArrayList<>();
+        List<Node> documents = new ArrayList<>();
         try {
             loader.loadAllFromReader(reader).forEach(documents::add);
         } catch (YamlEngineException e) {
@@ -185,7 +187,7 @@ public class RootSequence extends Sequence implements ConfigRoot {
 
     @Override
     public String saveToString() {
-        if (this.getFlowStyle() == FlowStyle.AUTO) {
+        if (isMultiDocument()) {
             return header + dumper.dumpAllToString(this.iterator());
         }
         return header + dumper.dumpToString(this);
@@ -196,28 +198,36 @@ public class RootSequence extends Sequence implements ConfigRoot {
         return new RootSection(file, configurator, prefix);
     }
 
-    private void loadDocuments(List<Object> documents) throws ConfigLoadException {
-        clear();
+    private void loadDocuments(List<Node> documents) throws ConfigLoadException {
         if (documents.isEmpty()) {
             return;
         }
 
-        if (documents.size() == 1) {
-            Object parsedNode = documents.get(0);
-            if (!(parsedNode instanceof List<?> elements)) {
+        setMultiDocument(documents.size() > 1);
+        if (!isMultiDocument()) {
+            Node node = documents.get(0);
+            if (!(node instanceof SequenceNode)) {
                 throw new ConfigLoadException(this, "Expected a list but found another node");
             }
-            elements.forEach(this::add);
-            setFlowStyle(FlowStyle.BLOCK);
+            map(node);
             return;
         }
 
-        for (Object parsedNode : documents) {
-            if (parsedNode != null) {
-                add(parsedNode);
+        clear();
+        for (Node node : documents) {
+            if (node == null || (node instanceof ScalarNode scalar && scalar.getValue().isEmpty())) {
+                continue;
             }
+            add(node);
         }
-        setFlowStyle(FlowStyle.AUTO);
+    }
+
+    public boolean isMultiDocument() {
+        return multiDocument;
+    }
+
+    public void setMultiDocument(boolean multiDocument) {
+        this.multiDocument = multiDocument;
     }
 
 }

@@ -25,13 +25,13 @@ public interface ConfigField {
     <T> void map(T value);
 
     List<CommentLine> getBlockComments();
-    void setBlockComments(@NotNull List<CommentLine> blockComments);
+    void setBlockComments(@Nullable List<CommentLine> blockComments);
     void clearBlockComments();
     void addBlockComment(@NotNull String value);
-    void addBlankLine();
+    void addBlockBlankLine();
 
     List<CommentLine> getInLineComments();
-    void setInLineComments(@NotNull List<CommentLine> inLineComments);
+    void setInLineComments(@Nullable List<CommentLine> inLineComments);
     void clearInlineComments();
     void addInlineComment(@NotNull String value);
 

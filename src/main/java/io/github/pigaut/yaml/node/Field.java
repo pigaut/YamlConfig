@@ -10,8 +10,8 @@ import java.util.*;
 
 public abstract class Field implements ConfigField {
 
-    private List<CommentLine> inLineComments = List.of();
-    private List<CommentLine> blockComments = List.of();
+    private List<CommentLine> blockComments = new ArrayList<>();
+    private List<CommentLine> inLineComments = new ArrayList<>();
 
     @NotNull
     public abstract Branch getParent() throws UnsupportedOperationException;
@@ -85,8 +85,8 @@ public abstract class Field implements ConfigField {
     }
 
     @Override
-    public void setInLineComments(@NotNull List<CommentLine> inLineComments) {
-        this.inLineComments = inLineComments;
+    public void setInLineComments(@Nullable List<CommentLine> inLineComments) {
+        this.inLineComments = inLineComments != null ? new ArrayList<>(inLineComments) : new ArrayList<>();
     }
 
     @Override
@@ -105,8 +105,8 @@ public abstract class Field implements ConfigField {
     }
 
     @Override
-    public void setBlockComments(@NotNull List<CommentLine> blockComments) {
-        this.blockComments = blockComments;
+    public void setBlockComments(@Nullable List<CommentLine> blockComments) {
+        this.blockComments = blockComments != null ? new ArrayList<>(blockComments) : new ArrayList<>();
     }
 
     @Override
@@ -120,7 +120,7 @@ public abstract class Field implements ConfigField {
     }
 
     @Override
-    public void addBlankLine() {
+    public void addBlockBlankLine() {
         blockComments.add(new CommentLine(Optional.empty(), Optional.empty(), "", CommentType.BLANK_LINE));
     }
 

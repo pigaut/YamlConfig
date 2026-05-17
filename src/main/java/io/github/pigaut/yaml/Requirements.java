@@ -7,6 +7,34 @@ import java.util.*;
 
 public class Requirements {
 
+    public static Requirement<Boolean> isTrue() {
+        return new Requirement<Boolean>() {
+            @Override
+            public boolean test(Boolean value) {
+                return value;
+            }
+
+            @Override
+            public String getErrorDetails() {
+                return "value must be true";
+            }
+        };
+    }
+
+    public static Requirement<Boolean> isFalse() {
+        return new Requirement<Boolean>() {
+            @Override
+            public boolean test(Boolean value) {
+                return !value;
+            }
+
+            @Override
+            public String getErrorDetails() {
+                return "value must be false";
+            }
+        };
+    }
+
     public static <T> Requirement<T> isInstance(Class<T> classType) {
         return new Requirement<>() {
             @Override

@@ -22,7 +22,8 @@ public class ConfigLoad {
     }
 
     private Composer createComposer(StreamReader streamReader) {
-        return new Composer(settings, new ParserImpl(settings, streamReader));
+        Parser fixingParser = new CommentFixingParser(settings, streamReader);
+        return new Composer(settings, fixingParser);
     }
 
     protected Composer createComposer(InputStream yamlStream) {
@@ -58,14 +59,12 @@ public class ConfigLoad {
     }
 
     private Iterable<Node> loadAll(Composer composer) {
-        Iterator<Node> result = new YamlIterator(composer);
-        return new YamlIterable(result);
+        return () -> composer;
     }
 
     public Iterable<Node> loadAllFromInputStream(InputStream yamlStream) {
         Objects.requireNonNull(yamlStream, "InputStream cannot be null");
-        Composer composer =
-                createComposer(new StreamReader(settings, new YamlUnicodeReader(yamlStream)));
+        Composer composer = createComposer(new StreamReader(settings, new YamlUnicodeReader(yamlStream)));
         return loadAll(composer);
     }
 
@@ -79,49 +78,6 @@ public class ConfigLoad {
         Objects.requireNonNull(yaml, "String cannot be null");
         Composer composer = createComposer(new StreamReader(settings, yaml));
         return loadAll(composer);
-    }
-
-    private static class YamlIterable implements Iterable<Node> {
-
-        private final Iterator<Node> iterator;
-
-        public YamlIterable(Iterator<Node> iterator) {
-            this.iterator = iterator;
-        }
-
-        @Override
-        public Iterator<Node> iterator() {
-            return iterator;
-        }
-    }
-
-    private static class YamlIterator implements Iterator<Node> {
-
-        private final Composer composer;
-        private boolean composerInitiated = false;
-
-        public YamlIterator(Composer composer) {
-            this.composer = composer;
-        }
-
-        @Override
-        public boolean hasNext() {
-            composerInitiated = true;
-            return composer.hasNext();
-        }
-
-        @Override
-        public Node next() {
-            if (!composerInitiated) {
-                hasNext();
-            }
-            return composer.next();
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException("Removing is not supported.");
-        }
     }
 
 }

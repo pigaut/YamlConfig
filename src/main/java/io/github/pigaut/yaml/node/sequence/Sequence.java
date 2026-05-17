@@ -11,6 +11,7 @@ import io.github.pigaut.yaml.node.scalar.*;
 import io.github.pigaut.yaml.node.section.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
+import org.snakeyaml.engine.v2.comments.*;
 import org.snakeyaml.engine.v2.common.*;
 
 import java.util.*;
@@ -606,7 +607,21 @@ public abstract class Sequence extends Branch implements ConfigSequence {
 
     @Override
     public String toString() {
-        return fields.toString();
+        StringBuilder builder = new StringBuilder();
+
+        List<CommentLine> blockComments = getBlockComments();
+        if (!blockComments.isEmpty()) {
+            builder.append("BlockComments=").append(blockComments).append(", ");
+        }
+
+        builder.append("Elements=").append(fields);
+
+        List<CommentLine> inlineComments = getInLineComments();
+        if (!inlineComments.isEmpty()) {
+            builder.append(", InlineComments=").append(inlineComments);
+        }
+
+        return builder.toString();
     }
 
 }

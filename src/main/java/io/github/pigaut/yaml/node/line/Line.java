@@ -8,6 +8,7 @@ import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.line.scalar.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
+import org.snakeyaml.engine.v2.comments.*;
 
 import java.util.*;
 
@@ -75,6 +76,51 @@ public class Line implements ConfigLine {
     }
 
     @Override
+    public List<CommentLine> getBlockComments() {
+        return scalar.getBlockComments();
+    }
+
+    @Override
+    public void setBlockComments(@NotNull List<CommentLine> blockComments) {
+        scalar.setBlockComments(blockComments);
+    }
+
+    @Override
+    public void clearBlockComments() {
+        scalar.clearBlockComments();
+    }
+
+    @Override
+    public void addBlockComment(@NotNull String value) {
+        scalar.addBlockComment(value);
+    }
+
+    @Override
+    public void addBlockBlankLine() {
+        scalar.addBlockBlankLine();
+    }
+
+    @Override
+    public List<CommentLine> getInLineComments() {
+        return scalar.getInLineComments();
+    }
+
+    @Override
+    public void setInLineComments(@NotNull List<CommentLine> inLineComments) {
+        scalar.setInLineComments(inLineComments);
+    }
+
+    @Override
+    public void clearInlineComments() {
+        scalar.clearInlineComments();
+    }
+
+    @Override
+    public void addInlineComment(@NotNull String value) {
+        scalar.addInlineComment(value);
+    }
+
+    @Override
     public ConfigOptional<ConfigScalar> toScalar() {
         return ConfigOptional.of(scalar);
     }
@@ -113,6 +159,16 @@ public class Line implements ConfigLine {
             }
         }
         return false;
+    }
+
+    @Override
+    public int size() {
+        return values.size();
+    }
+
+    @Override
+    public int flagCount() {
+        return valuesByKey.size();
     }
 
     @Override

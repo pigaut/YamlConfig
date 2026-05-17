@@ -1,24 +1,29 @@
 package io.github.pigaut.yaml.util;
 
 import org.jetbrains.annotations.*;
+import org.snakeyaml.engine.v2.common.*;
 import org.snakeyaml.engine.v2.nodes.*;
+import org.snakeyaml.engine.v2.scanner.*;
+
+import java.math.*;
 
 public class ScalarUtil {
 
-    public static @NotNull Tag getTag(Object object) {
-        if (isBoolean(object)) {
+    public static @NotNull Tag getTag(Object scalar) {
+        if (scalar instanceof Boolean) {
             return Tag.BOOL;
         }
 
-        if (isLong(object)) {
+        if (scalar instanceof Character || scalar instanceof String) {
+            return Tag.STR;
+        }
+
+        if (scalar instanceof Byte || scalar instanceof Short || scalar instanceof Integer
+                || scalar instanceof Long || scalar instanceof BigInteger) {
             return Tag.INT;
         }
 
-        if (isDouble(object)) {
-            return Tag.FLOAT;
-        }
-
-        return Tag.STR;
+        return Tag.FLOAT;
     }
 
     public static boolean isBoolean(Object object) {

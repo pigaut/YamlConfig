@@ -12,14 +12,16 @@ import io.github.pigaut.yaml.node.sequence.*;
 import io.github.pigaut.yaml.path.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
+import org.snakeyaml.engine.v2.comments.*;
 import org.snakeyaml.engine.v2.common.*;
 
 import java.util.*;
+import java.util.regex.*;
 import java.util.stream.*;
 
 public abstract class Section extends Branch implements ConfigSection {
 
-    private final Map<@NotNull String, @NotNull KeyedField> fieldsByKey = new LinkedHashMap<>();
+    private final Map<String, KeyedField> fieldsByKey = new LinkedHashMap<>();
 
     protected Section(FlowStyle flowStyle) {
         super(flowStyle);
@@ -195,7 +197,7 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     @Override
-    public Set<String> getKeys() {
+    public @NotNull Set<String> getKeys() {
         return new LinkedHashSet<>(fieldsByKey.keySet());
     }
 
@@ -297,6 +299,31 @@ public abstract class Section extends Branch implements ConfigSection {
             }
             iterator.nextBranch();
         }
+    }
+
+    @Override
+    public void addDefaults(@NotNull ConfigSection defaultSection) {
+        for (KeyedField field : defaultSection.getNestedFields()) {
+            if (fieldsByKey.containsKey(field.getKey())) {
+                continue;
+            }
+            addNode(field);
+        }
+    }
+
+    @Override
+    public void reorderFields(@NotNull List<String> keysOrder) {
+        LinkedHashMap<String, KeyedField> newMap = new LinkedHashMap<>();
+
+        for (String key : keysOrder) {
+            if (fieldsByKey.containsKey(key)) {
+                newMap.put(key, fieldsByKey.get(key));
+            }
+        }
+        newMap.putAll(fieldsByKey);
+
+        fieldsByKey.clear();
+        fieldsByKey.putAll(newMap);
     }
 
     @Override
@@ -550,6 +577,47 @@ public abstract class Section extends Branch implements ConfigSection {
         return getSequence(path).mapToList(ConfigSequence::toDoubleList);
     }
 
+    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
+
+    @Override
+    public String[][] getStringMatrix(@NotNull String path, int rows, int columns) {
+        String[][] matrix = new String[rows][columns];
+
+        ConfigSequence rowSequence = getSequence(path).orElse(null);
+        if (rowSequence == null) {
+            return matrix;
+        }
+
+        List<ConfigField> rowList = rowSequence.toFieldList();
+        for (int i = 0; i < rows; i++) {
+            if (i < rowList.size()) {
+                ConfigSequence columnSequence = null;
+
+                ConfigField field = rowList.get(i);
+                if (field instanceof ConfigSequence sequence) {
+                    columnSequence = sequence;
+                } else if (field instanceof ConfigScalar scalar) {
+                    columnSequence = scalar.split(WHITESPACE_PATTERN);
+                }
+
+                List<String> columnList = columnSequence != null ?
+                        columnSequence.toStringList().orElse(List.of()) : List.of();
+
+                for (int j = 0; j < columns; j++) {
+                    if (j < columnList.size()) {
+                        matrix[i][j] = columnList.get(j);
+                    } else {
+                        matrix[i][j] = "";
+                    }
+                }
+            } else {
+                Arrays.fill(matrix[i], "");
+            }
+        }
+
+        return matrix;
+    }
+
     private ConfigOptional<ConfigBranch> getBranch(@NotNull String path) {
         PathIterator iterator = PathIterator.of(this, path);
 
@@ -634,7 +702,21 @@ public abstract class Section extends Branch implements ConfigSection {
 
     @Override
     public String toString() {
-        return fieldsByKey.toString();
+        StringBuilder builder = new StringBuilder();
+
+        List<CommentLine> blockComments = getBlockComments();
+        if (!blockComments.isEmpty()) {
+            builder.append("BlockComments=").append(blockComments).append(", ");
+        }
+
+        builder.append("Fields=").append(fieldsByKey);
+
+        List<CommentLine> inlineComments = getInLineComments();
+        if (!inlineComments.isEmpty()) {
+            builder.append(", InlineComments=").append(inlineComments);
+        }
+
+        return builder.toString();
     }
 
 }

@@ -67,9 +67,7 @@ public class StandardConfigurator extends Configurator {
         addMapper(ScalarNode.class, new ScalarNodeMapper());
         addMapper(NodeTuple.class, new NodeTupleMapper());
 
-        addLoader(MappingNode.class, new MappingNodeLoader());
-        addLoader(SequenceNode.class, new SequenceNodeLoader());
-        addLoader(ScalarNode.class, new ScalarNodeLoader());
+        addLoader(Node.class, new NodeLoader());
     }
 
 }

@@ -272,8 +272,4 @@ public class YamlConfig {
         return generateRandomKey();
     }
 
-    public static @NotNull CommentLine createComment(@NotNull String value) {
-
-    }
-
 }

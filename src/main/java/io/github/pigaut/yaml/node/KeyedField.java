@@ -6,8 +6,9 @@ import org.jetbrains.annotations.*;
 public interface KeyedField extends ConfigField {
 
     @NotNull String getKey();
-    @NotNull ConfigScalar getKeyAsScalar();
+    @NotNull ConfigSection getParent();
 
+    @NotNull ConfigScalar getKeyScalar();
     <T> ConfigOptional<T> getKeyAs(Class<T> classType);
     ConfigOptional<Boolean> getBooleanKey();
     ConfigOptional<Character> getCharacterKey();

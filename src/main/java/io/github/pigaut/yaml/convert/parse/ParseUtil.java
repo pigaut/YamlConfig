@@ -18,17 +18,17 @@ public class ParseUtil {
     private ParseUtil() {}
 
     public static Object parseAsScalar(String string) {
-        final Boolean bool = parseBooleanOrNull(string);
+        Boolean bool = parseBooleanOrNull(string);
         if (bool != null) {
             return bool;
         }
 
-        final Integer integerNumber = parseIntegerOrNull(string);
+        Integer integerNumber = parseIntegerOrNull(string);
         if (integerNumber != null) {
             return integerNumber;
         }
 
-        final Double doubleNumber = parseDoubleOrNull(string);
+        Double doubleNumber = parseDoubleOrNull(string);
         if (doubleNumber != null) {
             return doubleNumber;
         }

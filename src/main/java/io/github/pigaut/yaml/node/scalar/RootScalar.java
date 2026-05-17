@@ -7,8 +7,8 @@ import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.sequence.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
-import org.snakeyaml.engine.v2.api.*;
 import org.snakeyaml.engine.v2.exceptions.*;
+import org.snakeyaml.engine.v2.nodes.*;
 
 import java.io.*;
 import java.nio.charset.*;
@@ -18,12 +18,14 @@ import java.util.regex.*;
 
 public class RootScalar extends Scalar implements ConfigRoot {
 
+    private final ConfigLoad loader = new ConfigLoad();
+    private final ConfigDump dumper = new ConfigDump();
+    private Configurator configurator;
+    private String header = "";
+
     private final @Nullable File file;
     private final @Nullable String name;
-    private final ConfigLoad loader = new ConfigLoad();
-    private @NotNull Configurator configurator;
     private @Nullable String prefix;
-    private @NotNull String header = "";
 
     public RootScalar(@NotNull Configurator configurator) {
         this(null, configurator, null);
@@ -139,24 +141,24 @@ public class RootScalar extends Scalar implements ConfigRoot {
 
     @Override
     public void loadFromStream(@NotNull InputStream inputStream) throws ConfigLoadException {
-        Object parsedNode;
+        Node node;
         try {
-            parsedNode = loader.loadFromInputStream(inputStream);
+            node = loader.loadFromInputStream(inputStream);
         } catch (YamlEngineException e) {
             throw new ConfigLoadException(this, e.getMessage());
         }
-        load(parsedNode);
+        load(node);
     }
 
     @Override
     public void loadFromReader(@NotNull Reader reader) throws ConfigLoadException {
-        Object parsedNode;
+        Node node;
         try {
-            parsedNode = loader.loadFromReader(reader);
+            node = loader.loadFromReader(reader);
         } catch (YamlEngineException e) {
             throw new ConfigLoadException(this, e.getMessage());
         }
-        load(parsedNode);
+        load(node);
     }
 
     @Override
@@ -185,14 +187,14 @@ public class RootScalar extends Scalar implements ConfigRoot {
 
     @Override
     public String saveToString() {
-        return header + this.toString();
+        return header + dumper.dumpToString(this);
     }
 
-    private void load(Object parsedNode) throws ConfigLoadException {
-        if (!YamlConfig.isScalarType(parsedNode.getClass())) {
+    private void load(Node node) throws ConfigLoadException {
+        if (!(node instanceof ScalarNode)) {
             throw new ConfigLoadException(this, "Expected a scalar but found another node");
         }
-        setValue(parsedNode);
+        setValue(node);
     }
 
     @Override

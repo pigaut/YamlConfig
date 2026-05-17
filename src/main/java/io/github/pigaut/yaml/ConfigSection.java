@@ -13,13 +13,16 @@ import java.util.stream.*;
 
 public interface ConfigSection extends ConfigBranch, Iterable<KeyedField> {
 
-    Set<String> getKeys();
+    @NotNull Set<String> getKeys();
     boolean contains(@NotNull String path);
     boolean isSet(@NotNull String path);
     boolean isSection(@NotNull String path);
     boolean isSequence(@NotNull String path);
     <T> void set(@NotNull String path, @NotNull T value);
     void remove(@NotNull String path);
+
+    void addDefaults(@NotNull ConfigSection defaultSection);
+    void reorderFields(@NotNull List<String> keysOrder);
 
     ConfigSection getSectionOrCreate(@NotNull String path);
     ConfigSequence getSequenceOrCreate(@NotNull String path);
@@ -77,5 +80,7 @@ public interface ConfigSection extends ConfigBranch, Iterable<KeyedField> {
     ConfigList<Long> getLongList(@NotNull String path);
     ConfigList<Float> getFloatList(@NotNull String path);
     ConfigList<Double> getDoubleList(@NotNull String path);
+
+    String[][] getStringMatrix(@NotNull String path, int rows, int columns);
 
 }

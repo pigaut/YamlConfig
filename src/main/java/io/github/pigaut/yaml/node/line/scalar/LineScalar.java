@@ -7,8 +7,10 @@ import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.line.*;
 import org.jetbrains.annotations.*;
+import org.snakeyaml.engine.v2.comments.*;
 import org.snakeyaml.engine.v2.common.*;
 
+import java.util.*;
 import java.util.regex.*;
 
 public abstract class LineScalar implements ConfigScalar {
@@ -169,4 +171,48 @@ public abstract class LineScalar implements ConfigScalar {
         return value.toString();
     }
 
+    @Override
+    public List<CommentLine> getBlockComments() {
+        return line.getBlockComments();
+    }
+
+    @Override
+    public void setBlockComments(@NotNull List<CommentLine> blockComments) {
+        line.setBlockComments(blockComments);
+    }
+
+    @Override
+    public void clearBlockComments() {
+        line.clearBlockComments();
+    }
+
+    @Override
+    public void addBlockComment(@NotNull String value) {
+        line.addBlockComment(value);
+    }
+
+    @Override
+    public void addBlockBlankLine() {
+        line.addBlockBlankLine();
+    }
+
+    @Override
+    public List<CommentLine> getInLineComments() {
+        return line.getInLineComments();
+    }
+
+    @Override
+    public void setInLineComments(@NotNull List<CommentLine> inLineComments) {
+        line.setInLineComments(inLineComments);
+    }
+
+    @Override
+    public void clearInlineComments() {
+        line.clearInlineComments();
+    }
+
+    @Override
+    public void addInlineComment(@NotNull String value) {
+        line.addInlineComment(value);
+    }
 }

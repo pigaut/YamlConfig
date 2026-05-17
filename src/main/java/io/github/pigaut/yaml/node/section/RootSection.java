@@ -6,26 +6,24 @@ import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.sequence.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
-import org.snakeyaml.engine.v2.api.*;
 import org.snakeyaml.engine.v2.common.*;
-import org.snakeyaml.engine.v2.composer.*;
 import org.snakeyaml.engine.v2.exceptions.*;
 import org.snakeyaml.engine.v2.nodes.*;
 
 import java.io.*;
 import java.nio.charset.*;
-import java.util.*;
 import java.util.function.*;
 
 public class RootSection extends Section implements ConfigRoot {
 
-    private final @Nullable File file;
-    private final String name;
     private final ConfigLoad loader = new ConfigLoad();
-    private final Dump dumper = new ConfigDump();
-    private @NotNull Configurator configurator;
+    private final ConfigDump dumper = new ConfigDump();
+    private Configurator configurator;
+    private String header = "";
+
+    private final @Nullable File file;
+    private final @Nullable String name;
     private @Nullable String prefix;
-    private @NotNull String header = "";
 
     public RootSection(@NotNull Configurator configurator) {
         this(null, configurator, null);
@@ -95,7 +93,7 @@ public class RootSection extends Section implements ConfigRoot {
     }
 
     @Override
-    public @NotNull String getName() {
+    public @Nullable String getName() {
         return name;
     }
 
@@ -141,24 +139,24 @@ public class RootSection extends Section implements ConfigRoot {
 
     @Override
     public void loadFromStream(@NotNull InputStream inputStream) throws ConfigLoadException {
-        Object parsedNode;
+        Node node;
         try {
-            parsedNode = loader.loadFromInputStream(inputStream);
+            node = loader.loadFromInputStream(inputStream);
         } catch (YamlEngineException e) {
             throw new ConfigLoadException(this, e.getMessage());
         }
-        load(parsedNode);
+        load(node);
     }
 
     @Override
     public void loadFromReader(@NotNull Reader reader) throws ConfigLoadException {
-        Object parsedNode;
+        Node node;
         try {
-            parsedNode = loader.loadFromReader(reader);
+            node = loader.loadFromReader(reader);
         } catch (YamlEngineException e) {
             throw new ConfigLoadException(this, e.getMessage());
         }
-        load(parsedNode);
+        load(node);
     }
 
     @Override
@@ -190,14 +188,11 @@ public class RootSection extends Section implements ConfigRoot {
         return header + dumper.dumpToString(this);
     }
 
-    private void load(Object parsedNode) throws ConfigLoadException {
-        if (!(parsedNode instanceof Map<?, ?> map)) {
+    private void load(Node node) throws ConfigLoadException {
+        if (!(node instanceof MappingNode)) {
             throw new ConfigLoadException(this, "Expected a section but found another node");
         }
-        clear();
-        map.forEach((key, value) -> {
-            set(String.valueOf(key), value);
-        });
+        map(node);
     }
 
     @Override
