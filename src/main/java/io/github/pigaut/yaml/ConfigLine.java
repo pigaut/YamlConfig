@@ -15,6 +15,8 @@ public interface ConfigLine extends ConfigField, Iterable<ConfigScalar> {
     int size();
     int flagCount();
 
+    Map<String, ConfigScalar> getAllFlags();
+
     @NotNull ConfigScalar asScalar();
 
     @NotNull String toString();

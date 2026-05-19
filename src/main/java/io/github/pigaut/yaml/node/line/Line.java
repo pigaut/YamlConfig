@@ -172,6 +172,11 @@ public class Line implements ConfigLine {
     }
 
     @Override
+    public Map<String, ConfigScalar> getAllFlags() {
+        return new HashMap<>(valuesByKey);
+    }
+
+    @Override
     public @NotNull ConfigScalar asScalar() {
         return scalar;
     }
@@ -603,6 +608,8 @@ public class Line implements ConfigLine {
         return false;
     }
 
+    private static final String SPLIT_LINE = "\u001F";
+
     public void updateLine(String line) {
         values.clear();
         valuesByKey.clear();
@@ -618,6 +625,11 @@ public class Line implements ConfigLine {
                     String value = raw.substring(separatorIndex + 1);
 
                     Object parsedValue = ParseUtil.parseAsScalar(value);
+                    ConfigScalar existingScalar = getScalar(key).orElse(null);
+                    if (existingScalar != null) {
+                        parsedValue = existingScalar.getValue() + SPLIT_LINE + parsedValue;
+                    }
+
                     valuesByKey.put(key, new KeyedLineScalar(this, key, parsedValue));
                 }
 

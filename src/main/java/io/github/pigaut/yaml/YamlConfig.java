@@ -1,22 +1,87 @@
 package io.github.pigaut.yaml;
 
 import io.github.pigaut.yaml.configurator.*;
+import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.scalar.*;
 import io.github.pigaut.yaml.node.section.*;
 import io.github.pigaut.yaml.node.sequence.*;
 import org.jetbrains.annotations.*;
-import org.snakeyaml.engine.v2.comments.*;
+import org.snakeyaml.engine.v2.api.*;
+import org.snakeyaml.engine.v2.exceptions.*;
 import org.snakeyaml.engine.v2.nodes.*;
 
 import java.io.*;
 import java.math.*;
+import java.nio.charset.*;
 import java.util.*;
-import java.util.function.*;
 import java.util.stream.*;
 
 public class YamlConfig {
 
+    private static final ConfigLoad loader = new ConfigLoad();
+
     private YamlConfig() {}
+
+    @NotNull
+    public static ConfigRoot loadConfig(@NotNull File file) throws ConfigLoadException {
+        return loadConfig(file, new StandardConfigurator(), null);
+    }
+
+    @NotNull
+    public static ConfigRoot loadConfig(@NotNull File file, @NotNull Configurator configurator) throws ConfigLoadException {
+        return loadConfig(file, configurator, null);
+    }
+
+    @NotNull
+    public static ConfigRoot loadConfig(@NotNull File file, @NotNull Configurator configurator, String prefix) throws ConfigLoadException {
+        List<Node> documents = new ArrayList<>();
+        try (FileInputStream fileInputStream = new FileInputStream(file);
+             InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, StandardCharsets.UTF_8);
+             BufferedReader reader = new BufferedReader(inputStreamReader)) {
+
+            for (Node document : loader.loadAllFromReader(reader)) {
+                documents.add(document);
+            }
+        } catch (IOException | YamlEngineException e) {
+            throw new ConfigLoadException(prefix, file, e.getMessage());
+        }
+
+        if (documents.isEmpty()) {
+            throw new ConfigLoadException(prefix, file, "Could not determine config type");
+        }
+
+        if (documents.size() > 1) {
+            RootSequence sequence = new RootSequence(file, configurator, prefix);
+            for (Node node : documents) {
+                if (node == null || (node instanceof ScalarNode scalar && scalar.getValue().isEmpty())) {
+                    continue;
+                }
+                sequence.add(node);
+            }
+            return sequence;
+        }
+
+        Node node = documents.get(0);
+        if (node instanceof MappingNode) {
+            RootSection section = new RootSection(file, configurator, prefix);
+            section.map(node);
+            return section;
+        }
+
+        if (node instanceof SequenceNode) {
+            RootSequence sequence = new RootSequence(file, configurator, prefix);
+            sequence.map(node);
+            return sequence;
+        }
+
+        if (node instanceof ScalarNode) {
+            RootScalar scalar = new RootScalar(file, configurator, prefix);
+            scalar.map(node);
+            return scalar;
+        }
+
+        throw new ConfigLoadException(prefix, file, "Could not determine config type");
+    }
 
     @NotNull
     public static RootSection loadSection(@NotNull File file) throws ConfigLoadException {

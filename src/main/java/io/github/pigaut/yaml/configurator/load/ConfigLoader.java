@@ -3,6 +3,7 @@ package io.github.pigaut.yaml.configurator.load;
 import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.line.*;
+import io.github.pigaut.yaml.node.scalar.*;
 import org.jetbrains.annotations.*;
 
 public interface ConfigLoader<T> {

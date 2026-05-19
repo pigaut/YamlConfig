@@ -11,6 +11,12 @@ public class ConfigLoadException extends ConfigException {
     private final @Nullable File file;
     private final @NotNull String details;
 
+    public ConfigLoadException(@Nullable String prefix, @Nullable File file, @NotNull String details) {
+        this.prefix = prefix;
+        this.file = file;
+        this.details = details;
+    }
+
     public ConfigLoadException(ConfigRoot config, @NotNull String details) {
         this.prefix = config.getPrefix();
         this.file = config.getFile();
