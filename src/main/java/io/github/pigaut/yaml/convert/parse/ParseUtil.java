@@ -1,7 +1,9 @@
 package io.github.pigaut.yaml.convert.parse;
 
 import io.github.pigaut.yaml.amount.*;
+import io.github.pigaut.yaml.chance.*;
 import io.github.pigaut.yaml.convert.format.*;
+import io.github.pigaut.yaml.delay.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 
@@ -263,24 +265,69 @@ public class ParseUtil {
 
     private static final Pattern TIME_PATTERN = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*(tick|ticks|h|hour|hours|m|min|mins|minute|minutes|s|sec|secs|second|seconds)?");
 
-    public static Ticks parseTime(String string) throws StringParseException {
+    public static Delay parseDelay(String string) throws StringParseException {
         string = string.trim().toLowerCase();
 
         if (string.matches("\\d+")) {
             int ticks = Integer.parseInt(string);
             if (ticks < 0) {
-                throw new StringParseException("Time values must be positive");
+                throw new StringParseException("Time delay must be positive");
             }
-            return new Ticks(ticks);
+            return Delay.fromTicks(ticks);
+        }
+
+        if (string.contains("-")) {
+            String[] parts = string.split("-");
+            if (parts.length != 2) {
+                throw new StringParseException("Expected time range delay but found: " + string);
+            }
+
+            double min = Double.parseDouble(parts[0]);
+
+            Matcher matcher = TIME_PATTERN.matcher(parts[1]);
+            if (!matcher.find()) {
+                throw new StringParseException("Expected time range delay but found: " + string);
+            }
+
+            double max = Double.parseDouble(matcher.group(1));
+
+            int minTicks;
+            int maxTicks;
+
+            String unit = matcher.group(2);
+            if (unit == null || unit.equals("tick") || unit.equals("ticks")) {
+                minTicks = (int) min;
+                maxTicks = (int) max;
+            }
+            else if (unit.equals("s") || unit.equals("sec") || unit.equals("secs") || unit.equals("second") || unit.equals("seconds")) {
+                minTicks = (int) (min * TicksUtil.SECOND);
+                maxTicks = (int) (max * TicksUtil.SECOND);
+            }
+            else if (unit.equals("m") || unit.equals("min") || unit.equals("mins") || unit.equals("minute") || unit.equals("minutes")) {
+                minTicks = (int) (min * TicksUtil.MINUTE);
+                maxTicks = (int) (max * TicksUtil.MINUTE);
+            }
+            else if (unit.equals("h") || unit.equals("hour") || unit.equals("hours")) {
+                minTicks = (int) (min * TicksUtil.HOUR);
+                maxTicks = (int) (max * TicksUtil.HOUR);
+            }
+            else {
+                throw new StringParseException("Expected a time unit but found: " + unit);
+            }
+
+            if (minTicks >= maxTicks) {
+                throw new StringParseException("Min delay must be lower than the max time delay");
+            }
+
+            return Delay.between(minTicks, maxTicks);
         }
 
         Matcher matcher = TIME_PATTERN.matcher(string);
-
         int totalTicks = 0;
         while (matcher.find()) {
             double value = Double.parseDouble(matcher.group(1));
             if (value < 0) {
-                throw new StringParseException("Time values must be positive");
+                throw new StringParseException("Time delay must be positive");
             }
             String unit = matcher.group(2);
 
@@ -301,12 +348,44 @@ public class ParseUtil {
             }
         }
 
-        return new Ticks(totalTicks);
+        return Delay.fromTicks(totalTicks);
     }
 
-    public static @Nullable Ticks parseTicksOrNull(String string) {
+    public static @Nullable Delay parseDelayOrNull(String string) {
         try {
-            return parseTime(string);
+            return parseDelay(string);
+        } catch (StringParseException e) {
+            return null;
+        }
+    }
+
+    public static @NotNull Chance parseChance(String string) throws StringParseException {
+        string = string.trim();
+
+        Double percentage = parseDoubleOrNull(string);
+         if (percentage != null) {
+             if (percentage < 0 || percentage > 1) {
+                 throw new StringParseException("Chance must be a value between 0 and 1");
+             }
+             return new Chance(percentage);
+         }
+
+         if (string.endsWith("%")) {
+             percentage = parseDoubleOrNull(string.substring(0, string.length() - 1));
+             if (percentage != null) {
+                 if (percentage < 0 || percentage > 100) {
+                     throw new StringParseException("Chance must be a value between 0% and 100%");
+                 }
+                 return new Chance(percentage / 100);
+             }
+         }
+
+         throw new StringParseException("Expected chance but found: " + string);
+    }
+
+    public static @Nullable Chance parseChanceOrNull(String string) {
+        try {
+            return parseChance(string);
         } catch (StringParseException e) {
             return null;
         }

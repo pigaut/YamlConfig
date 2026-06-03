@@ -132,6 +132,22 @@ public class ConfigList<E> extends AbstractOptional<List<E>> {
         }
     }
 
+    public ConfigList<E> formatEach(Function<E, E> formatter) {
+        Objects.requireNonNull(formatter);
+        if (isInvalid()) {
+            return this;
+        }
+        else {
+            List<E> formattedElements = new ArrayList<>();
+            for (E element : value) {
+                E formattedElement = formatter.apply(element);
+                formattedElements.add(formattedElement);
+            }
+            return new ConfigList<>(field, formattedElements, existsInConfig);
+        }
+    }
+
+
     public ConfigList<E> check(boolean condition, @NotNull String errorDetails) {
         Objects.requireNonNull(errorDetails);
         if (isInvalid()) {

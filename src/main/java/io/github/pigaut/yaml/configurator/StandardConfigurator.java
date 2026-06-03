@@ -2,11 +2,13 @@ package io.github.pigaut.yaml.configurator;
 
 import io.github.pigaut.yaml.amount.*;
 import io.github.pigaut.yaml.amount.config.*;
+import io.github.pigaut.yaml.chance.*;
 import io.github.pigaut.yaml.configurator.convert.deserialize.*;
 import io.github.pigaut.yaml.configurator.convert.serialize.*;
 import io.github.pigaut.yaml.configurator.load.*;
 import io.github.pigaut.yaml.configurator.map.*;
-import io.github.pigaut.yaml.util.*;
+import io.github.pigaut.yaml.delay.*;
+import io.github.pigaut.yaml.delay.config.*;
 import org.snakeyaml.engine.v2.nodes.*;
 
 import java.io.*;
@@ -51,13 +53,17 @@ public class StandardConfigurator extends Configurator {
         addDeserializer(URL.class, Deserializers.URL);
         addSerializer(URL.class, Serializers.defaultSerializer());
 
-        addDeserializer(Ticks.class, Deserializers.TIME);
-        addSerializer(Ticks.class, Serializers.defaultSerializer());
+        addDeserializer(Delay.class, Deserializers.TIME);
+        addSerializer(Delay.class, Serializers.defaultSerializer());
 
         addLoader(Amount.class, new AmountLoader());
         addMapper(FixedAmount.class, new FixedAmountMapper());
         addMapper(RangedAmount.class, new RangedAmountMapper());
         addMapper(RandomAmount.class, new RandomAmountMapper());
+
+        addLoader(Delay.class, new DelayLoader());
+
+        addLoader(Chance.class, new ChanceLoader());
 
         addMapper(Map.class, new MapMapper());
         addMapper(Iterable.class, new IterableMapper());
