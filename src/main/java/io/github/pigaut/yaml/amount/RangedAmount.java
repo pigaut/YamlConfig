@@ -15,14 +15,6 @@ public class RangedAmount implements Amount {
         this.max = max;
     }
 
-    public double getMin() {
-        return min;
-    }
-
-    public double getMax() {
-        return max;
-    }
-
     @Override
     public int intValue() {
         return (int) this.doubleValue();
@@ -31,6 +23,16 @@ public class RangedAmount implements Amount {
     @Override
     public double doubleValue() {
         return ThreadLocalRandom.current().nextDouble(min, max + 1);
+    }
+
+    @Override
+    public double minValue() {
+        return min;
+    }
+
+    @Override
+    public double maxValue() {
+        return max;
     }
 
     @Override

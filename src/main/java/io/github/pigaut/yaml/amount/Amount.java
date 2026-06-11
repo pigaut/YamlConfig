@@ -14,6 +14,10 @@ public interface Amount {
 
     double doubleValue();
 
+    double minValue();
+
+    double maxValue();
+
     boolean match(double amount);
 
     boolean test(DoublePredicate predicate);
@@ -84,6 +88,16 @@ public interface Amount {
 
         @Override
         public double doubleValue() {
+            return 0;
+        }
+
+        @Override
+        public double minValue() {
+            return 0;
+        }
+
+        @Override
+        public double maxValue() {
             return 0;
         }
 

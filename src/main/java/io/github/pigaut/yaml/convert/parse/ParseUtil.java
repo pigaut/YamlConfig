@@ -205,40 +205,40 @@ public class ParseUtil {
         string = string.trim();
 
         if (string.endsWith("+")) {
-            Double amount = parseDoubleOrNull(string.replace("+", ""));
+            Double amount = parseDoubleOrNull(string.substring(0, string.length() - 1));
             if (amount == null) {
                 throw new StringParseException("Expected an inequality amount but found: '" + string + "'");
             }
             return Amount.greaterThanOrEqual(amount);
         }
         else if (string.endsWith("-")) {
-            Double amount = parseDoubleOrNull(string.replace("-", ""));
+            Double amount = parseDoubleOrNull(string.substring(0, string.length() - 1));
             if (amount == null) {
-                throw new StringParseException("Expected an inequality amount but found: '" + string + "'");
+                throw new StringParseException("Expected an inequality amount but found: " + string);
             }
             return Amount.lessThanOrEqual(amount);
         }
 
-        final Double value = parseDoubleOrNull(string);
+        Double value = parseDoubleOrNull(string);
         if (value != null) {
             return Amount.fixed(value);
         }
 
         if (string.contains("-")) {
-            final String[] range = string.split("-");
-            if (range.length != 2) {
-                throw new StringParseException("Expected a number range but found: '" + string + "'");
+            String[] rangeParts = string.split("-");
+            if (rangeParts.length != 2) {
+                throw new StringParseException("Expected a number range but found: " + string);
             }
 
-            final Double min = parseDoubleOrNull(range[0]);
-            final Double max = parseDoubleOrNull(range[1]);
+            Double min = parseDoubleOrNull(rangeParts[0]);
+            Double max = parseDoubleOrNull(rangeParts[1]);
 
             if (min == null || max == null) {
-                throw new StringParseException("Expected a number range but found: '" + string + "'");
+                throw new StringParseException("Expected a number range but found: " + string);
             }
 
             if (min >= max) {
-                throw new StringParseException("Number range's min value must be less than max value");
+                throw new StringParseException("Min amount must be less than the max amount");
             }
 
             return Amount.between(min, max);
@@ -252,7 +252,7 @@ public class ParseUtil {
             return Amount.random(values);
         }
 
-        throw new StringParseException("Expected an amount but found: '" + string + "'");
+        throw new StringParseException("Expected an amount but found: " + string);
     }
 
     public static Amount parseAmountOrNull(String string) {

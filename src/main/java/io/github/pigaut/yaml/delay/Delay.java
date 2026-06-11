@@ -28,10 +28,10 @@ public interface Delay {
 
     int toTicks();
 
-    int toHours();
+    double toHours();
 
-    int toMinutes();
+    double toMinutes();
 
-    int toSeconds();
+    double toSeconds();
 
 }

@@ -21,6 +21,16 @@ public class FixedAmount implements Amount {
     }
 
     @Override
+    public double minValue() {
+        return value;
+    }
+
+    @Override
+    public double maxValue() {
+        return value;
+    }
+
+    @Override
     public boolean match(double amount) {
         return this.value == amount;
     }

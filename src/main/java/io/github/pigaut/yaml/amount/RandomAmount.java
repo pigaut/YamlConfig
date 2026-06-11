@@ -25,6 +25,28 @@ public class RandomAmount implements Amount {
     }
 
     @Override
+    public double minValue() {
+        double lowest = values[0];
+        for (double value : values) {
+            if (value < lowest) {
+                lowest = value;
+            }
+        }
+        return lowest;
+    }
+
+    @Override
+    public double maxValue() {
+        double highest = values[0];
+        for (double value : values) {
+            if (value > highest) {
+                highest = value;
+            }
+        }
+        return highest;
+    }
+
+    @Override
     public boolean match(double amount) {
         for (Double value : values) {
             if (value == amount) {
