@@ -9,6 +9,8 @@ import java.util.regex.*;
 
 public interface ConfigScalar extends ConfigField {
 
+    boolean isInLine();
+
     boolean equals(@NotNull String value);
     boolean equalsIgnoreCase(@NotNull String value);
     boolean contains(String value);

@@ -27,6 +27,11 @@ public abstract class Scalar extends Field implements ConfigScalar {
     }
 
     @Override
+    public boolean isInLine() {
+        return false;
+    }
+
+    @Override
     public boolean equals(@NotNull String value) {
         String string = toString();
         return string.equals(value);

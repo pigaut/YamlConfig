@@ -24,8 +24,14 @@ public abstract class LineScalar implements ConfigScalar {
     }
 
     @Override
+    public boolean isInLine() {
+        return true;
+    }
+
+    @Override
     public boolean contains(String value) {
-        return line.contains(value);
+        String string = toString();
+        return string.contains(value);
     }
 
     @Override
