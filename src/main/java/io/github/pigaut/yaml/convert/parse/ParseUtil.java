@@ -185,6 +185,26 @@ public class ParseUtil {
         }
     }
 
+    public static @Nullable Double parsePercentageOrNull(@NotNull String string) {
+        try {
+            return parsePercentage(string);
+        } catch (StringParseException e) {
+            return null;
+        }
+    }
+
+    public static @Nullable Double parsePercentage(@NotNull String string) throws StringParseException {
+        if (!string.endsWith("%")) {
+            throw new StringParseException("Expected a percentage but found: " + string);
+        }
+        String numberPart = string.substring(0, string.length() - 1).trim();
+        try {
+            return Double.parseDouble(numberPart) / 100d;
+        } catch (NumberFormatException e) {
+            throw new StringParseException("Expected a percentage but found: " + string);
+        }
+    }
+
     public static @Nullable LocalDate parseLocalDateOrNull(String string) {
         try {
             return parseLocalDate(string);

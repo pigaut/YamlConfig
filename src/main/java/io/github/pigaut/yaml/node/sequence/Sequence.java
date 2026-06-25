@@ -75,13 +75,14 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     public <T> void add(@NotNull T value) {
         Preconditions.checkNotNull(value, "Value cannot be null");
 
-        final var classType = value.getClass();
+        var classType = value.getClass();
         if (YamlConfig.isScalarType(classType)) {
             fields.add(new KeylessScalar(this, size(), value));
             return;
         }
 
-        @SuppressWarnings("unchecked") final var mapper = (ConfigMapper<? super T>) getRoot().getConfigurator().getMapper(classType);
+        @SuppressWarnings("unchecked")
+        var mapper = (ConfigMapper<? super T>) getRoot().getConfigurator().getMapper(classType);
         if (mapper == null) {
             throw new IllegalArgumentException("No config mapper found for value of class type: " + classType.getSimpleName());
         }

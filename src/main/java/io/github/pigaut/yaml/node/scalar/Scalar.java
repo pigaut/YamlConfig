@@ -5,11 +5,14 @@ import io.github.pigaut.yaml.configurator.*;
 import io.github.pigaut.yaml.configurator.load.*;
 import io.github.pigaut.yaml.configurator.map.*;
 import io.github.pigaut.yaml.convert.format.*;
+import io.github.pigaut.yaml.convert.parse.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.line.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.common.*;
+
+import java.util.*;
 
 public abstract class Scalar extends Field implements ConfigScalar {
 
@@ -67,7 +70,7 @@ public abstract class Scalar extends Field implements ConfigScalar {
         }
 
         if (line != null) {
-            line.updateLine(value.toString());
+            line.updateLine(this.value.toString());
         }
     }
 
@@ -120,19 +123,31 @@ public abstract class Scalar extends Field implements ConfigScalar {
     }
 
     @Override
-    public ConfigOptional<Float> toFloat() {
-        if (ScalarUtil.isFloat(value)) {
-            return ConfigOptional.of(this, ((Number) value).floatValue());
-        }
-        return ConfigOptional.invalid(this, "Expected a float but found: " + this);
-    }
-
-    @Override
     public ConfigOptional<Double> toDouble() {
         if (ScalarUtil.isDouble(value)) {
             return ConfigOptional.of(this, ((Number) value).doubleValue());
         }
+        if (value instanceof String string) {
+            Double parsed = ParseUtil.parsePercentageOrNull(string);
+            if (parsed != null) {
+                return ConfigOptional.of(this, parsed);
+            }
+        }
         return ConfigOptional.invalid(this, "Expected a double but found: " + this);
+    }
+
+    @Override
+    public ConfigOptional<Float> toFloat() {
+        if (ScalarUtil.isFloat(value)) {
+            return ConfigOptional.of(this, ((Number) value).floatValue());
+        }
+        if (value instanceof String string) {
+            Double parsed = ParseUtil.parsePercentageOrNull(string);
+            if (parsed != null) {
+                return ConfigOptional.of(this, parsed.floatValue());
+            }
+        }
+        return ConfigOptional.invalid(this, "Expected a float but found: " + this);
     }
 
     @Override

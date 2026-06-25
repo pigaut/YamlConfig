@@ -4,6 +4,7 @@ import io.github.pigaut.yaml.amount.*;
 import io.github.pigaut.yaml.convert.format.*;
 
 import java.util.*;
+import java.util.regex.*;
 
 public class Requirements {
 

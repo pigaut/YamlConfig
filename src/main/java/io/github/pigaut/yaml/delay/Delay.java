@@ -34,4 +34,6 @@ public interface Delay {
 
     double toSeconds();
 
+    long toMillis();
+
 }
