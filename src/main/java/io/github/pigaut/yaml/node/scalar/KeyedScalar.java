@@ -7,6 +7,7 @@ import io.github.pigaut.yaml.node.scalar.key.*;
 import io.github.pigaut.yaml.node.section.*;
 import io.github.pigaut.yaml.node.sequence.*;
 import org.jetbrains.annotations.*;
+import org.snakeyaml.engine.v2.nodes.*;
 
 import java.util.*;
 import java.util.regex.*;
@@ -14,12 +15,12 @@ import java.util.regex.*;
 public class KeyedScalar extends Scalar implements KeyedField {
 
     private final Section parent;
-    private final KeyScalar key;
+    private final ScalarKey key;
 
     public KeyedScalar(@NotNull Section parent, @NotNull String key, @NotNull Object value) {
         super(value);
         this.parent = parent;
-        this.key = new KeyScalar(parent, key);
+        this.key = new ScalarKey(parent, this, key);
     }
 
     @Override
@@ -84,8 +85,8 @@ public class KeyedScalar extends Scalar implements KeyedField {
 
     @Override
     public ConfigSequence split(Pattern pattern) {
-        final ConfigSequence sequence = new KeyedSequence(parent, key);
-        final List<Object> parsedValues = ParseUtil.parseAllAsScalars(pattern.split(toString()));
+        ConfigSequence sequence = new KeyedSequence(parent, key);
+        List<Object> parsedValues = ParseUtil.parseAllAsScalars(Tag.STR, pattern.split(toString()));
         sequence.map(parsedValues);
         return sequence;
     }

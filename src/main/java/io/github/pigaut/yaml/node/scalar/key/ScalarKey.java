@@ -9,13 +9,15 @@ import org.jetbrains.annotations.*;
 
 import java.util.regex.*;
 
-public class KeyScalar extends Scalar {
+public class ScalarKey extends Scalar {
 
     private final Section parent;
+    private final KeyedField owner;
 
-    public KeyScalar(@NotNull Section parent, @NotNull String key) {
+    public ScalarKey(@NotNull Section parent, @NotNull KeyedField owner, @NotNull String key) {
         super(ParseUtil.parseAsScalar(key));
         this.parent = parent;
+        this.owner = owner;
     }
 
     @Override
@@ -41,6 +43,22 @@ public class KeyScalar extends Scalar {
     @Override
     public @NotNull String getKey() {
         return toString();
+    }
+
+    @Override
+    public void replaceAll(@NotNull CharSequence target, @NotNull CharSequence replacement) {
+        String string = toString();
+        if (string.contains(target)) {
+            setValue(string.replace(target, replacement));
+        }
+    }
+
+    @Override
+    public void setValue(@Nullable Object value) {
+        String oldKey = toString();
+        String newKey = value != null ? value.toString() : YamlConfig.generateRandomKey();
+        parent.onKeyChanged(owner, oldKey, newKey);
+        super.setValue(value);
     }
 
 }

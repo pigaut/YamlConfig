@@ -24,6 +24,8 @@ public interface ConfigField {
 
     <T> void map(T value);
 
+    void replaceAll(@NotNull CharSequence target, @NotNull CharSequence replacement);
+
     List<CommentLine> getBlockComments();
     void setBlockComments(@Nullable List<CommentLine> blockComments);
     void clearBlockComments();

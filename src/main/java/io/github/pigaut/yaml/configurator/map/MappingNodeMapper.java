@@ -24,9 +24,6 @@ public class MappingNodeMapper implements ConfigMapper<MappingNode> {
     public void mapToSection(@NotNull ConfigSection section, @NotNull MappingNode mappingNode) {
         for (NodeTuple nodeTuple : mappingNode.getValue()) {
             section.add(nodeTuple);
-//            String key = YamlConfig.getNodeKey(nodeTuple);
-//            Node valueNode = nodeTuple.getValueNode();
-//            section.set(key, valueNode);
         }
 
         section.setInLineComments(mappingNode.getInLineComments());

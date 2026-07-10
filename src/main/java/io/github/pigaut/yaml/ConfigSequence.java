@@ -77,4 +77,7 @@ public interface ConfigSequence extends ConfigBranch, Iterable<KeylessField> {
     ConfigList<Float> toFloatList();
     ConfigList<Double> toDoubleList();
 
+    @NotNull
+    ConfigSequence copy();
+
 }

@@ -94,6 +94,11 @@ public abstract class LineScalar implements ConfigScalar {
     }
 
     @Override
+    public void replaceAll(@NotNull CharSequence target, @NotNull CharSequence replacement) {
+        line.replaceAll(target, replacement);
+    }
+
+    @Override
     public void clear() {
         line.clear();
     }
@@ -183,7 +188,7 @@ public abstract class LineScalar implements ConfigScalar {
     }
 
     @Override
-    public void setBlockComments(@NotNull List<CommentLine> blockComments) {
+    public void setBlockComments(@Nullable List<CommentLine> blockComments) {
         line.setBlockComments(blockComments);
     }
 
@@ -208,7 +213,7 @@ public abstract class LineScalar implements ConfigScalar {
     }
 
     @Override
-    public void setInLineComments(@NotNull List<CommentLine> inLineComments) {
+    public void setInLineComments(@Nullable List<CommentLine> inLineComments) {
         line.setInLineComments(inLineComments);
     }
 
@@ -221,4 +226,5 @@ public abstract class LineScalar implements ConfigScalar {
     public void addInlineComment(@NotNull String value) {
         line.addInlineComment(value);
     }
+
 }

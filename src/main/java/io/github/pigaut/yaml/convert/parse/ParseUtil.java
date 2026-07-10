@@ -6,6 +6,7 @@ import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.delay.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
+import org.snakeyaml.engine.v2.nodes.*;
 
 import java.io.*;
 import java.math.*;
@@ -19,7 +20,14 @@ public class ParseUtil {
 
     private ParseUtil() {}
 
-    public static Object parseAsScalar(String string) {
+    public static Object parseAsScalar(@NotNull Tag tag, @NotNull String string) {
+        if (tag.equals(Tag.STR)) {
+            return string;
+        }
+        return parseAsScalar(string);
+    }
+
+    public static Object parseAsScalar(@NotNull String string) {
         Boolean bool = parseBooleanOrNull(string);
         if (bool != null) {
             return bool;
@@ -38,8 +46,16 @@ public class ParseUtil {
         return string;
     }
 
-    public static List<Object> parseAllAsScalars(String... strings) {
-        final List<Object> deserializedList = new ArrayList<>();
+    public static @NotNull List<Object> parseAllAsScalars(@NotNull Tag tag, String... strings) {
+        List<Object> deserializedList = new ArrayList<>();
+        for (String string : strings) {
+            deserializedList.add(parseAsScalar(tag, string));
+        }
+        return deserializedList;
+    }
+
+    public static @NotNull List<Object> parseAllAsScalars(String... strings) {
+        List<Object> deserializedList = new ArrayList<>();
         for (String string : strings) {
             deserializedList.add(parseAsScalar(string));
         }
@@ -99,7 +115,7 @@ public class ParseUtil {
 
     public static byte parseByte(String string) throws StringParseException {
         try {
-            return Byte.parseByte(string);
+            return Byte.parseByte(string.replaceAll("\\s", ""));
         } catch (NumberFormatException e) {
             throw new StringParseException("Expected a byte but found: '" + string + "'");
         }
@@ -115,7 +131,7 @@ public class ParseUtil {
 
     public static short parseShort(String string) throws StringParseException {
         try {
-            return Short.parseShort(string);
+            return Short.parseShort(string.replaceAll("\\s", ""));
         } catch (NumberFormatException e) {
             throw new StringParseException("Expected a short but found: '" + string + "'");
         }
@@ -131,7 +147,7 @@ public class ParseUtil {
 
     public static int parseInteger(String string) throws StringParseException {
         try {
-            return Integer.parseInt(string);
+            return Integer.parseInt(string.replaceAll("\\s", ""));
         } catch (NumberFormatException e) {
             throw new StringParseException("Expected an integer but found: '" + string + "'");
         }
@@ -147,7 +163,7 @@ public class ParseUtil {
 
     public static long parseLong(String string) throws StringParseException {
         try {
-            return Long.parseLong(string);
+            return Long.parseLong(string.replaceAll("\\s", ""));
         } catch (NumberFormatException e) {
             throw new StringParseException("Expected a long but found: '" + string + "'");
         }
@@ -163,7 +179,7 @@ public class ParseUtil {
 
     public static float parseFloat(String string) throws StringParseException {
         try {
-            return Float.parseFloat(string);
+            return Float.parseFloat(string.replaceAll("\\s", ""));
         } catch (NumberFormatException e) {
             throw new StringParseException("Expected a float but found: '" + string + "'");
         }
@@ -179,7 +195,7 @@ public class ParseUtil {
 
     public static double parseDouble(String string) throws StringParseException {
         try {
-            return Double.parseDouble(string);
+            return Double.parseDouble(string.replaceAll("\\s", ""));
         } catch (NumberFormatException e) {
             throw new StringParseException("Expected a double but found: '" + string + "'");
         }
@@ -197,10 +213,10 @@ public class ParseUtil {
         if (!string.endsWith("%")) {
             throw new StringParseException("Expected a percentage but found: " + string);
         }
-        String numberPart = string.substring(0, string.length() - 1).trim();
+        String numberPart = string.substring(0, string.length() - 1);
         try {
-            return Double.parseDouble(numberPart) / 100d;
-        } catch (NumberFormatException e) {
+            return parseDouble(numberPart) / 100d;
+        } catch (StringParseException e) {
             throw new StringParseException("Expected a percentage but found: " + string);
         }
     }

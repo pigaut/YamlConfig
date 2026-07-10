@@ -83,4 +83,7 @@ public interface ConfigSection extends ConfigBranch, Iterable<KeyedField> {
 
     String[][] getStringMatrix(@NotNull String path, int rows, int columns);
 
+    @NotNull
+    ConfigSection copy();
+
 }

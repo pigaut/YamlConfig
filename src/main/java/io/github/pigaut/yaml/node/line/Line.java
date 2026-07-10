@@ -76,12 +76,17 @@ public class Line implements ConfigLine {
     }
 
     @Override
+    public void replaceAll(@NotNull CharSequence target, @NotNull CharSequence replacement) {
+        scalar.replaceAll(target, replacement);
+    }
+
+    @Override
     public List<CommentLine> getBlockComments() {
         return scalar.getBlockComments();
     }
 
     @Override
-    public void setBlockComments(@NotNull List<CommentLine> blockComments) {
+    public void setBlockComments(@Nullable List<CommentLine> blockComments) {
         scalar.setBlockComments(blockComments);
     }
 
@@ -477,6 +482,10 @@ public class Line implements ConfigLine {
             return List.of();
         }
 
+        if (lineStyle == LineStyle.SPACED) {
+            return tokenizeSpaced(line);
+        }
+
         List<Token> parts = new ArrayList<>();
 
         StringBuilder current = new StringBuilder();
@@ -486,14 +495,15 @@ public class Line implements ConfigLine {
         for (int i = 0; i < chars.length; i++) {
             char c = chars[i];
 
+            // Check escaped comma
             if (c == ',' && i + 1 < chars.length && chars[i + 1] == ',') {
                 current.append(',');
                 i++;
                 continue;
             }
 
+            // Commas separate standard VALUEs
             if (c == ',') {
-                // Commas separate standard VALUEs
                 parts.add(new Token(current.toString(), TokenType.VALUE));
                 current.setLength(0);
 
@@ -535,66 +545,34 @@ public class Line implements ConfigLine {
         return parts;
     }
 
-//    private static List<Token> tokenize(String line) {
-//        if (line == null || line.isEmpty()) {
-//            return List.of();
-//        }
-//
-//        List<Token> parts = new ArrayList<>();
-//
-//        // Handle the id
-//        int firstSpace = line.indexOf(' ');
-//        if (firstSpace == -1) {
-//            return List.of(new Token(line, TokenType.VALUE));
-//        }
-//        parts.add(new Token(line.substring(0, firstSpace), TokenType.VALUE));
-//
-//        StringBuilder current = new StringBuilder();
-//        char[] chars = line.toCharArray();
-//
-//        for (int i = firstSpace + 1; i < chars.length; i++) {
-//            char c = chars[i];
-//
-//            if (c == ',' && i + 1 < chars.length && chars[i + 1] == ',') {
-//                current.append(',');
-//                i++;
-//                continue;
-//            }
-//
-//            if (c == ',') {
-//                // Commas separate standard VALUEs
-//                parts.add(new Token(current.toString(), TokenType.VALUE));
-//                current.setLength(0);
-//
-//                if (i + 1 < chars.length && chars[i + 1] == ' ') {
-//                    i++;
-//                }
-//                continue;
-//            }
-//
-//            if (c == ' ' && isNextTokenAFlag(chars, i + 1)) {
-//                String finalRaw = current.toString();
-//                TokenType finalType = finalRaw.contains("=") && !finalRaw.contains("==")
-//                        ? TokenType.KEY_VALUE
-//                        : TokenType.VALUE;
-//                parts.add(new Token(finalRaw, finalType));
-//                current.setLength(0);
-//                continue;
-//            }
-//
-//            current.append(c);
-//        }
-//
-//        if (!current.isEmpty()) {
-//            String finalRaw = current.toString();
-//            TokenType finalType = finalRaw.contains("=") && !finalRaw.contains("==")
-//                    ? TokenType.KEY_VALUE
-//                    : TokenType.VALUE;
-//            parts.add(new Token(finalRaw, finalType));
-//        }
-//
-//        return parts;
-//    }
+    private static List<Token> tokenizeSpaced(String line) {
+        List<Token> parts = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+
+        for (char c : line.toCharArray()) {
+            if (c == ' ') {
+                if (!current.isEmpty()) {
+                    parts.add(toToken(current.toString()));
+                    current.setLength(0);
+                }
+                continue;
+            }
+            current.append(c);
+        }
+
+        if (!current.isEmpty()) {
+            parts.add(toToken(current.toString()));
+        }
+
+        return parts;
+    }
+
+    private static Token toToken(String raw) {
+        TokenType type = raw.contains("=") && !raw.contains("==")
+                ? TokenType.KEY_VALUE
+                : TokenType.VALUE;
+        return new Token(raw, type);
+    }
 
     private static boolean isNextTokenAFlag(char[] chars, int start) {
         for (int j = start; j < chars.length; j++) {

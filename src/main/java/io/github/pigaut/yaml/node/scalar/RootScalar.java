@@ -199,8 +199,8 @@ public class RootScalar extends Scalar implements ConfigRoot {
 
     @Override
     public ConfigSequence split(Pattern pattern) {
-        final ConfigSequence sequence = new RootSequence(file, configurator, prefix);
-        final List<Object> parsedValues = ParseUtil.parseAllAsScalars(pattern.split(toString()));
+        ConfigSequence sequence = new RootSequence(file, configurator, prefix);
+        List<Object> parsedValues = ParseUtil.parseAllAsScalars(Tag.STR, pattern.split(toString()));
         sequence.map(parsedValues);
         return sequence;
     }

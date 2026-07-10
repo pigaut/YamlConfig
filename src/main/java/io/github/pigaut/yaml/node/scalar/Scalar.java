@@ -25,7 +25,7 @@ public abstract class Scalar extends Field implements ConfigScalar {
     }
 
     protected Scalar(@NotNull Object value, @NotNull ScalarStyle scalarStyle) {
-        setValue(value);
+        setValueInternal(value);
         this.scalarStyle = scalarStyle;
     }
 
@@ -59,6 +59,10 @@ public abstract class Scalar extends Field implements ConfigScalar {
 
     @Override
     public void setValue(@Nullable Object value) {
+        setValueInternal(value);
+    }
+
+    private void setValueInternal(@Nullable Object value) {
         if (value != null) {
             if (!YamlConfig.isScalarType(value.getClass())) {
                 throw new IllegalArgumentException("Value is not a scalar");
@@ -85,8 +89,16 @@ public abstract class Scalar extends Field implements ConfigScalar {
     }
 
     @Override
+    public void replaceAll(@NotNull CharSequence target, @NotNull CharSequence replacement) {
+        String string = toString();
+        if (string.contains(target)) {
+            setValue(string.replace(target, replacement));
+        }
+    }
+
+    @Override
     public @NotNull String toString(@NotNull StringFormatter formatter) {
-        final String string = this.toString();
+        String string = this.toString();
         return formatter.format(string);
     }
 
@@ -111,6 +123,12 @@ public abstract class Scalar extends Field implements ConfigScalar {
         if (ScalarUtil.isInteger(value)) {
             return ConfigOptional.of(this, ((Number) value).intValue());
         }
+        if (value instanceof String string) {
+            Integer parsed = ParseUtil.parseIntegerOrNull(string);
+            if (parsed != null) {
+                return ConfigOptional.of(this, parsed);
+            }
+        }
         return ConfigOptional.invalid(this, "Expected an integer but found: " + this);
     }
 
@@ -118,6 +136,12 @@ public abstract class Scalar extends Field implements ConfigScalar {
     public ConfigOptional<Long> toLong() {
         if (ScalarUtil.isLong(value)) {
             return ConfigOptional.of(this, ((Number) value).longValue());
+        }
+        if (value instanceof String string) {
+            Long parsed = ParseUtil.parseLongOrNull(string);
+            if (parsed != null) {
+                return ConfigOptional.of(this, parsed);
+            }
         }
         return ConfigOptional.invalid(this, "Expected a long but found: " + this);
     }

@@ -10,17 +10,23 @@ import org.snakeyaml.engine.v2.common.*;
 public class KeyedSequence extends Sequence implements KeyedField {
 
     private final Section parent;
-    private final KeyScalar key;
+    private final ScalarKey key;
 
     public KeyedSequence(@NotNull Section parent, @NotNull String key) {
-        this(parent, new KeyScalar(parent, key));
+        super(FlowStyle.BLOCK);
+        this.parent = parent;
+        this.key = new ScalarKey(parent, this, key);
+        FlowStyle defaultStyle = parent.getNestedFlowStyle();
+        if (defaultStyle != null) {
+            setFlowStyle(defaultStyle);
+        }
     }
 
-    public KeyedSequence(@NotNull Section parent, @NotNull KeyScalar key) {
+    public KeyedSequence(@NotNull Section parent, @NotNull ScalarKey key) {
         super(FlowStyle.BLOCK);
         this.parent = parent;
         this.key = key;
-        final FlowStyle defaultStyle = parent.getNestedFlowStyle();
+        FlowStyle defaultStyle = parent.getNestedFlowStyle();
         if (defaultStyle != null) {
             setFlowStyle(defaultStyle);
         }

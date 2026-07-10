@@ -27,7 +27,7 @@ public abstract class Section extends Branch implements ConfigSection {
         super(flowStyle);
     }
 
-    public ConfigField getNode(String key) {
+    public KeyedField getNode(String key) {
         return fieldsByKey.get(key);
     }
 
@@ -37,6 +37,14 @@ public abstract class Section extends Branch implements ConfigSection {
 
     public void removeNode(String key) {
         fieldsByKey.remove(key);
+    }
+
+    public void onKeyChanged(KeyedField field, String oldKey, String newKey) {
+        if (fieldsByKey.get(oldKey) != field) {
+            return;
+        }
+        fieldsByKey.remove(oldKey);
+        fieldsByKey.put(newKey, field);
     }
 
     @Override
@@ -145,7 +153,7 @@ public abstract class Section extends Branch implements ConfigSection {
 
     @Override
     public @NotNull Map<String, Object> toMap() {
-        final Map<String, Object> map = new LinkedHashMap<>();
+        Map<String, Object> map = new LinkedHashMap<>();
         for (Map.Entry<String, KeyedField> entry : fieldsByKey.entrySet()) {
             ConfigField field = entry.getValue();
             map.put(entry.getKey(), field.getValue());
@@ -324,6 +332,13 @@ public abstract class Section extends Branch implements ConfigSection {
 
         fieldsByKey.clear();
         fieldsByKey.putAll(newMap);
+    }
+
+    @Override
+    public void replaceAll(@NotNull CharSequence target, @NotNull CharSequence replacement) {
+        for (ConfigField field : getNestedFields()) {
+            field.replaceAll(target, replacement);
+        }
     }
 
     @Override
@@ -698,6 +713,14 @@ public abstract class Section extends Branch implements ConfigSection {
     @Override
     public ConfigOptional<ConfigSequence> toSequence() {
         return ConfigOptional.invalid(this, "Expected a list but found a section");
+    }
+
+    @Override
+    public @NotNull RootSection copy() {
+        ConfigRoot root = getRoot();
+        RootSection section = new RootSection(null, root.getConfigurator(), root.getPrefix());
+        section.map(toMap());
+        return section;
     }
 
     @Override

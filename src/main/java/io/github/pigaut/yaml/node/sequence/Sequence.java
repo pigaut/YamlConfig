@@ -540,6 +540,14 @@ public abstract class Sequence extends Branch implements ConfigSequence {
         return createList(field -> field.toScalar().flatMap(ConfigScalar::toDouble).orThrow());
     }
 
+    @Override
+    public @NotNull ConfigSequence copy() {
+        ConfigRoot root = getRoot();
+        RootSequence sequence = new RootSequence(null, root.getConfigurator(), root.getPrefix());
+        sequence.map(toList());
+        return sequence;
+    }
+
     @FunctionalInterface
     private interface ListMapper<T> {
         T apply(ConfigField field) throws InvalidConfigException;
@@ -571,6 +579,13 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     @Override
     public @NotNull FieldType getFieldType() {
         return FieldType.SEQUENCE;
+    }
+
+    @Override
+    public void replaceAll(@NotNull CharSequence target, @NotNull CharSequence replacement) {
+        for (ConfigField field : this) {
+            field.replaceAll(target, replacement);
+        }
     }
 
     @Override
