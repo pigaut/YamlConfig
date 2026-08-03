@@ -7,24 +7,31 @@ import java.util.*;
 
 public enum NumberStyle {
 
-    PERCENT_2("%2") {
+    DECIMALS_0("d0") {
         @Override
         public @NotNull String format(@NotNull Number number) {
-            return formatPercent(number, 2);
+            return formatDecimals(number, 0);
         }
     },
 
-    PERCENT_1("%1") {
+    DECIMALS_1("d1") {
         @Override
         public @NotNull String format(@NotNull Number number) {
-            return formatPercent(number, 1);
+            return formatDecimals(number, 1);
         }
     },
 
-    PERCENT("%") {
+    DECIMALS_2("d2") {
         @Override
         public @NotNull String format(@NotNull Number number) {
-            return formatPercent(number, 0);
+            return formatDecimals(number, 2);
+        }
+    },
+
+    DECIMALS_3("d3") {
+        @Override
+        public @NotNull String format(@NotNull Number number) {
+            return formatDecimals(number, 3);
         }
     },
 
@@ -34,7 +41,7 @@ public enum NumberStyle {
             double d = number.doubleValue();
             if (d == (int) d) {
                 int value = (int) d;
-                if (value >= 1 && value <= 30) {
+                if (value >= 0 && value < ROMAN_NUMERALS.length) {
                     return ROMAN_NUMERALS[value];
                 }
             }
@@ -100,7 +107,14 @@ public enum NumberStyle {
     private static final String[] ROMAN_NUMERALS = {
             "", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
             "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX",
-            "XXI", "XXII", "XXIII", "XXIV", "XXV", "XXVI", "XXVII", "XXVIII", "XXIX", "XXX"
+            "XXI", "XXII", "XXIII", "XXIV", "XXV", "XXVI", "XXVII", "XXVIII", "XXIX", "XXX",
+            "XXXI", "XXXII", "XXXIII", "XXXIV", "XXXV", "XXXVI", "XXXVII", "XXXVIII", "XXXIX", "XL",
+            "XLI", "XLII", "XLIII", "XLIV", "XLV", "XLVI", "XLVII", "XLVIII", "XLIX", "L",
+            "LI", "LII", "LIII", "LIV", "LV", "LVI", "LVII", "LVIII", "LIX", "LX",
+            "LXI", "LXII", "LXIII", "LXIV", "LXV", "LXVI", "LXVII", "LXVIII", "LXIX", "LXX",
+            "LXXI", "LXXII", "LXXIII", "LXXIV", "LXXV", "LXXVI", "LXXVII", "LXXVIII", "LXXIX", "LXXX",
+            "LXXXI", "LXXXII", "LXXXIII", "LXXXIV", "LXXXV", "LXXXVI", "LXXXVII", "LXXXVIII", "LXXXIX", "XC",
+            "XCI", "XCII", "XCIII", "XCIV", "XCV", "XCVI", "XCVII", "XCVIII", "XCIX", "C"
     };
 
     NumberStyle(String tagName) {
@@ -170,13 +184,13 @@ public enum NumberStyle {
         return string;
     }
 
-    private static @NotNull String formatPercent(@NotNull Number number, int decimals) {
-        double percent = number.doubleValue() * 100d;
+    private static @NotNull String formatDecimals(@NotNull Number number, int decimals) {
+        double value = number.doubleValue();
         if (decimals <= 0) {
-            return String.valueOf(Math.round(percent));
+            return String.valueOf(Math.round(value));
         }
         String pattern = "%." + decimals + "f";
-        return String.format(Locale.US, pattern, percent);
+        return String.format(Locale.US, pattern, value);
     }
 
 }

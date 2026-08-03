@@ -198,8 +198,8 @@ public class RootSequence extends Sequence implements ConfigRoot {
         return new RootSection(file, configurator, prefix);
     }
 
-    private void loadDocuments(List<Node> documents) throws ConfigLoadException {
-        if (documents.isEmpty()) {
+    private void loadDocuments(@Nullable List<Node> documents) throws ConfigLoadException {
+        if (documents == null || documents.isEmpty()) {
             return;
         }
 

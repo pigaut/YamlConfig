@@ -190,17 +190,23 @@ public class RootScalar extends Scalar implements ConfigRoot {
         return header + dumper.dumpToString(this);
     }
 
-    private void load(Node node) throws ConfigLoadException {
-        if (!(node instanceof ScalarNode)) {
-            throw new ConfigLoadException(this, "Expected a scalar but found another node");
+    private void load(@Nullable Node node) throws ConfigLoadException {
+        if (node == null) {
+            return;
         }
-        setValue(node);
+
+        if (node instanceof ScalarNode) {
+            map(node);
+            return;
+        }
+
+        throw new ConfigLoadException(this, "Expected a scalar but found another node");
     }
 
     @Override
-    public ConfigSequence split(Pattern pattern) {
+    public ConfigSequence split(@NotNull Pattern pattern) {
         ConfigSequence sequence = new RootSequence(file, configurator, prefix);
-        List<Object> parsedValues = ParseUtil.parseAllAsScalars(Tag.STR, pattern.split(toString()));
+        List<Object> parsedValues = ScalarUtil.parseAllAsScalars(pattern.split(toString()));
         sequence.map(parsedValues);
         return sequence;
     }

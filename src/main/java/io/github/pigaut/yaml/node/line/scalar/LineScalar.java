@@ -29,7 +29,7 @@ public abstract class LineScalar implements ConfigScalar {
     }
 
     @Override
-    public boolean contains(String value) {
+    public boolean contains(@NotNull String value) {
         String string = toString();
         return string.contains(value);
     }
@@ -64,6 +64,12 @@ public abstract class LineScalar implements ConfigScalar {
     }
 
     @Override
+    public boolean matches(@NotNull String regex) {
+        String string = toString();
+        return string.matches(regex);
+    }
+
+    @Override
     public @NotNull ScalarStyle getScalarStyle() {
         return line.asScalar().getScalarStyle();
     }
@@ -85,11 +91,16 @@ public abstract class LineScalar implements ConfigScalar {
 
     @Override
     public ConfigLine toLine(@NotNull LineStyle lineStyle) {
-        return line;
+        throw new UnsupportedOperationException("Line scalars cannot be converted to a line");
     }
 
     @Override
-    public ConfigSequence split(Pattern pattern) {
+    public ConfigOptional<ConfigLine> toLine(@NotNull LineStyle lineStyle, @NotNull String format) {
+        throw new UnsupportedOperationException("Line scalars cannot be converted to a line");
+    }
+
+    @Override
+    public ConfigSequence split(@NotNull Pattern pattern) {
         return line.asScalar().split(pattern);
     }
 

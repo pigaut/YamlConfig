@@ -33,7 +33,12 @@ public interface ConfigSection extends ConfigBranch, Iterable<KeyedField> {
     Set<KeyedScalar> getNestedScalars();
     Set<KeyedSection> getNestedSections();
     Set<KeyedSequence> getNestedSequences();
-    
+
+    Set<KeyedField> getNestedFields(@NotNull String path);
+    Set<KeyedScalar> getNestedScalars(@NotNull String path);
+    Set<KeyedSection> getNestedSections(@NotNull String path);
+    Set<KeyedSequence> getNestedSequences(@NotNull String path);
+
     <T> ConfigList<T> getAll(@NotNull String path, @NotNull Class<T> classType);
     <T> List<T> getAllRequired(@NotNull String path, @NotNull Class<T> classType) throws InvalidConfigException;
 
@@ -43,6 +48,8 @@ public interface ConfigSection extends ConfigBranch, Iterable<KeyedField> {
     @NotNull ConfigSection getRequiredSection(@NotNull String path) throws InvalidConfigException;
     @NotNull ConfigSequence getRequiredSequence(@NotNull String path) throws InvalidConfigException;
     @NotNull ConfigLine getRequiredLine(@NotNull String path) throws InvalidConfigException;
+    @NotNull ConfigLine getRequiredLine(@NotNull String path, @NotNull LineStyle lineStyle) throws InvalidConfigException;
+    @NotNull ConfigLine getRequiredLine(@NotNull String path, @NotNull LineStyle lineStyle, @NotNull String format) throws InvalidConfigException;
     @NotNull Boolean getRequiredBoolean(@NotNull String path) throws InvalidConfigException;
     @NotNull Character getRequiredCharacter(@NotNull String path) throws InvalidConfigException;
     @NotNull String getRequiredString(@NotNull String path) throws InvalidConfigException;
@@ -59,6 +66,7 @@ public interface ConfigSection extends ConfigBranch, Iterable<KeyedField> {
     ConfigOptional<ConfigSequence> getSequence(@NotNull String path);
     ConfigOptional<ConfigLine> getLine(@NotNull String path);
     ConfigOptional<ConfigLine> getLine(@NotNull String path, @NotNull LineStyle lineStyle);
+    ConfigOptional<ConfigLine> getLine(@NotNull String path, @NotNull LineStyle lineStyle, @NotNull String format);
     ConfigOptional<Boolean> getBoolean(@NotNull String path);
     ConfigOptional<Character> getCharacter(@NotNull String path);
     ConfigOptional<String> getString(@NotNull String path);

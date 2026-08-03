@@ -12,6 +12,10 @@ public interface ConfigLine extends ConfigField, Iterable<ConfigScalar> {
     boolean contains(@NotNull String value);
     boolean hasFlag(@NotNull String key);
 
+    @Nullable String getFormat();
+
+    boolean matchesFormat(@NotNull String line);
+
     int size();
     int flagCount();
 

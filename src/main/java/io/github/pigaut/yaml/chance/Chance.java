@@ -7,7 +7,7 @@ public class Chance {
     private final double percentage;
 
     public Chance(double percentage) {
-        Preconditions.checkArgument(percentage < 0 || percentage > 1,
+        Preconditions.checkArgument(percentage >= 0 && percentage <= 1,
                 "Chance must be between 0 and 1");
         this.percentage = percentage;
     }

@@ -83,11 +83,16 @@ public class AbstractOptional<T> {
         return value != null ? value : supplier.get();
     }
 
-    public void collectError(Consumer<InvalidConfigException> errorCollector) throws IllegalStateException {
-        if (isValid()) {
-            throw new IllegalStateException("There is no error in this config optional.");
+    public void throwErrorIfAny() throws InvalidConfigException {
+        if (exception != null && existsInConfig()) {
+            throw exception;
         }
-        errorCollector.accept(exception);
+    }
+
+    public void collectErrorIfAny(Consumer<InvalidConfigException> errorCollector) {
+        if (exception != null && existsInConfig()) {
+            errorCollector.accept(exception);
+        }
     }
 
     public @NotNull T orThrow() throws InvalidConfigException {

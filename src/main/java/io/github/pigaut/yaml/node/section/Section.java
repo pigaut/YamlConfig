@@ -205,6 +205,30 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     @Override
+    public Set<KeyedSequence> getNestedSequences(@NotNull String path) {
+        ConfigSection section = getSection(path).orElse(null);
+        return section != null ? section.getNestedSequences() : Set.of();
+    }
+
+    @Override
+    public Set<KeyedSection> getNestedSections(@NotNull String path) {
+        ConfigSection section = getSection(path).orElse(null);
+        return section != null ? section.getNestedSections() : Set.of();
+    }
+
+    @Override
+    public Set<KeyedScalar> getNestedScalars(@NotNull String path) {
+        ConfigSection section = getSection(path).orElse(null);
+        return section != null ? section.getNestedScalars() : Set.of();
+    }
+
+    @Override
+    public Set<KeyedField> getNestedFields(@NotNull String path) {
+        ConfigSection section = getSection(path).orElse(null);
+        return section != null ? section.getNestedFields() : Set.of();
+    }
+
+    @Override
     public @NotNull Set<String> getKeys() {
         return new LinkedHashSet<>(fieldsByKey.keySet());
     }
@@ -312,7 +336,10 @@ public abstract class Section extends Branch implements ConfigSection {
     @Override
     public void addDefaults(@NotNull ConfigSection defaultSection) {
         for (KeyedField field : defaultSection.getNestedFields()) {
-            if (fieldsByKey.containsKey(field.getKey())) {
+            KeyedField existingField = getNode(field.getKey());
+            if (existingField != null) {
+                existingField.setBlockComments(field.getBlockComments());
+                existingField.setInLineComments(field.getInLineComments());
                 continue;
             }
             addNode(field);
@@ -408,6 +435,16 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     @Override
+    public @NotNull ConfigLine getRequiredLine(@NotNull String path, @NotNull LineStyle lineStyle) throws InvalidConfigException {
+        return getLine(path, lineStyle).orThrow();
+    }
+
+    @Override
+    public @NotNull ConfigLine getRequiredLine(@NotNull String path, @NotNull LineStyle lineStyle, @NotNull String format) throws InvalidConfigException {
+        return getLine(path, lineStyle, format).orThrow();
+    }
+
+    @Override
     public @NotNull Boolean getRequiredBoolean(@NotNull String path) throws InvalidConfigException {
         return getBoolean(path).orThrow();
     }
@@ -490,6 +527,11 @@ public abstract class Section extends Branch implements ConfigSection {
     @Override
     public ConfigOptional<ConfigLine> getLine(@NotNull String path, @NotNull LineStyle lineStyle) {
         return getScalar(path).map(scalar -> scalar.toLine(lineStyle));
+    }
+
+    @Override
+    public ConfigOptional<ConfigLine> getLine(@NotNull String path, @NotNull LineStyle lineStyle, @NotNull String format) {
+        return getScalar(path).flatMap(scalar -> scalar.toLine(lineStyle, format));
     }
 
     @Override

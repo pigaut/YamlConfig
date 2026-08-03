@@ -13,7 +13,8 @@ public interface ConfigScalar extends ConfigField {
 
     boolean equals(@NotNull String value);
     boolean equalsIgnoreCase(@NotNull String value);
-    boolean contains(String value);
+    boolean contains(@NotNull String value);
+    boolean matches(@NotNull String regex);
 
     @NotNull Object getValue();
     @NotNull ScalarStyle getScalarStyle();
@@ -26,7 +27,9 @@ public interface ConfigScalar extends ConfigField {
 
     ConfigLine toLine();
     ConfigLine toLine(@NotNull LineStyle lineStyle);
-    ConfigSequence split(Pattern pattern);
+    ConfigOptional<ConfigLine> toLine(@NotNull LineStyle lineStyle, @NotNull String format);
+
+    ConfigSequence split(@NotNull Pattern pattern);
 
     ConfigOptional<Boolean> toBoolean();
     ConfigOptional<Character> toCharacter();

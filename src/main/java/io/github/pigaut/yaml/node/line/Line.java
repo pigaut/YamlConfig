@@ -3,7 +3,6 @@ package io.github.pigaut.yaml.node.line;
 import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.configurator.*;
 import io.github.pigaut.yaml.convert.format.*;
-import io.github.pigaut.yaml.convert.parse.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.line.scalar.*;
 import io.github.pigaut.yaml.util.*;
@@ -11,6 +10,8 @@ import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.comments.*;
 
 import java.util.*;
+import java.util.regex.*;
+import java.util.stream.*;
 
 public class Line implements ConfigLine {
 
@@ -18,10 +19,12 @@ public class Line implements ConfigLine {
     private final List<ConfigScalar> values = new ArrayList<>();
     private final Map<String, ConfigScalar> valuesByKey = new LinkedHashMap<>();
     private final LineStyle lineStyle;
+    private final @Nullable String lineFormat;
 
-    public Line(@NotNull ConfigScalar scalar, LineStyle lineStyle) {
+    public Line(@NotNull ConfigScalar scalar, LineStyle lineStyle, @Nullable String lineFormat) {
         this.scalar = scalar;
         this.lineStyle = lineStyle;
+        this.lineFormat = lineFormat;
         updateLine(scalar.toString());
     }
 
@@ -164,6 +167,52 @@ public class Line implements ConfigLine {
             }
         }
         return false;
+    }
+
+    @Override
+    public @Nullable String getFormat() {
+        return lineFormat;
+    }
+
+    @Override
+    public boolean matchesFormat(@NotNull String line) {
+        String[] parts = line.split("\\s");
+
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i];
+            if (part.startsWith("<") && part.endsWith(">")) {
+                // Required parameter (anything)
+                continue;
+            }
+
+            if (part.startsWith("(") && part.endsWith(")")) {
+                // Optional flag
+                continue;
+            }
+
+            ConfigOptional<String> foundString = getString(i);
+
+            if (part.contains("|")) {
+                String[] aliases = part.split("\\|");
+                boolean anyMatched = false;
+                for (String alias : aliases) {
+                    if (foundString.require(s -> s.equalsIgnoreCase(alias)).isValid()) {
+                        anyMatched = true;
+                        break;
+                    }
+                }
+                if (!anyMatched) {
+                    return false;
+                }
+                continue;
+            }
+
+            if (foundString.require(s -> s.equalsIgnoreCase(part)).isInvalid()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     @Override
@@ -482,10 +531,6 @@ public class Line implements ConfigLine {
             return List.of();
         }
 
-        if (lineStyle == LineStyle.SPACED) {
-            return tokenizeSpaced(line);
-        }
-
         List<Token> parts = new ArrayList<>();
 
         StringBuilder current = new StringBuilder();
@@ -495,15 +540,15 @@ public class Line implements ConfigLine {
         for (int i = 0; i < chars.length; i++) {
             char c = chars[i];
 
-            // Check escaped comma
+            // Ignore escaped comma ",,"
             if (c == ',' && i + 1 < chars.length && chars[i + 1] == ',') {
                 current.append(',');
                 i++;
                 continue;
             }
 
-            // Commas separate standard VALUEs
-            if (c == ',') {
+            // End current token at comma
+            if (c == ',' && lineStyle != LineStyle.SPACED) {
                 parts.add(new Token(current.toString(), TokenType.VALUE));
                 current.setLength(0);
 
@@ -513,65 +558,59 @@ public class Line implements ConfigLine {
                 continue;
             }
 
+            // End current token (label) at first space
             if (c == ' ' && !foundLabel) {
-                String finalRaw = current.toString();
-                parts.add(new Token(finalRaw, TokenType.VALUE));
+                Token token = new Token(current.toString(), TokenType.VALUE);
+                parts.add(token);
                 current.setLength(0);
                 foundLabel = true;
                 continue;
             }
 
+            // End current token at space followed by flag token
             if (c == ' ' && isNextTokenAFlag(chars, i + 1)) {
-                String finalRaw = current.toString();
-                TokenType finalType = finalRaw.contains("=") && !finalRaw.contains("==")
-                        ? TokenType.KEY_VALUE
-                        : TokenType.VALUE;
-                parts.add(new Token(finalRaw, finalType));
+                Token token = toToken(current.toString());
+                parts.add(token);
                 current.setLength(0);
                 continue;
             }
 
-            current.append(c);
-        }
-
-        if (!current.isEmpty()) {
-            String finalRaw = current.toString();
-            TokenType finalType = finalRaw.contains("=") && !finalRaw.contains("==")
-                    ? TokenType.KEY_VALUE
-                    : TokenType.VALUE;
-            parts.add(new Token(finalRaw, finalType));
-        }
-
-        return parts;
-    }
-
-    private static List<Token> tokenizeSpaced(String line) {
-        List<Token> parts = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-
-        for (char c : line.toCharArray()) {
-            if (c == ' ') {
+            // End current token at empty space
+            if (c == ' ' && lineStyle == LineStyle.SPACED) {
                 if (!current.isEmpty()) {
-                    parts.add(toToken(current.toString()));
+                    Token token = toToken(current.toString());
+                    parts.add(token);
                     current.setLength(0);
                 }
                 continue;
             }
+
             current.append(c);
         }
 
+        // Add last remaining token
         if (!current.isEmpty()) {
-            parts.add(toToken(current.toString()));
+            Token token = toToken(current.toString());
+            parts.add(token);
         }
 
         return parts;
     }
 
     private static Token toToken(String raw) {
-        TokenType type = raw.contains("=") && !raw.contains("==")
-                ? TokenType.KEY_VALUE
-                : TokenType.VALUE;
-        return new Token(raw, type);
+        int splitIndex = raw.indexOf("=");
+        if (splitIndex == -1) {
+            return new Token(raw, TokenType.VALUE);
+        }
+
+        boolean escaped = splitIndex < raw.length() - 1 && raw.charAt(splitIndex + 1) == '=';
+        if (escaped) {
+            // Collapse only the "==" at splitIndex into a literal "="
+            String unescaped = raw.substring(0, splitIndex) + "=" + raw.substring(splitIndex + 2);
+            return new Token(unescaped, TokenType.VALUE);
+        }
+
+        return new Token(raw, TokenType.KEY_VALUE);
     }
 
     private static boolean isNextTokenAFlag(char[] chars, int start) {
@@ -588,12 +627,11 @@ public class Line implements ConfigLine {
 
     private static final String SPLIT_LINE = "\u001F";
 
-    public void updateLine(String line) {
+    public void updateLine(@NotNull String line) {
         values.clear();
         valuesByKey.clear();
 
-        List<Token> tokens = tokenize(line);
-        for (Token token : tokens) {
+        for (Token token : tokenize(line)) {
             switch (token.type()) {
                 case KEY_VALUE -> {
                     String raw = token.raw();
@@ -602,7 +640,7 @@ public class Line implements ConfigLine {
                     String key = raw.substring(0, separatorIndex);
                     String value = raw.substring(separatorIndex + 1);
 
-                    Object parsedValue = ParseUtil.parseAsScalar(value);
+                    Object parsedValue = ScalarUtil.parseAsScalar(value);
                     ConfigScalar existingScalar = getScalar(key).orElse(null);
                     if (existingScalar != null) {
                         parsedValue = existingScalar.getValue() + SPLIT_LINE + parsedValue;
@@ -612,8 +650,8 @@ public class Line implements ConfigLine {
                 }
 
                 case VALUE -> {
-                    Object value = ParseUtil.parseAsScalar(token.raw());
-                    values.add(new KeylessLineScalar(this, values.size(), value));
+                    Object parsedValue = ScalarUtil.parseAsScalar(token.raw());
+                    values.add(new KeylessLineScalar(this, values.size(), parsedValue));
                 }
             }
         }

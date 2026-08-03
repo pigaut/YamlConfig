@@ -188,11 +188,17 @@ public class RootSection extends Section implements ConfigRoot {
         return header + dumper.dumpToString(this);
     }
 
-    private void load(Node node) throws ConfigLoadException {
-        if (!(node instanceof MappingNode)) {
-            throw new ConfigLoadException(this, "Expected a section but found another node");
+    private void load(@Nullable Node node) throws ConfigLoadException {
+        if (node == null) {
+            return;
         }
-        map(node);
+
+        if (node instanceof MappingNode) {
+            map(node);
+            return;
+        }
+
+        throw new ConfigLoadException(this, "Expected a section but found another node");
     }
 
     @Override

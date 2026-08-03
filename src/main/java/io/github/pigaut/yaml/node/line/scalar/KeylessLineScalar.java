@@ -1,6 +1,7 @@
 package io.github.pigaut.yaml.node.line.scalar;
 
 import io.github.pigaut.yaml.*;
+import io.github.pigaut.yaml.convert.parse.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
@@ -55,6 +56,12 @@ public class KeylessLineScalar extends LineScalar implements KeylessField {
         if (ScalarUtil.isInteger(value)) {
             return ConfigOptional.of(line, ((Number) value).intValue());
         }
+        if (value instanceof String string) {
+            Integer parsed = ParseUtil.parseIntegerOrNull(string);
+            if (parsed != null) {
+                return ConfigOptional.of(line, parsed);
+            }
+        }
         return ConfigOptional.invalid(line, "Missing an integer value at position: " + getPosition());
     }
 
@@ -63,15 +70,13 @@ public class KeylessLineScalar extends LineScalar implements KeylessField {
         if (ScalarUtil.isLong(value)) {
             return ConfigOptional.of(line, ((Number) value).longValue());
         }
-        return ConfigOptional.invalid(line, "Missing a long value at position: " + getPosition());
-    }
-
-    @Override
-    public ConfigOptional<Float> toFloat() {
-        if (ScalarUtil.isFloat(value)) {
-            return ConfigOptional.of(line, ((Number) value).floatValue());
+        if (value instanceof String string) {
+            Long parsed = ParseUtil.parseLongOrNull(string);
+            if (parsed != null) {
+                return ConfigOptional.of(line, parsed);
+            }
         }
-        return ConfigOptional.invalid(line, "Missing a float value at position: " + getPosition());
+        return ConfigOptional.invalid(line, "Missing a long value at position: " + getPosition());
     }
 
     @Override
@@ -79,7 +84,27 @@ public class KeylessLineScalar extends LineScalar implements KeylessField {
         if (ScalarUtil.isDouble(value)) {
             return ConfigOptional.of(line, ((Number) value).doubleValue());
         }
+        if (value instanceof String string) {
+            Double parsed = ParseUtil.parseDoubleOrNull(string);
+            if (parsed != null) {
+                return ConfigOptional.of(line, parsed);
+            }
+        }
         return ConfigOptional.invalid(line, "Missing a double value at position: " + getPosition());
+    }
+
+    @Override
+    public ConfigOptional<Float> toFloat() {
+        if (ScalarUtil.isFloat(value)) {
+            return ConfigOptional.of(line, ((Number) value).floatValue());
+        }
+        if (value instanceof String string) {
+            Double parsed = ParseUtil.parseDoubleOrNull(string);
+            if (parsed != null) {
+                return ConfigOptional.of(line, parsed.floatValue());
+            }
+        }
+        return ConfigOptional.invalid(line, "Missing a float value at position: " + getPosition());
     }
 
 }

@@ -47,9 +47,15 @@ public abstract class Scalar extends Field implements ConfigScalar {
     }
 
     @Override
-    public boolean contains(String value) {
+    public boolean contains(@NotNull String value) {
         String string = toString();
         return string.contains(value);
+    }
+
+    @Override
+    public boolean matches(@NotNull String regex) {
+        String string = toString();
+        return string.matches(regex);
     }
 
     @Override
@@ -152,7 +158,7 @@ public abstract class Scalar extends Field implements ConfigScalar {
             return ConfigOptional.of(this, ((Number) value).doubleValue());
         }
         if (value instanceof String string) {
-            Double parsed = ParseUtil.parsePercentageOrNull(string);
+            Double parsed = ParseUtil.parseDoubleOrNull(string);
             if (parsed != null) {
                 return ConfigOptional.of(this, parsed);
             }
@@ -166,7 +172,7 @@ public abstract class Scalar extends Field implements ConfigScalar {
             return ConfigOptional.of(this, ((Number) value).floatValue());
         }
         if (value instanceof String string) {
-            Double parsed = ParseUtil.parsePercentageOrNull(string);
+            Double parsed = ParseUtil.parseDoubleOrNull(string);
             if (parsed != null) {
                 return ConfigOptional.of(this, parsed.floatValue());
             }
@@ -235,7 +241,20 @@ public abstract class Scalar extends Field implements ConfigScalar {
 
     @Override
     public ConfigLine toLine(@NotNull LineStyle lineStyle) {
-        return line != null ? line : (line = new Line(this, lineStyle));
+        return line != null ? line : (line = new Line(this, lineStyle, null));
+    }
+
+    @Override
+    public ConfigOptional<ConfigLine> toLine(@NotNull LineStyle lineStyle, @NotNull String format) {
+        if (line == null) {
+            line = new Line(this, lineStyle, format);
+        }
+
+        if (!line.matchesFormat(format)) {
+            return ConfigOptional.invalid(line, "Expected format: " + format);
+        }
+
+        return ConfigOptional.of(line);
     }
 
     @Override

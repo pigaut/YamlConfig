@@ -20,13 +20,6 @@ public class ParseUtil {
 
     private ParseUtil() {}
 
-    public static Object parseAsScalar(@NotNull Tag tag, @NotNull String string) {
-        if (tag.equals(Tag.STR)) {
-            return string;
-        }
-        return parseAsScalar(string);
-    }
-
     public static Object parseAsScalar(@NotNull String string) {
         Boolean bool = parseBooleanOrNull(string);
         if (bool != null) {
@@ -44,14 +37,6 @@ public class ParseUtil {
         }
 
         return string;
-    }
-
-    public static @NotNull List<Object> parseAllAsScalars(@NotNull Tag tag, String... strings) {
-        List<Object> deserializedList = new ArrayList<>();
-        for (String string : strings) {
-            deserializedList.add(parseAsScalar(tag, string));
-        }
-        return deserializedList;
     }
 
     public static @NotNull List<Object> parseAllAsScalars(String... strings) {
@@ -87,7 +72,7 @@ public class ParseUtil {
             return false;
         }
 
-        throw new StringParseException("Expected a boolean but found: '" + string + "'");
+        throw new StringParseException("Expected a boolean but found: " + string);
     }
 
     public static Character parseCharacterOrNull(String string) {
@@ -102,7 +87,7 @@ public class ParseUtil {
         if (string.length() == 1) {
             return string.charAt(0);
         }
-        throw new StringParseException("Expected a character but found: '" + string + "'");
+        throw new StringParseException("Expected a character but found: " + string);
     }
 
     public static Byte parseByteOrNull(String string) {
@@ -117,7 +102,7 @@ public class ParseUtil {
         try {
             return Byte.parseByte(string.replaceAll("\\s", ""));
         } catch (NumberFormatException e) {
-            throw new StringParseException("Expected a byte but found: '" + string + "'");
+            throw new StringParseException("Expected a byte but found: " + string);
         }
     }
 
@@ -133,7 +118,7 @@ public class ParseUtil {
         try {
             return Short.parseShort(string.replaceAll("\\s", ""));
         } catch (NumberFormatException e) {
-            throw new StringParseException("Expected a short but found: '" + string + "'");
+            throw new StringParseException("Expected a short but found: " + string);
         }
     }
 
@@ -149,7 +134,7 @@ public class ParseUtil {
         try {
             return Integer.parseInt(string.replaceAll("\\s", ""));
         } catch (NumberFormatException e) {
-            throw new StringParseException("Expected an integer but found: '" + string + "'");
+            throw new StringParseException("Expected an integer but found: " + string);
         }
     }
 
@@ -165,7 +150,7 @@ public class ParseUtil {
         try {
             return Long.parseLong(string.replaceAll("\\s", ""));
         } catch (NumberFormatException e) {
-            throw new StringParseException("Expected a long but found: '" + string + "'");
+            throw new StringParseException("Expected a long but found: " + string);
         }
     }
 
@@ -178,10 +163,19 @@ public class ParseUtil {
     }
 
     public static float parseFloat(String string) throws StringParseException {
+        if (string.endsWith("%")) {
+            String numberPart = string.substring(0, string.length() - 1);
+            try {
+                return Float.parseFloat(numberPart.replaceAll("\\s", "")) / 100;
+            } catch (NumberFormatException e) {
+                throw new StringParseException("Expected a percentage but found: " + string);
+            }
+        }
+
         try {
             return Float.parseFloat(string.replaceAll("\\s", ""));
         } catch (NumberFormatException e) {
-            throw new StringParseException("Expected a float but found: '" + string + "'");
+            throw new StringParseException("Expected a float but found: " + string);
         }
     }
 
@@ -194,30 +188,19 @@ public class ParseUtil {
     }
 
     public static double parseDouble(String string) throws StringParseException {
+        if (string.endsWith("%")) {
+            String numberPart = string.substring(0, string.length() - 1);
+            try {
+                return Float.parseFloat(numberPart.replaceAll("\\s", "")) / 100;
+            } catch (NumberFormatException e) {
+                throw new StringParseException("Expected a percentage but found: " + string);
+            }
+        }
+
         try {
             return Double.parseDouble(string.replaceAll("\\s", ""));
         } catch (NumberFormatException e) {
-            throw new StringParseException("Expected a double but found: '" + string + "'");
-        }
-    }
-
-    public static @Nullable Double parsePercentageOrNull(@NotNull String string) {
-        try {
-            return parsePercentage(string);
-        } catch (StringParseException e) {
-            return null;
-        }
-    }
-
-    public static @Nullable Double parsePercentage(@NotNull String string) throws StringParseException {
-        if (!string.endsWith("%")) {
-            throw new StringParseException("Expected a percentage but found: " + string);
-        }
-        String numberPart = string.substring(0, string.length() - 1);
-        try {
-            return parseDouble(numberPart) / 100d;
-        } catch (StringParseException e) {
-            throw new StringParseException("Expected a percentage but found: " + string);
+            throw new StringParseException("Expected a double but found: " + string);
         }
     }
 
@@ -233,7 +216,7 @@ public class ParseUtil {
         try {
             return LocalDate.parse(string, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
         } catch (DateTimeParseException e) {
-            throw new StringParseException("Expected a date but found: '" + string + "'");
+            throw new StringParseException("Expected a date but found: " + string);
         }
     }
 
@@ -243,7 +226,7 @@ public class ParseUtil {
         if (string.endsWith("+")) {
             Double amount = parseDoubleOrNull(string.substring(0, string.length() - 1));
             if (amount == null) {
-                throw new StringParseException("Expected an inequality amount but found: '" + string + "'");
+                throw new StringParseException("Expected an inequality amount but found: " + string);
             }
             return Amount.greaterThanOrEqual(amount);
         }
@@ -398,25 +381,27 @@ public class ParseUtil {
     public static @NotNull Chance parseChance(String string) throws StringParseException {
         string = string.trim();
 
+        if (string.endsWith("%")) {
+            Double percentage = parseDoubleOrNull(string.substring(0, string.length() - 1));
+            if (percentage != null && Double.isFinite(percentage)) {
+                if (percentage < 0 || percentage > 100) {
+                    throw new StringParseException("Chance must be a value between 0% and 100%");
+                }
+                return new Chance(percentage / 100);
+            }
+
+            throw new StringParseException("Expected chance but found: " + string);
+        }
+
         Double percentage = parseDoubleOrNull(string);
-         if (percentage != null) {
+         if (percentage != null && Double.isFinite(percentage)) {
              if (percentage < 0 || percentage > 1) {
-                 throw new StringParseException("Chance must be a value between 0 and 1");
+                 throw new StringParseException("Chance must be a value between 0% and 100%");
              }
              return new Chance(percentage);
          }
 
-         if (string.endsWith("%")) {
-             percentage = parseDoubleOrNull(string.substring(0, string.length() - 1));
-             if (percentage != null) {
-                 if (percentage < 0 || percentage > 100) {
-                     throw new StringParseException("Chance must be a value between 0% and 100%");
-                 }
-                 return new Chance(percentage / 100);
-             }
-         }
-
-         throw new StringParseException("Expected chance but found: " + string);
+        throw new StringParseException("Expected chance but found: " + string);
     }
 
     public static @Nullable Chance parseChanceOrNull(String string) {
@@ -439,7 +424,7 @@ public class ParseUtil {
         try {
             return LocalTime.parse(string, DateTimeFormatter.ofPattern("HH:mm[:ss]"));
         } catch (DateTimeParseException e) {
-            throw new StringParseException("Expected a time but found: '" + string + "'");
+            throw new StringParseException("Expected a time but found: " + string);
         }
     }
 
@@ -455,7 +440,7 @@ public class ParseUtil {
         try {
             return LocalDateTime.parse(string, DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm[:ss]"));
         } catch (DateTimeParseException e) {
-            throw new StringParseException("Expected a date and time but found: '" + string + "'");
+            throw new StringParseException("Expected a date and time but found: " + string);
         }
     }
 
@@ -471,7 +456,7 @@ public class ParseUtil {
         try {
             return new BigInteger(string);
         } catch (NumberFormatException e) {
-            throw new StringParseException("Expected a big integer but found: '" + string + "'");
+            throw new StringParseException("Expected a big integer but found: " + string);
         }
     }
 
@@ -487,7 +472,7 @@ public class ParseUtil {
         try {
             return new BigDecimal(string);
         } catch (NumberFormatException e) {
-            throw new StringParseException("Expected a big decimal but found: '" + string + "'");
+            throw new StringParseException("Expected a big decimal but found: " + string);
         }
     }
 
@@ -515,7 +500,7 @@ public class ParseUtil {
         try {
             return Locale.forLanguageTag(string);
         } catch (Exception e) {
-            throw new StringParseException("Expected a locale but found: '" + string + "'");
+            throw new StringParseException("Expected a locale but found: " + string);
         }
     }
 
@@ -531,7 +516,7 @@ public class ParseUtil {
         try {
             return java.util.UUID.fromString(string);
         } catch (IllegalArgumentException e) {
-            throw new StringParseException("Expected a uuid but found: '" + string + "'");
+            throw new StringParseException("Expected a uuid but found: " + string);
         }
     }
 
@@ -547,7 +532,7 @@ public class ParseUtil {
         try {
             return new URL(string);
         } catch (MalformedURLException e) {
-            throw new StringParseException("Expected a url but found: '" + string + "'");
+            throw new StringParseException("Expected a url but found: " + string);
         }
     }
 
@@ -569,7 +554,7 @@ public class ParseUtil {
                 return Enum.valueOf(classType, CaseFormatter.toConstantCase(string));
             } catch (IllegalArgumentException e) {
                 final String typeName = CaseFormatter.toTitleCase(CaseFormatter.splitClassName(classType));
-                throw new StringParseException("Expected a " + typeName + " but found: '" + string + "'");
+                throw new StringParseException("Expected a " + typeName + " but found: " + string);
             }
         };
     }

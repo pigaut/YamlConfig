@@ -9,6 +9,7 @@ public interface KeyedField extends ConfigField {
     @NotNull ConfigSection getParent();
 
     @NotNull ConfigScalar getKeyScalar();
+    <T> @NotNull T getKey(Class<T> classType) throws InvalidConfigException;
     <T> ConfigOptional<T> getKeyAs(Class<T> classType);
     ConfigOptional<Boolean> getBooleanKey();
     ConfigOptional<Character> getCharacterKey();

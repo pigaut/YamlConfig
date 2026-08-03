@@ -21,7 +21,7 @@ public class ScalarKey extends Scalar {
     }
 
     @Override
-    public ConfigSequence split(Pattern pattern) {
+    public ConfigSequence split(@NotNull Pattern pattern) {
         throw new IllegalStateException("Cannot split a key scalar.");
     }
 

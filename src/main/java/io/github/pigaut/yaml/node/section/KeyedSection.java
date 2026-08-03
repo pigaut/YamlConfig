@@ -53,6 +53,11 @@ public class KeyedSection extends Section implements KeyedField {
     }
 
     @Override
+    public <T> @NotNull T getKey(Class<T> classType) throws InvalidConfigException {
+        return getKeyAs(classType).orThrow();
+    }
+
+    @Override
     public <T> ConfigOptional<T> getKeyAs(Class<T> classType) {
         return key.get(classType);
     }

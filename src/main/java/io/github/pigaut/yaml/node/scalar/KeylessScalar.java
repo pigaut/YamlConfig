@@ -4,6 +4,7 @@ import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.convert.parse.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.sequence.*;
+import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.nodes.*;
 
@@ -57,9 +58,9 @@ public class KeylessScalar extends Scalar implements KeylessField {
     }
 
     @Override
-    public ConfigSequence split(Pattern pattern) {
+    public ConfigSequence split(@NotNull Pattern pattern) {
         ConfigSequence sequence = new KeylessSequence(parent, index);
-        List<Object> parsedValues = ParseUtil.parseAllAsScalars(Tag.STR, pattern.split(toString()));
+        List<Object> parsedValues = ScalarUtil.parseAllAsScalars(pattern.split(toString()));
         sequence.map(parsedValues);
         return sequence;
     }

@@ -21,7 +21,15 @@ public class ScalarNodeMapper implements ConfigMapper<ScalarNode> {
 
     @Override
     public void mapToScalar(@NotNull ConfigScalar scalar, @NotNull ScalarNode scalarNode) {
-        Object parsedValue = ParseUtil.parseAsScalar(scalarNode.getTag(), scalarNode.getValue());
+        String value = scalarNode.getValue();
+
+        Object parsedValue;
+        if (scalarNode.getTag() == Tag.STR) {
+            parsedValue = value;
+        } else {
+            parsedValue = ScalarUtil.parseAsScalar(value);
+        }
+
         scalar.setValue(parsedValue);
         scalar.setBlockComments(scalarNode.getBlockComments());
         scalar.setInLineComments(scalarNode.getInLineComments());

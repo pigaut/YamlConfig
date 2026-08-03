@@ -44,9 +44,19 @@ public class InvalidConfigException extends ConfigException {
         this.prefix = config.getPrefix();
         this.file = config.getFile();
         this.path = path;
-        this.line = field instanceof ConfigLine configLine ? configLine.getValue() :
-                field instanceof LineScalar lineScalar ? lineScalar.toLine().getValue() : null;
-        this.details = details;
+        if (field instanceof LineScalar lineScalar) {
+            line = lineScalar.toLine().getValue();
+        } else if (field instanceof ConfigScalar configScalar) {
+            line = configScalar.toString();
+        } else {
+            line = null;
+        }
+
+        if (field instanceof ConfigLine configLine && configLine.getFormat() != null) {
+            this.details = "Expected format: " + configLine.getFormat();
+        } else {
+            this.details = details;
+        }
     }
 
     public @NotNull ConfigField getField() {
