@@ -34,11 +34,7 @@ public class NodeLoader implements ConfigLoader<Node> {
             }
         }
 
-        MappingNode mappingNode = new MappingNode(Tag.MAP, nodeTuples, section.getFlowStyle());
-        mappingNode.setBlockComments(section.getBlockComments());
-        mappingNode.setInLineComments(section.getInLineComments());
-
-        return mappingNode;
+        return new MappingNode(Tag.MAP, nodeTuples, section.getFlowStyle());
     }
 
     @Override
@@ -51,11 +47,7 @@ public class NodeLoader implements ConfigLoader<Node> {
             }
         }
 
-        SequenceNode sequenceNode = new SequenceNode(Tag.SEQ, nodes, sequence.getFlowStyle());
-        sequenceNode.setInLineComments(sequence.getInLineComments());
-        sequenceNode.setBlockComments(sequence.getBlockComments());
-
-        return sequenceNode;
+        return new SequenceNode(Tag.SEQ, nodes, sequence.getFlowStyle());
     }
 
 }

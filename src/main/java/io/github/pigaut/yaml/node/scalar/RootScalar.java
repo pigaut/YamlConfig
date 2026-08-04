@@ -176,6 +176,9 @@ public class RootScalar extends Scalar implements ConfigRoot {
         }
 
         String yamlData = saveToString();
+        if (yamlData == null) {
+            return false;
+        }
 
         try (FileWriter writer = new FileWriter(file)) {
             writer.write(yamlData);
@@ -187,7 +190,8 @@ public class RootScalar extends Scalar implements ConfigRoot {
 
     @Override
     public String saveToString() {
-        return header + dumper.dumpToString(this);
+        String yaml = dumper.dumpToString(this);
+        return yaml != null ? header + yaml : null;
     }
 
     private void load(@Nullable Node node) throws ConfigLoadException {

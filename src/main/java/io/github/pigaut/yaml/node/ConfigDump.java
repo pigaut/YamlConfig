@@ -19,7 +19,7 @@ public class ConfigDump {
             .setWidth(100)
             .build();
 
-    public @NotNull String dumpToString(@NotNull ConfigRoot root) {
+    public @Nullable String dumpToString(@NotNull ConfigRoot root) {
         Node rootNode = root.get(Node.class).orElse(null);
         if (rootNode == null) {
             return "";
@@ -34,13 +34,14 @@ public class ConfigDump {
             serializer.serializeDocument(rootNode);
             serializer.emitStreamEnd();
         } catch (Exception e) {
-            return "";
+            e.printStackTrace();
+            return null;
         }
 
         return writer.toString();
     }
 
-    public @NotNull String dumpAllToString(@NotNull Iterator<KeylessField> fields) {
+    public @Nullable String dumpAllToString(@NotNull Iterator<KeylessField> fields) {
         StreamDataWriter writer = new StringStreamDataWriter();
         Emitter emitter = new Emitter(settings, writer);
         Serializer serializer = new Serializer(settings, emitter);
@@ -58,7 +59,8 @@ public class ConfigDump {
 
             serializer.emitStreamEnd();
         } catch (Exception e) {
-            return "";
+            e.printStackTrace();
+            return null;
         }
 
         return writer.toString();

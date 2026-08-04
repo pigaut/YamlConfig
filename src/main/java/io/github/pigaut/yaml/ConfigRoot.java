@@ -33,6 +33,6 @@ public interface ConfigRoot extends ConfigField {
     boolean save();
     boolean save(@NotNull File file);
 
-    String saveToString();
+    @Nullable String saveToString();
 
 }

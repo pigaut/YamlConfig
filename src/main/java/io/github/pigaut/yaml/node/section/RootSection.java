@@ -174,6 +174,9 @@ public class RootSection extends Section implements ConfigRoot {
         }
 
         String yamlData = saveToString();
+        if (yamlData == null) {
+            return false;
+        }
 
         try (FileWriter writer = new FileWriter(file)) {
             writer.write(yamlData);
@@ -184,8 +187,9 @@ public class RootSection extends Section implements ConfigRoot {
     }
 
     @Override
-    public String saveToString() {
-        return header + dumper.dumpToString(this);
+    public @Nullable String saveToString() {
+        String yaml = dumper.dumpToString(this);
+        return yaml != null ? header + yaml : null;
     }
 
     private void load(@Nullable Node node) throws ConfigLoadException {

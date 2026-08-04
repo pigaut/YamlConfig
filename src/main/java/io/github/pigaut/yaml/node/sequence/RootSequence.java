@@ -176,6 +176,9 @@ public class RootSequence extends Sequence implements ConfigRoot {
         }
 
         String yamlData = saveToString();
+        if (yamlData == null) {
+            return false;
+        }
 
         try (FileWriter writer = new FileWriter(file)) {
             writer.write(yamlData);
@@ -188,9 +191,11 @@ public class RootSequence extends Sequence implements ConfigRoot {
     @Override
     public String saveToString() {
         if (isMultiDocument()) {
-            return header + dumper.dumpAllToString(this.iterator());
+            String yaml = dumper.dumpAllToString(this.iterator());
+            return yaml != null ? header + yaml : null;
         }
-        return header + dumper.dumpToString(this);
+        String yaml = dumper.dumpToString(this);
+        return yaml != null ? header + yaml : null;
     }
 
     @Override

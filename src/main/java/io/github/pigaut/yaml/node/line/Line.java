@@ -519,119 +519,13 @@ public class Line implements ConfigLine {
         return getScalar(key).flatMap(ConfigScalar::toDouble);
     }
 
-    private record Token(String raw, TokenType type) {}
-
-    enum TokenType {
-        VALUE,
-        KEY_VALUE
-    }
-
-    private List<Token> tokenize(String line) {
-        if (line == null || line.isEmpty()) {
-            return List.of();
-        }
-
-        List<Token> parts = new ArrayList<>();
-
-        StringBuilder current = new StringBuilder();
-        char[] chars = line.toCharArray();
-
-        boolean foundLabel = lineStyle != LineStyle.LABELED;
-        for (int i = 0; i < chars.length; i++) {
-            char c = chars[i];
-
-            // Ignore escaped comma ",,"
-            if (c == ',' && i + 1 < chars.length && chars[i + 1] == ',') {
-                current.append(',');
-                i++;
-                continue;
-            }
-
-            // End current token at comma
-            if (c == ',' && lineStyle != LineStyle.SPACED) {
-                parts.add(new Token(current.toString(), TokenType.VALUE));
-                current.setLength(0);
-
-                if (i + 1 < chars.length && chars[i + 1] == ' ') {
-                    i++;
-                }
-                continue;
-            }
-
-            // End current token (label) at first space
-            if (c == ' ' && !foundLabel) {
-                Token token = new Token(current.toString(), TokenType.VALUE);
-                parts.add(token);
-                current.setLength(0);
-                foundLabel = true;
-                continue;
-            }
-
-            // End current token at space followed by flag token
-            if (c == ' ' && isNextTokenAFlag(chars, i + 1)) {
-                Token token = toToken(current.toString());
-                parts.add(token);
-                current.setLength(0);
-                continue;
-            }
-
-            // End current token at empty space
-            if (c == ' ' && lineStyle == LineStyle.SPACED) {
-                if (!current.isEmpty()) {
-                    Token token = toToken(current.toString());
-                    parts.add(token);
-                    current.setLength(0);
-                }
-                continue;
-            }
-
-            current.append(c);
-        }
-
-        // Add last remaining token
-        if (!current.isEmpty()) {
-            Token token = toToken(current.toString());
-            parts.add(token);
-        }
-
-        return parts;
-    }
-
-    private static Token toToken(String raw) {
-        int splitIndex = raw.indexOf("=");
-        if (splitIndex == -1) {
-            return new Token(raw, TokenType.VALUE);
-        }
-
-        boolean escaped = splitIndex < raw.length() - 1 && raw.charAt(splitIndex + 1) == '=';
-        if (escaped) {
-            // Collapse only the "==" at splitIndex into a literal "="
-            String unescaped = raw.substring(0, splitIndex) + "=" + raw.substring(splitIndex + 2);
-            return new Token(unescaped, TokenType.VALUE);
-        }
-
-        return new Token(raw, TokenType.KEY_VALUE);
-    }
-
-    private static boolean isNextTokenAFlag(char[] chars, int start) {
-        for (int j = start; j < chars.length; j++) {
-            if (chars[j] == ' ') return false; // Found another space before an '='
-            if (chars[j] == '=') {
-                // Ensure it's '=' and not '=='
-                boolean notEscaped = (j + 1 >= chars.length || chars[j + 1] != '=');
-                return notEscaped;
-            }
-        }
-        return false;
-    }
-
     private static final String SPLIT_LINE = "\u001F";
 
     public void updateLine(@NotNull String line) {
         values.clear();
         valuesByKey.clear();
 
-        for (Token token : tokenize(line)) {
+        for (LineTokenizer.Token token : LineTokenizer.tokenize(line, lineStyle)) {
             switch (token.type()) {
                 case KEY_VALUE -> {
                     String raw = token.raw();
