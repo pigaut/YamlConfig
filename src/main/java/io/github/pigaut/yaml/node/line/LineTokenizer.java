@@ -36,11 +36,6 @@ public class LineTokenizer {
                 continue;
             }
 
-            boolean nextTokenFlag = isNextTokenAFlag(chars, i + 1);
-            if (nextTokenFlag) {
-                foundFlag = true;
-            }
-
             // End current token at comma
             if (c == ',' && lineStyle != LineStyle.SPACED) {
                 Token token = new Token(current.toString(), TokenType.VALUE);
@@ -53,12 +48,20 @@ public class LineTokenizer {
                 continue;
             }
 
-            // End current token (label) at first space
+            // End current token (label) at first space unless first token is a flag
             if (c == ' ' && !foundLabel) {
                 Token token = new Token(current.toString(), TokenType.VALUE);
                 flush(token, parts, current);
                 foundLabel = true;
                 continue;
+            }
+
+            boolean nextTokenFlag = false;
+            if (c == ' ' || i == 0) {
+                nextTokenFlag = isNextTokenAFlag(chars, i + 1);
+                if (nextTokenFlag) {
+                    foundFlag = true;
+                }
             }
 
             // End current token at space followed by flag token

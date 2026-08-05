@@ -1,6 +1,7 @@
 package io.github.pigaut.yaml.node.sequence;
 
 import io.github.pigaut.yaml.*;
+import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.scalar.key.*;
 import io.github.pigaut.yaml.node.section.*;
@@ -45,6 +46,11 @@ public class KeyedSequence extends Sequence implements KeyedField {
     @Override
     public @NotNull String getKey() {
         return key.getKey();
+    }
+
+    @Override
+    public @NotNull String getKey(@NotNull CaseStyle style) {
+        return key.getKey(style);
     }
 
     @Override

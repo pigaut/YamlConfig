@@ -1,6 +1,7 @@
 package io.github.pigaut.yaml.node.scalar;
 
 import io.github.pigaut.yaml.*;
+import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.convert.parse.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.sequence.*;
@@ -50,6 +51,11 @@ public class KeylessScalar extends Scalar implements KeylessField {
     @Override
     public @NotNull String getKey() throws UnsupportedOperationException {
         return "[" + index + "]";
+    }
+
+    @Override
+    public @NotNull String getKey(@NotNull CaseStyle style) {
+        return getKey();
     }
 
     @Override

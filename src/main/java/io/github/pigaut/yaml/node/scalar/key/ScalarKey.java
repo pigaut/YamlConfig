@@ -1,6 +1,7 @@
 package io.github.pigaut.yaml.node.scalar.key;
 
 import io.github.pigaut.yaml.*;
+import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.convert.parse.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.scalar.*;
@@ -43,6 +44,11 @@ public class ScalarKey extends Scalar {
     @Override
     public @NotNull String getKey() {
         return toString();
+    }
+
+    @Override
+    public @NotNull String getKey(@NotNull CaseStyle style) {
+        return style.format(toString());
     }
 
     @Override

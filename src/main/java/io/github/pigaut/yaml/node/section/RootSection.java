@@ -2,6 +2,7 @@ package io.github.pigaut.yaml.node.section;
 
 import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.configurator.*;
+import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.sequence.*;
 import io.github.pigaut.yaml.util.*;
@@ -12,17 +13,19 @@ import org.snakeyaml.engine.v2.nodes.*;
 
 import java.io.*;
 import java.nio.charset.*;
+import java.util.*;
 import java.util.function.*;
 
 public class RootSection extends Section implements ConfigRoot {
 
     private final ConfigLoad loader = new ConfigLoad();
     private final ConfigDump dumper = new ConfigDump();
-    private Configurator configurator;
-    private String header = "";
-
     private final @Nullable File file;
     private final @Nullable String name;
+    private final List<ConfigException> errors = new ArrayList<>();
+    private final List<ConfigException> warnings = new ArrayList<>();
+    private Configurator configurator;
+    private String header = "";
     private @Nullable String prefix;
 
     public RootSection(@NotNull Configurator configurator) {
@@ -54,6 +57,11 @@ public class RootSection extends Section implements ConfigRoot {
 
     @Override
     public @NotNull String getKey() throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Root does not have a key");
+    }
+
+    @Override
+    public @NotNull String getKey(@NotNull CaseStyle style) {
         throw new UnsupportedOperationException("Root does not have a key");
     }
 
@@ -190,6 +198,46 @@ public class RootSection extends Section implements ConfigRoot {
     public @Nullable String saveToString() {
         String yaml = dumper.dumpToString(this);
         return yaml != null ? header + yaml : null;
+    }
+
+    @Override
+    public boolean hasErrors() {
+        return !errors.isEmpty();
+    }
+
+    @Override
+    public boolean hasWarnings() {
+        return !warnings.isEmpty();
+    }
+
+    @Override
+    public @NotNull List<ConfigException> getErrors() {
+        return new ArrayList<>(errors);
+    }
+
+    @Override
+    public @NotNull List<ConfigException> getWarnings() {
+        return new ArrayList<>(warnings);
+    }
+
+    @Override
+    public void collectError(@NotNull ConfigException error) {
+        errors.add(error);
+    }
+
+    @Override
+    public void collectWarning(@NotNull ConfigException warning) {
+        warnings.add(warning);
+    }
+
+    @Override
+    public void clearErrors() {
+        errors.clear();
+    }
+
+    @Override
+    public void clearWarnings() {
+        warnings.clear();
     }
 
     private void load(@Nullable Node node) throws ConfigLoadException {

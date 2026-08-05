@@ -1,6 +1,7 @@
 package io.github.pigaut.yaml;
 
 import io.github.pigaut.yaml.configurator.FieldType;
+import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.comments.*;
@@ -14,9 +15,9 @@ public interface ConfigField {
     @NotNull ConfigBranch getParent() throws UnsupportedOperationException;
     @NotNull ConfigRoot getRoot();
     @NotNull String getKey();
+    @NotNull String getKey(@NotNull CaseStyle style);
     @NotNull Object getValue();
     @NotNull String getPath();
-    @NotNull String getSimplePath();
     @NotNull FieldType getFieldType();
 
     <T> T getRequired(@NotNull Class<T> classType) throws InvalidConfigException;

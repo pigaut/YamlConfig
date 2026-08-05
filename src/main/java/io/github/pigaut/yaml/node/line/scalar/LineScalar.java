@@ -135,11 +135,6 @@ public abstract class LineScalar implements ConfigScalar {
     }
 
     @Override
-    public @NotNull String getSimplePath() {
-        return line.getSimplePath();
-    }
-
-    @Override
     public @NotNull FieldType getFieldType() {
         return line.getFieldType();
     }

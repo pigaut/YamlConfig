@@ -1,6 +1,7 @@
 package io.github.pigaut.yaml.node.section;
 
 import io.github.pigaut.yaml.*;
+import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.sequence.*;
 import org.jetbrains.annotations.*;
@@ -41,6 +42,11 @@ public class KeylessSection extends Section implements KeylessField {
     @Override
     public @NotNull String getKey() throws UnsupportedOperationException {
         return "[" + index + "]";
+    }
+
+    @Override
+    public @NotNull String getKey(@NotNull CaseStyle style) {
+        return getKey();
     }
 
     @Override

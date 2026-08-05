@@ -401,7 +401,7 @@ public abstract class Section extends Branch implements ConfigSection {
 
     @Override
     public <T> List<T> getAllRequired(@NotNull String path, @NotNull Class<T> classType) throws InvalidConfigException {
-        return getAll(path, classType).withDefault(List.of());
+        return getAll(path, classType).withDefaultOrThrow(List.of());
     }
 
     @Override

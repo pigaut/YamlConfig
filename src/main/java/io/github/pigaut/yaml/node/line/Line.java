@@ -34,6 +34,11 @@ public class Line implements ConfigLine {
     }
 
     @Override
+    public @NotNull String getKey(@NotNull CaseStyle style) {
+        return scalar.getKey(style);
+    }
+
+    @Override
     public boolean isRoot() {
         return scalar.isRoot();
     }
@@ -56,11 +61,6 @@ public class Line implements ConfigLine {
     @Override
     public @NotNull String getPath() {
         return scalar.getPath();
-    }
-
-    @Override
-    public @NotNull String getSimplePath() {
-        return scalar.getSimplePath();
     }
 
     @Override

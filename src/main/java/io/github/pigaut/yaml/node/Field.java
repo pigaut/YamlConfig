@@ -45,35 +45,6 @@ public abstract class Field implements ConfigField {
         return String.join(".", keys);
     }
 
-    public @NotNull String getSimplePath() {
-        if (isRoot()) {
-            throw new UnsupportedOperationException("Root configurations do not have a path");
-        }
-
-        List<Field> branch = new ArrayList<>();
-        Field currentNode = this;
-        while (!currentNode.isRoot()) {
-            branch.add(0, currentNode);
-            currentNode = currentNode.getParent();
-        }
-
-        List<String> keys = new ArrayList<>();
-        for (int i = 0; i < branch.size(); i++) {
-            Field node = branch.get(i);
-            final StringBuilder keyBuilder = new StringBuilder();
-            keyBuilder.append(node instanceof KeylessField keylessNode ?
-                    ("[" + keylessNode.getPosition() + "]") : node.getKey());
-            while (node instanceof Sequence && i < branch.size() - 1) {
-                final KeylessField nextNode = (KeylessField) branch.get(1 + i++);
-                keyBuilder.append("[" + nextNode.getPosition() + "]");
-                node = (Field) nextNode;
-            }
-            keys.add(keyBuilder.toString());
-        }
-
-        return String.join(".", keys);
-    }
-
     @Override
     public <T> T getRequired(@NotNull Class<T> classType) throws InvalidConfigException {
         return get(classType).orThrow();

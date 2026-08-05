@@ -4,9 +4,10 @@ import io.github.pigaut.yaml.configurator.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.util.*;
 import java.util.function.*;
 
-public interface ConfigRoot extends ConfigField {
+public interface ConfigRoot extends ConfigField, ErrorCollector {
 
     @Nullable String getPrefix();
     void setPrefix(@Nullable String prefix);

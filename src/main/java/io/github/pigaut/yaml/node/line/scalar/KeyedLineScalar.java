@@ -1,6 +1,7 @@
 package io.github.pigaut.yaml.node.line.scalar;
 
 import io.github.pigaut.yaml.*;
+import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.convert.parse.*;
 import io.github.pigaut.yaml.node.line.*;
 import io.github.pigaut.yaml.util.*;
@@ -18,6 +19,11 @@ public class KeyedLineScalar extends LineScalar implements ConfigScalar {
     @Override
     public @NotNull String getKey() {
         return flag;
+    }
+
+    @Override
+    public @NotNull String getKey(@NotNull CaseStyle style) {
+        return style.format(flag);
     }
 
     @Override

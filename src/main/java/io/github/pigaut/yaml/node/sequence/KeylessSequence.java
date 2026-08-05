@@ -1,6 +1,7 @@
 package io.github.pigaut.yaml.node.sequence;
 
 import io.github.pigaut.yaml.*;
+import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.section.*;
 import org.jetbrains.annotations.*;
@@ -36,6 +37,11 @@ public class KeylessSequence extends Sequence implements KeylessField {
     @Override
     public @NotNull String getKey() throws UnsupportedOperationException {
         return "[" + index + "]";
+    }
+
+    @Override
+    public @NotNull String getKey(@NotNull CaseStyle style) {
+        return getKey();
     }
 
     @Override
