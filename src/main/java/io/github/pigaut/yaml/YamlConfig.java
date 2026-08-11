@@ -6,7 +6,6 @@ import io.github.pigaut.yaml.node.scalar.*;
 import io.github.pigaut.yaml.node.section.*;
 import io.github.pigaut.yaml.node.sequence.*;
 import org.jetbrains.annotations.*;
-import org.snakeyaml.engine.v2.api.*;
 import org.snakeyaml.engine.v2.exceptions.*;
 import org.snakeyaml.engine.v2.nodes.*;
 
@@ -113,11 +112,7 @@ public class YamlConfig {
     @NotNull
     public static RootSection loadSectionOrEmpty(@NotNull File file, @NotNull Configurator configurator, String prefix) {
         RootSection section = createEmptySection(file, configurator, prefix);
-        try {
-            section.load();
-        } catch (ConfigLoadException e) {
-            // ignored
-        }
+        section.loadOrEmpty();
         return section;
     }
 
@@ -171,11 +166,7 @@ public class YamlConfig {
     @NotNull
     public static RootSequence loadSequenceOrEmpty(@NotNull File file, @NotNull Configurator configurator, String prefix) {
         RootSequence sequence = createEmptySequence(file, configurator, prefix);
-        try {
-            sequence.load();
-        } catch (ConfigLoadException e) {
-            // ignored
-        }
+        sequence.loadOrEmpty();
         return sequence;
     }
 
@@ -229,11 +220,7 @@ public class YamlConfig {
     @NotNull
     public static RootScalar loadScalarOrEmpty(@NotNull File file, @NotNull Configurator configurator, String prefix) {
         RootScalar scalar = createEmptyScalar(file, configurator, prefix);
-        try {
-            scalar.load();
-        } catch (ConfigLoadException e) {
-            // ignored
-        }
+        scalar.loadOrEmpty();
         return scalar;
     }
 
@@ -263,10 +250,9 @@ public class YamlConfig {
             Float.class, Double.class, BigInteger.class, BigDecimal.class
     );
 
-    public static String getFileName(@NotNull File file) {
-        final String fileName = file.getName();
-        final int extension = fileName.lastIndexOf(".");
-        return extension != -1 ? fileName.substring(0, extension) : fileName;
+    public static String getFileNameWithoutYamlExtension(@NotNull File file) {
+        String fileName = file.getName();
+        return removeYamlExtension(fileName);
     }
 
     public static String generateRandomKey() {
@@ -327,6 +313,17 @@ public class YamlConfig {
         }
 
         return fileName + ".yml";
+    }
+
+    public static @NotNull String removeYamlExtension(@NotNull String fileName) {
+        String lower = fileName.toLowerCase(Locale.ROOT);
+        if (lower.endsWith(".yml")) {
+            return fileName.substring(0, fileName.length() - 4);
+        }
+        if (lower.endsWith(".yaml")) {
+            return fileName.substring(0, fileName.length() - 5);
+        }
+        return fileName;
     }
 
     // Handle lists and sections as keys one day

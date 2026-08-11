@@ -1,9 +1,10 @@
 package io.github.pigaut.yaml;
 
-import io.github.pigaut.yaml.convert.format.*;
+import io.github.pigaut.yaml.configurator.load.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.line.scalar.*;
 import io.github.pigaut.yaml.node.scalar.*;
+import io.github.pigaut.yaml.node.scalar.key.*;
 import io.github.pigaut.yaml.node.section.*;
 import io.github.pigaut.yaml.node.sequence.*;
 import org.jetbrains.annotations.*;
@@ -16,40 +17,69 @@ public class InvalidConfigException extends ConfigException {
 
     private final ConfigField field;
     private final @Nullable String prefix;
-    private @Nullable String error;
     private final @Nullable File file;
+    private final @Nullable String fileName;
+    private final @Nullable Object key;
+
     private final @Nullable String path;
     private final @Nullable String topLevelKey;
     private final @Nullable String line;
-    private final String details;
+    private final @Nullable String details;
 
-    public InvalidConfigException(@NotNull ConfigField field, String details) {
-        this(field.getRoot(), field, field.isRoot() ? null : field.getKey(), details);
+    private @Nullable String error;
+
+    public InvalidConfigException(@NotNull ConfigField field, @Nullable String details) {
+        this(field.getRoot(), field, null, details);
     }
 
-    public InvalidConfigException(@NotNull ConfigField field, @NotNull String key, String details) {
+    public InvalidConfigException(@NotNull ConfigField field, @NotNull String key, @Nullable String details) {
         this(field.getRoot(), field, key, details);
     }
 
-    public InvalidConfigException(@NotNull ConfigField field, int index, String details) {
+    public InvalidConfigException(@NotNull ConfigField field, int index, @Nullable String details) {
         this(field.getRoot(), field, index, details);
     }
 
     public InvalidConfigException(@NotNull InvalidConfigException exception, @Nullable String details) {
         this.field = exception.field;
         this.prefix = exception.prefix;
-        this.error = exception.error;
         this.file = exception.file;
+        this.fileName = exception.fileName;
+        this.key = exception.key;
+
         this.path = exception.path;
         this.topLevelKey = exception.topLevelKey;
         this.line = exception.line;
         this.details = details;
+
+        this.error = exception.error;
     }
 
     private InvalidConfigException(@NotNull ConfigRoot root, @NotNull ConfigField field, @Nullable Object key, @Nullable String details) {
+        // key to field
+        if (field instanceof ScalarKey scalarKey) {
+            field = scalarKey.getField();
+        }
+
+        // in-line scalar to complete line
+        if (field instanceof LineScalar lineScalar) {
+            field = lineScalar.toLine();
+        }
+
+        // Line to scalar
+        if (field instanceof ConfigLine lineField) {
+            field = lineField.toScalar();
+        }
+
+        if (!(field instanceof ConfigBranch)) {
+            key = null;
+        }
+
         this.field = field;
         this.prefix = root.getPrefix();
         this.file = root.getFile();
+        this.fileName = root.getName();
+        this.key = key;
 
         // Path
         if (field instanceof ConfigSection section && key != null) {
@@ -66,11 +96,16 @@ public class InvalidConfigException extends ConfigException {
         }
 
         // Top level key
-        ConfigField parentField = field;
-        while (!parentField.isRoot()) {
-            parentField = parentField.getParent();
+        if (field.isRoot()) {
+            topLevelKey = key != null ? key.toString() : null;
         }
-        topLevelKey = parentField instanceof KeyedField keyedField ? keyedField.getKey() : null;
+        else {
+            ConfigField topLevelField = field;
+            while (!topLevelField.getParent().isRoot()) {
+                topLevelField = topLevelField.getParent();
+            }
+            topLevelKey = topLevelField instanceof KeyedField keyedField ? keyedField.getKey() : null;
+        }
 
         // Line
         if (field instanceof KeyedScalar keyedScalar) {
@@ -80,47 +115,64 @@ public class InvalidConfigException extends ConfigException {
             }
             line = keyedScalar.getKey() + ": " + value;
         }
-        else if (field instanceof LineScalar lineScalar) {
-            ConfigLine line = lineScalar.toLine();
-            String value = line.getValue();
-            if (value.length() > 25) {
-                value = value.substring(0, 25) + "...";
-            }
-            this.line = line.isRoot() ? value : line.getKey() + ": " + value;
-        }
         else if (field instanceof ConfigSection section) {
-            if (section.isRoot()) {
-                line = "{ ... }";
-            }
-            else if (key != null) {
-                String value = section.getString(key.toString()).orElse("...");
-                if (value.length() > 25) {
-                    value = value.substring(0, 25) + "...";
+            StringBuilder builder = new StringBuilder();
+            if (key == null) {
+                if (section.isRoot()) {
+                    builder.append("{ ... }");
+                } else if (section instanceof KeyedSection keyedSection) {
+                    builder.append(keyedSection.getKey()).append(": { ... }");
+                } else if (section instanceof KeylessSection keylessSection) {
+                    if (keylessSection.getParent() instanceof KeyedSequence keyedParentSequence) {
+                        builder.append(keyedParentSequence.getKey()).append("[").append(keylessSection.getIndex() + 1).append("]: ");
+                    } else {
+                        builder.append("[").append(keylessSection.getIndex() + 1).append("]: ");
+                    }
                 }
-                line = key + ": " + value;
+            } else if (section.isScalar(key.toString())) {
+                Object value = section.getValue(key.toString());
+                if (value != null) {
+                    String stringValue = value.toString();
+                    if (stringValue.length() > 25) {
+                        stringValue = stringValue.substring(0, 25) + "...";
+                    }
+                    builder.append(key).append(": ").append(stringValue);
+                } else if (section.isRoot()) {
+                    builder.append("{ ... }");
+                } else {
+                    builder.append(section.getKey()).append(": { ... }");
+                }
+            } else if (section.isRoot()) {
+                builder.append("{ ... }");
+            } else {
+                builder.append(section.getKey()).append(": { ... }");
             }
-            else {
-                line = section.getKey() + ": { ... }";
-            }
+            line = builder.toString();
         }
         else if (field instanceof KeylessField keylessField) {
             ConfigField parent = keylessField.getParent();
             if (parent instanceof ConfigSequence parentSequence) {
-                if (key instanceof Integer index && index < parentSequence.size()) {
-                    StringBuilder lineBuilder = new StringBuilder();
-                    if (!parentSequence.isRoot()) {
-                        lineBuilder.append(parentSequence.getKey());
+                if (key instanceof Integer index && parentSequence.isScalar(index)) {
+                    Object value = parentSequence.getValue(index);
+                    if (value != null) {
+                        StringBuilder lineBuilder = new StringBuilder();
+                        if (!parentSequence.isRoot()) {
+                            lineBuilder.append(parentSequence.getKey());
+                        }
+
+                        lineBuilder.append("[").append(index + 1).append("]: ");
+
+                        String string = value.toString();
+                        if (string.length() > 25) {
+                            string = string.substring(0, 25) + "...";
+                        }
+                        lineBuilder.append(string);
+
+                        line = lineBuilder.toString();
                     }
-
-                    lineBuilder.append("[").append(index + 1).append("]: ");
-
-                    String value = parentSequence.getString(index).orElse("...");
-                    if (value.length() > 25) {
-                        value = value.substring(0, 25) + "...";
+                    else {
+                        line = parentSequence.getKey() + ": [ ... ]";
                     }
-                    lineBuilder.append(value);
-
-                    line = lineBuilder.toString();
                 }
                 else {
                     line = parentSequence.getKey() + ": [ ... ]";
@@ -140,7 +192,7 @@ public class InvalidConfigException extends ConfigException {
         if (field instanceof ConfigLine configLine && configLine.getFormat() != null) {
             this.details = "Expected format: " + configLine.getFormat();
         } else {
-            this.details = details;
+            this.details = Objects.requireNonNullElse(details, "Could not process the provided configuration");
         }
     }
 
@@ -156,12 +208,18 @@ public class InvalidConfigException extends ConfigException {
         return error;
     }
 
-    public void setError(@Nullable String error) {
-        this.error = error;
+    public void setErrorIfMissing(@Nullable String error) {
+        if (this.error == null) {
+            this.error = error;
+        }
     }
 
     public @Nullable File getFile() {
         return file;
+    }
+
+    public @Nullable Object getKey() {
+        return key;
     }
 
     public @Nullable String getFilePath() {
@@ -183,11 +241,15 @@ public class InvalidConfigException extends ConfigException {
         return topLevelKey;
     }
 
+    public @Nullable String getFileName() {
+        return fileName;
+    }
+
     public @Nullable String getLine() {
         return line;
     }
 
-    public @NotNull String getDetails() {
+    public @Nullable String getDetails() {
         return details;
     }
 
@@ -198,19 +260,17 @@ public class InvalidConfigException extends ConfigException {
 
     @Override
     public String toString() {
-        String optionalPrefix = prefix != null ? (prefix + " ") : "";
-        String optionalError = error != null ? (": " + CaseFormatter.toSpacedUpperCase(error)) : "";
-        String optionalFile = file != null ? (" File >> " + file.getPath() + "\n") : "";
-        String optionalPath = path != null ? (" Path >> " + path + "\n") : "";
-        String optionalLine = line != null ? (" Line >> " + line + "\n") : "";
-
-        String errorMessage = "%sConfiguration Error%s\n" +
-                "%s" +
-                "%s" +
-                "%s" +
-                " Details >> %s.\n\n";
-        return String.format(errorMessage, optionalPrefix, optionalError, optionalFile,
-                optionalPath, optionalLine, details);
+        return "InvalidConfigException{" +
+                "field=" + field +
+                ", \nprefix='" + prefix + '\'' +
+                ", \nerror='" + error + '\'' +
+                ", \nfile=" + file +
+                ", \nkey=" + key +
+                ", \npath='" + path + '\'' +
+                ", \ntopLevelKey='" + topLevelKey + '\'' +
+                ", \nline='" + line + '\'' +
+                ", \ndetails='" + details + '\'' +
+                "\n}";
     }
 
 }

@@ -9,12 +9,16 @@ import java.util.stream.*;
 
 public class ConfigOptional<T> extends AbstractOptional<T> {
 
-    protected ConfigOptional(@NotNull ConfigField field, @NotNull T value, boolean existsInConfig) {
+    protected ConfigOptional(ConfigField field, @Nullable T value, boolean existsInConfig) {
         super(field, value, existsInConfig);
     }
 
-    protected ConfigOptional(@NotNull ConfigField field, @NotNull InvalidConfigException exception, boolean existsInConfig) {
-        super(field, exception, existsInConfig);
+    protected ConfigOptional(ConfigField field, @Nullable InvalidConfigException exception, boolean existsInConfig) {
+        super(field, exception, existsInConfig, false);
+    }
+
+    protected ConfigOptional(ConfigField field, @Nullable InvalidConfigException exception, boolean existsInConfig, boolean warning) {
+        super(field, exception, existsInConfig, warning);
     }
 
     public static <T extends ConfigField> ConfigOptional<T> of(@NotNull T field) {
@@ -37,8 +41,8 @@ public class ConfigOptional<T> extends AbstractOptional<T> {
         return new ConfigOptional<>(field, new InvalidConfigException(field, index, cause), false);
     }
 
-    public static <T> ConfigOptional<T> invalid(@NotNull ConfigField field, @NotNull String cause) {
-        return new ConfigOptional<>(field, new InvalidConfigException(field, cause), true);
+    public static <T> ConfigOptional<T> invalid(@NotNull ConfigField field, @NotNull String details) {
+        return new ConfigOptional<>(field, new InvalidConfigException(field, details), true);
     }
 
     public static <T> ConfigOptional<T> invalid(@NotNull InvalidConfigException exception) {
@@ -78,6 +82,23 @@ public class ConfigOptional<T> extends AbstractOptional<T> {
         }
     }
 
+    public ConfigOptional<T> requireOrWarn(@NotNull Requirement<? super T> requirement) {
+        return requireOrWarn(requirement, requirement.getErrorDetails());
+    }
+
+    public ConfigOptional<T> requireOrWarn(@NotNull Requirement<? super T> requirement, @NotNull String errorDetails) {
+        Objects.requireNonNull(requirement);
+        Objects.requireNonNull(errorDetails);
+        if (isInvalid()) {
+            return this;
+        } else {
+            if (requirement.test(value)) {
+                return this;
+            }
+            return new ConfigOptional<>(field, new InvalidConfigException(field, errorDetails), existsInConfig, true);
+        }
+    }
+
     public T requireOrThrow(@NotNull Requirement<? super T> requirement) throws InvalidConfigException {
         return requireOrThrow(requirement, requirement.getErrorDetails());
     }
@@ -106,36 +127,44 @@ public class ConfigOptional<T> extends AbstractOptional<T> {
         }
     }
 
-    public <U> ConfigOptional<U> map(Function<? super T, ? extends U> mapper) {
-        Objects.requireNonNull(mapper);
-        if (exception != null) {
-            return new ConfigOptional<>(field, exception, existsInConfig);
+    public ConfigOptional<T> checkOrWarn(boolean condition, @NotNull String errorMessage) {
+        if (isInvalid()) {
+            return this;
         } else {
-            U mappedValue = Objects.requireNonNull(mapper.apply(value));
-            return new ConfigOptional<>(field, mappedValue, existsInConfig);
+            if (condition) {
+                return this;
+            }
+            return new ConfigOptional<>(field, new InvalidConfigException(field, errorMessage), existsInConfig, true);
         }
     }
 
-    public <U> ConfigOptional<U> flatMap(Function<? super T, ? extends ConfigOptional<? extends U>> mapper) {
+    public <U> ConfigOptional<@Nullable U> mapIfValid(Function<? super T, ? extends @Nullable U> mapper) {
         Objects.requireNonNull(mapper);
-        if (exception != null) {
+        if (isInvalid()) {
             return new ConfigOptional<>(field, exception, existsInConfig);
-        } else {
-            @SuppressWarnings("unchecked")
-            ConfigOptional<U> r = (ConfigOptional<U>) mapper.apply(value);
-            return Objects.requireNonNull(r);
         }
+        U mappedValue = Objects.requireNonNull(mapper.apply(value));
+        return new ConfigOptional<>(field, mappedValue, existsInConfig);
     }
 
-    public <U> ConfigList<U> mapToList(Function<? super T, ? extends ConfigList<? extends U>> mapper) {
+    public <U> ConfigOptional<@Nullable U> flatMapIfValid(Function<? super T, ? extends ConfigOptional<? extends U>> mapper) {
         Objects.requireNonNull(mapper);
-        if (exception != null) {
+        if (isInvalid()) {
+            return new ConfigOptional<>(field, exception, existsInConfig);
+        }
+        @SuppressWarnings("unchecked")
+        ConfigOptional<U> r = (ConfigOptional<U>) mapper.apply(value);
+        return Objects.requireNonNull(r);
+    }
+
+    public <U> ConfigList<@Nullable U> mapToListIfValid(Function<? super T, ? extends ConfigList<? extends U>> mapper) {
+        Objects.requireNonNull(mapper);
+        if (isInvalid()) {
             return new ConfigList<>(field, exception, existsInConfig);
-        } else {
-            @SuppressWarnings("unchecked")
-            ConfigList<U> r = (ConfigList<U>) mapper.apply(value);
-            return Objects.requireNonNull(r);
         }
+        @SuppressWarnings("unchecked")
+        ConfigList<U> r = (ConfigList<U>) mapper.apply(value);
+        return Objects.requireNonNull(r);
     }
 
 }

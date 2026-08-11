@@ -1,6 +1,7 @@
 package io.github.pigaut.yaml.util;
 
 import io.github.pigaut.yaml.*;
+import io.github.pigaut.yaml.configurator.load.*;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -12,19 +13,27 @@ public class AbstractOptional<T> {
     protected final T value;
     protected final InvalidConfigException exception;
     protected final boolean existsInConfig;
+    protected final boolean warning;
 
-    protected AbstractOptional(@NotNull ConfigField field, @NotNull T value, boolean existsInConfig) {
+    protected AbstractOptional(ConfigField field, @Nullable T value, boolean existsInConfig) {
         this.field = field;
         this.value = value;
         this.exception = null;
         this.existsInConfig = existsInConfig;
+        this.warning = false;
     }
 
-    protected AbstractOptional(@NotNull ConfigField field, @NotNull InvalidConfigException exception, boolean existsInConfig) {
+    protected AbstractOptional(ConfigField field, @Nullable InvalidConfigException exception, boolean existsInConfig, boolean warning) {
         this.field = field;
         this.value = null;
         this.exception = exception;
         this.existsInConfig = existsInConfig;
+        this.warning = warning;
+        ConfigRoot root = field.getRoot();
+        ConfigLoader<?> activeLoader = root.getActiveLoader();
+        if (activeLoader != null) {
+            exception.setErrorIfMissing(activeLoader.getErrorDescription());
+        }
     }
 
     public ConfigField field() {
@@ -50,56 +59,50 @@ public class AbstractOptional<T> {
     }
 
     public boolean isValid() {
-        return value != null;
+        return value != null || exception == null;
     }
 
     public boolean isInvalid() {
-        return exception != null;
+        return exception != null || value == null;
     }
 
-    public boolean test(@NotNull Predicate<? super T> predicate) {
+    public boolean test(Predicate<? super T> predicate) {
         return isValid() && predicate.test(value);
     }
 
-    public void ifValid(@NotNull Consumer<? super T> action) {
+    public void ifValid(@NotNull Consumer<? super @NotNull T> action) {
         if (isValid()) {
             action.accept(value);
-        }
-        else if (existsInConfig()) {
-            assert exception != null;
-            ConfigRoot root = field.getRoot();
-            root.collectError(exception);
+        } else if (existsInConfig()) {
+            collectException();
         }
     }
 
-    public void ifValidOrWarn(@NotNull Consumer<? super T> action) {
+    public void ifValidOrWarn(@NotNull Consumer<? super @NotNull T> action) {
         if (isValid()) {
             action.accept(value);
-        }
-        else if (existsInConfig()) {
+        } else if (existsInConfig()) {
             assert exception != null;
             ConfigRoot root = field.getRoot();
             root.collectWarning(exception);
         }
     }
 
-    public void ifValidOrThrow(@NotNull Consumer<? super T> action) throws InvalidConfigException {
+    public void ifValidOrThrow(@NotNull Consumer<? super @NotNull T> action) throws InvalidConfigException {
         if (isValid()) {
             action.accept(value);
-        }
-        else if (existsInConfig()) {
+        } else if (existsInConfig()) {
             assert exception != null;
             throw exception;
         }
     }
 
-    public void ifValidOrElse(@NotNull Consumer<? super T> action, @NotNull Consumer<@NotNull InvalidConfigException> errorCollector) {
+    public void ifValidOrElse(@NotNull Consumer<? super @NotNull T> action, Runnable orElse) {
         if (isValid()) {
             action.accept(value);
-        }
-        else if (existsInConfig()) {
-            assert exception != null;
-            errorCollector.accept(exception);
+        } else if (existsInConfig()) {
+            collectException();
+            orElse.run();
         }
     }
 
@@ -107,71 +110,67 @@ public class AbstractOptional<T> {
         return value != null ? value : other;
     }
 
-    public T orElseGet(@NotNull Supplier<? extends T> supplier) {
+    public T orElseGet(Supplier<? extends T> supplier) {
         return value != null ? value : supplier.get();
     }
 
     public void throwErrorIfAny() throws InvalidConfigException {
-        if (exception != null && existsInConfig()) {
+        if (isInvalid() && existsInConfig()) {
             throw exception;
         }
     }
 
     public void collectErrorIfAny(Consumer<InvalidConfigException> errorCollector) {
-        if (exception != null && existsInConfig()) {
+        if (isInvalid() && existsInConfig()) {
             errorCollector.accept(exception);
         }
     }
 
     public @NotNull T orThrow() throws InvalidConfigException {
-        if (exception != null) {
+        if (isInvalid()) {
             throw exception;
         }
         return Objects.requireNonNull(value);
     }
 
-    public T withDefault(T defaultValue) {
+    @Contract("!null -> !null")
+    public T withDefault(@Nullable T defaultValue) {
         if (isValid()) {
             return value;
-        }
-        else if (existsInConfig()) {
-            assert exception != null;
-            ConfigRoot root = field.getRoot();
-            root.collectError(exception);
+        } else if (existsInConfig()) {
+            collectException();
         }
         return defaultValue;
     }
 
-    public T withDefaultOrWarn(T defaultValue) {
+    @Contract("!null -> !null")
+    public T withDefaultOrWarn(@Nullable T defaultValue) {
         if (isValid()) {
             return value;
-        }
-        else if (existsInConfig()) {
-            assert exception != null;
+        } else if (existsInConfig()) {
             ConfigRoot root = field.getRoot();
             root.collectWarning(exception);
         }
         return defaultValue;
     }
 
-    public T withDefaultOrThrow(T defaultValue) throws InvalidConfigException {
+    @Contract("!null -> !null")
+    public T withDefaultOrThrow(@Nullable T defaultValue) throws InvalidConfigException {
         if (isValid()) {
             return value;
-        }
-        else if (existsInConfig()) {
-            assert exception != null;
+        } else if (existsInConfig()) {
             throw exception;
         }
         return defaultValue;
     }
 
-    public T withDefaultOrElse(T defaultValue, @NotNull Consumer<@NotNull InvalidConfigException> errorCollector) {
+    @Contract("!null, _ -> !null")
+    public T withDefaultOrElse(@Nullable T defaultValue, Runnable orElse) {
         if (isValid()) {
             return value;
-        }
-        else if (existsInConfig()) {
-            assert exception != null;
-            errorCollector.accept(exception);
+        } else if (existsInConfig()) {
+            collectException();
+            orElse.run();
         }
         return defaultValue;
     }
@@ -180,16 +179,26 @@ public class AbstractOptional<T> {
         return Optional.ofNullable(value);
     }
 
-    @Override
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if (!(object instanceof AbstractOptional<?> that)) return false;
-        return existsInConfig == that.existsInConfig && Objects.equals(field, that.field) && Objects.equals(value, that.value) && Objects.equals(exception, that.exception);
+    private void collectException() {
+        assert exception != null;
+        ConfigRoot root = field.getRoot();
+        if (warning) {
+            root.collectWarning(exception);
+        } else {
+            root.collectError(exception);
+        }
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(field, value, exception, existsInConfig);
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (!(object instanceof AbstractOptional<?> that)) return false;
+        return existsInConfig == that.existsInConfig && Objects.equals(field, that.field) && Objects.equals(value, that.value) && Objects.equals(exception, that.exception);
     }
 
 }

@@ -16,7 +16,7 @@ public class AmountLoader implements ConfigLoader<Amount> {
     }
 
     @Override
-    public @NotNull Amount loadFromScalar(ConfigScalar scalar) throws InvalidConfigException {
+    public @NotNull Amount loadFromScalar(@NotNull ConfigScalar scalar) throws InvalidConfigException {
         try {
             return ParseUtil.parseAmount(scalar.toString());
         } catch (StringParseException e) {

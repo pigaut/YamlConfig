@@ -78,7 +78,7 @@ public abstract class Section extends Branch implements ConfigSection {
         Preconditions.checkNotNull(value, "Value cannot be null");
         var classType = value.getClass();
         if (YamlConfig.isScalarType(classType)) {
-            createScalar(YamlConfig.generateRandomKey(), value);
+            createScalar(YamlConfig.generateRandomKey(), value, true);
             return;
         }
 
@@ -205,27 +205,27 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     @Override
-    public Set<KeyedSequence> getNestedSequences(@NotNull String path) {
-        ConfigSection section = getSection(path).orElse(null);
-        return section != null ? section.getNestedSequences() : Set.of();
+    public Set<? extends ConfigSequence> getNestedSequences(@NotNull String path) {
+        ConfigBranch branch = getBranch(path).orElse(null);
+        return branch != null ? branch.getNestedSequences() : Set.of();
     }
 
     @Override
-    public Set<KeyedSection> getNestedSections(@NotNull String path) {
-        ConfigSection section = getSection(path).orElse(null);
-        return section != null ? section.getNestedSections() : Set.of();
+    public Set<? extends ConfigSection> getNestedSections(@NotNull String path) {
+        ConfigBranch branch = getBranch(path).orElse(null);
+        return branch != null ? branch.getNestedSections() : Set.of();
     }
 
     @Override
-    public Set<KeyedScalar> getNestedScalars(@NotNull String path) {
-        ConfigSection section = getSection(path).orElse(null);
-        return section != null ? section.getNestedScalars() : Set.of();
+    public Set<? extends ConfigScalar> getNestedScalars(@NotNull String path) {
+        ConfigBranch branch = getBranch(path).orElse(null);
+        return branch != null ? branch.getNestedScalars() : Set.of();
     }
 
     @Override
-    public Set<KeyedField> getNestedFields(@NotNull String path) {
-        ConfigSection section = getSection(path).orElse(null);
-        return section != null ? section.getNestedFields() : Set.of();
+    public Set<? extends ConfigField> getNestedFields(@NotNull String path) {
+        ConfigBranch branch = getBranch(path).orElse(null);
+        return branch != null ? branch.getNestedFields() : Set.of();
     }
 
     @Override
@@ -234,35 +234,55 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     @Override
-    public boolean contains(@NotNull String path) {
-        return getField(path).isValid();
+    public boolean isSet(@NotNull String path) {
+        PathIterator iterator = PathIterator.of(this, path);
+        ConfigField field = null;
+        while (iterator.hasNext()) {
+            field = iterator.next();
+        }
+        return field != null;
     }
 
     @Override
-    public boolean isSet(@NotNull String path) {
-        return getScalar(path).isValid();
+    public boolean isScalar(@NotNull String path) {
+        PathIterator iterator = PathIterator.of(this, path);
+        ConfigField field = null;
+        while (iterator.hasNext()) {
+            field = iterator.next();
+        }
+        return field instanceof ConfigScalar;
     }
 
     @Override
     public boolean isSection(@NotNull String path) {
-        return getSection(path).isValid();
+        PathIterator iterator = PathIterator.of(this, path);
+        ConfigField field = null;
+        while (iterator.hasNext()) {
+            field = iterator.next();
+        }
+        return field instanceof ConfigSection;
     }
 
     @Override
     public boolean isSequence(@NotNull String path) {
-        return getSequence(path).isValid();
+        PathIterator iterator = PathIterator.of(this, path);
+        ConfigField field = null;
+        while (iterator.hasNext()) {
+            field = iterator.next();
+        }
+        return field instanceof ConfigSequence;
     }
 
     @Override
     public <T> void set(@NotNull String path, @Nullable T value) {
         if (value == null) {
-            createScalar(path, "");
+            createScalar(path, "", true);
             return;
         }
 
         final var classType = value.getClass();
         if (YamlConfig.isScalarType(classType)) {
-            createScalar(path, value);
+            createScalar(path, value, true);
             return;
         }
 
@@ -321,15 +341,15 @@ public abstract class Section extends Branch implements ConfigSection {
 
     @Override
     public void remove(@NotNull String path) {
-        final PathIterator iterator = PathIterator.of(this, path);
+        PathIterator iterator = PathIterator.of(this, path);
         while (iterator.hasNext()) {
             if (iterator.isLast()) {
-                final Branch currentBranch = iterator.getCurrentBranch();
-                final FieldKey lastKey = iterator.getLastKey();
+                Branch currentBranch = iterator.getCurrentBranch();
+                FieldKey lastKey = iterator.getLastKey();
                 lastKey.remove(currentBranch);
                 break;
             }
-            iterator.nextBranch();
+            iterator.nextBranch(true);
         }
     }
 
@@ -373,7 +393,7 @@ public abstract class Section extends Branch implements ConfigSection {
         PathIterator iterator = PathIterator.of(this, path);
         Branch currentBranch = this;
         while (iterator.hasNext()) {
-            currentBranch = iterator.nextBranch();
+            currentBranch = iterator.nextBranch(true);
         }
         return currentBranch.convertToSection();
     }
@@ -383,7 +403,7 @@ public abstract class Section extends Branch implements ConfigSection {
         PathIterator iterator = PathIterator.of(this, path);
         Branch currentBranch = this;
         while (iterator.hasNext()) {
-            currentBranch = iterator.nextBranch();
+            currentBranch = iterator.nextBranch(true);
         }
         return currentBranch.convertToSequence();
     }
@@ -391,12 +411,30 @@ public abstract class Section extends Branch implements ConfigSection {
     @Override
     public ConfigScalar getScalarOrCreate(@NotNull String path) {
         ConfigScalar scalar = getScalar(path).orElse(null);
-        return scalar != null ? scalar : createScalar(path, "");
+        return scalar != null ? scalar : createScalar(path, "", true);
+    }
+
+    @Override
+    public ConfigScalar getScalarOrEmpty(@NotNull String path) {
+        ConfigScalar scalar = getScalar(path).orElse(null);
+        return scalar != null ? scalar : createScalar(path, "", false);
+    }
+
+    @Override
+    public ConfigSection getSectionOrEmpty(@NotNull String path) {
+        ConfigSection section = getSection(path).orElse(null);
+        return section != null ? section : createSection(path, false);
+    }
+
+    @Override
+    public ConfigSequence getSequenceOrEmpty(@NotNull String path) {
+        ConfigSequence sequence = getSequence(path).orElse(null);
+        return sequence != null ? sequence : createSequence(path, false);
     }
 
     @Override
     public <T> ConfigList<T> getAll(@NotNull String path, @NotNull Class<T> classType) {
-        return getBranch(path).mapToList(branch -> branch.getAll(classType));
+        return getBranch(path).mapToListIfValid(branch -> branch.getAll(classType));
     }
 
     @Override
@@ -486,11 +524,11 @@ public abstract class Section extends Branch implements ConfigSection {
 
     @Override
     public <T> ConfigOptional<T> get(@NotNull String path, @NotNull Class<T> classType) {
-        return getField(path).flatMap(field -> field.get(classType));
+        return getField(path).flatMapIfValid(field -> field.get(classType));
     }
 
     public ConfigOptional<ConfigField> getField(@NotNull String path) {
-        final PathIterator iterator = PathIterator.of(this, path);
+        PathIterator iterator = PathIterator.of(this, path);
 
         ConfigField field = null;
         while (iterator.hasNext()) {
@@ -506,132 +544,132 @@ public abstract class Section extends Branch implements ConfigSection {
 
     @Override
     public ConfigOptional<ConfigScalar> getScalar(@NotNull String path) {
-        return getField(path).flatMap(ConfigField::toScalar);
+        return getField(path).flatMapIfValid(ConfigField::asScalar);
     }
 
     @Override
     public ConfigOptional<ConfigSection> getSection(@NotNull String path) {
-        return getField(path).flatMap(ConfigField::toSection);
+        return getField(path).flatMapIfValid(ConfigField::asSection);
     }
 
     @Override
     public ConfigOptional<ConfigSequence> getSequence(@NotNull String path) {
-        return getField(path).flatMap(ConfigField::toSequence);
+        return getField(path).flatMapIfValid(ConfigField::asSequence);
     }
 
     @Override
     public ConfigOptional<ConfigLine> getLine(@NotNull String path) {
-        return getScalar(path).map(ConfigScalar::toLine);
+        return getScalar(path).mapIfValid(ConfigScalar::toLine);
     }
 
     @Override
     public ConfigOptional<ConfigLine> getLine(@NotNull String path, @NotNull LineStyle lineStyle) {
-        return getScalar(path).map(scalar -> scalar.toLine(lineStyle));
+        return getScalar(path).mapIfValid(scalar -> scalar.toLine(lineStyle));
     }
 
     @Override
     public ConfigOptional<ConfigLine> getLine(@NotNull String path, @NotNull LineStyle lineStyle, @NotNull String format) {
-        return getScalar(path).flatMap(scalar -> scalar.toLine(lineStyle, format));
+        return getScalar(path).flatMapIfValid(scalar -> scalar.toLine(lineStyle, format));
     }
 
     @Override
     public ConfigOptional<Boolean> getBoolean(@NotNull String path) {
-        return getScalar(path).flatMap(ConfigScalar::toBoolean);
+        return getScalar(path).flatMapIfValid(ConfigScalar::toBoolean);
     }
 
     @Override
     public ConfigOptional<Character> getCharacter(@NotNull String path) {
-        return getScalar(path).flatMap(ConfigScalar::toCharacter);
+        return getScalar(path).flatMapIfValid(ConfigScalar::toCharacter);
     }
 
     @Override
     public @NotNull ConfigOptional<String> getString(@NotNull String path) {
-        return getScalar(path).map(ConfigScalar::toString);
+        return getScalar(path).mapIfValid(ConfigScalar::toString);
     }
 
     @Override
     public @NotNull ConfigOptional<String> getString(@NotNull String path, @NotNull StringFormatter formatter) {
-        return getScalar(path).map(scalar -> formatter.format(scalar.toString()));
+        return getScalar(path).mapIfValid(scalar -> formatter.format(scalar.toString()));
     }
 
     @Override
     public ConfigOptional<Integer> getInteger(@NotNull String path) {
-        return getScalar(path).flatMap(ConfigScalar::toInteger);
+        return getScalar(path).flatMapIfValid(ConfigScalar::toInteger);
     }
 
     @Override
     public ConfigOptional<Long> getLong(@NotNull String path) {
-        return getScalar(path).flatMap(ConfigScalar::toLong);
+        return getScalar(path).flatMapIfValid(ConfigScalar::toLong);
     }
 
     @Override
     public ConfigOptional<Float> getFloat(@NotNull String path) {
-        return getScalar(path).flatMap(ConfigScalar::toFloat);
+        return getScalar(path).flatMapIfValid(ConfigScalar::toFloat);
     }
 
     @Override
     public ConfigOptional<Double> getDouble(@NotNull String path) {
-        return getScalar(path).flatMap(ConfigScalar::toDouble);
+        return getScalar(path).flatMapIfValid(ConfigScalar::toDouble);
     }
 
     @Override
     public <T> ConfigList<T> getList(@NotNull String path, Class<T> classType) {
-        return getSequence(path).mapToList(sequence -> sequence.toList(classType));
+        return getSequence(path).mapToListIfValid(sequence -> sequence.toList(classType));
     }
 
     @Override
     public ConfigList<ConfigField> getFieldList(@NotNull String path) {
-        return getSequence(path).mapToList(sequence -> ConfigList.of(sequence, sequence.toFieldList()));
+        return getSequence(path).mapToListIfValid(sequence -> ConfigList.of(sequence, sequence.toFieldList()));
     }
 
     @Override
     public ConfigList<ConfigScalar> getScalarList(@NotNull String path) {
-        return getSequence(path).mapToList(ConfigSequence::toScalarList);
+        return getSequence(path).mapToListIfValid(ConfigSequence::toScalarList);
     }
 
     @Override
     public ConfigList<ConfigSection> getSectionList(@NotNull String path) {
-        return getSequence(path).mapToList(ConfigSequence::toSectionList);
+        return getSequence(path).mapToListIfValid(ConfigSequence::toSectionList);
     }
 
     @Override
     public ConfigList<Boolean> getBooleanList(@NotNull String path) {
-        return getSequence(path).mapToList(ConfigSequence::toBooleanList);
+        return getSequence(path).mapToListIfValid(ConfigSequence::toBooleanList);
     }
 
     @Override
     public ConfigList<Character> getCharacterList(@NotNull String path) {
-        return getSequence(path).mapToList(ConfigSequence::toCharacterList);
+        return getSequence(path).mapToListIfValid(ConfigSequence::toCharacterList);
     }
 
     @Override
     public ConfigList<String> getStringList(@NotNull String path) {
-        return getSequence(path).mapToList(ConfigSequence::toStringList);
+        return getSequence(path).mapToListIfValid(ConfigSequence::toStringList);
     }
 
     @Override
     public ConfigList<String> getStringList(@NotNull String path, @NotNull StringFormatter formatter) {
-        return getSequence(path).mapToList(seq -> seq.toStringList(formatter));
+        return getSequence(path).mapToListIfValid(seq -> seq.toStringList(formatter));
     }
 
     @Override
     public ConfigList<Integer> getIntegerList(@NotNull String path) {
-        return getSequence(path).mapToList(ConfigSequence::toIntegerList);
+        return getSequence(path).mapToListIfValid(ConfigSequence::toIntegerList);
     }
 
     @Override
     public ConfigList<Long> getLongList(@NotNull String path) {
-        return getSequence(path).mapToList(ConfigSequence::toLongList);
+        return getSequence(path).mapToListIfValid(ConfigSequence::toLongList);
     }
 
     @Override
     public ConfigList<Float> getFloatList(@NotNull String path) {
-        return getSequence(path).mapToList(ConfigSequence::toFloatList);
+        return getSequence(path).mapToListIfValid(ConfigSequence::toFloatList);
     }
 
     @Override
     public ConfigList<Double> getDoubleList(@NotNull String path) {
-        return getSequence(path).mapToList(ConfigSequence::toDoubleList);
+        return getSequence(path).mapToListIfValid(ConfigSequence::toDoubleList);
     }
 
     private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
@@ -675,6 +713,18 @@ public abstract class Section extends Branch implements ConfigSection {
         return matrix;
     }
 
+    @Override
+    public @Nullable Object getValue(@NotNull String path) {
+        PathIterator iterator = PathIterator.of(this, path);
+
+        ConfigField field = null;
+        while (iterator.hasNext()) {
+            field = iterator.next();
+        }
+
+        return field != null ? field.getValue() : null;
+    }
+
     private ConfigOptional<ConfigBranch> getBranch(@NotNull String path) {
         PathIterator iterator = PathIterator.of(this, path);
 
@@ -690,18 +740,35 @@ public abstract class Section extends Branch implements ConfigSection {
         return ConfigOptional.notSet(this, path, "Field is not set");
     }
 
-    private Scalar createScalar(@NotNull String path, @NotNull Object value) {
-        final PathIterator pathIterator = PathIterator.of(this, path);
+    private Scalar createScalar(@NotNull String path, @NotNull Object value, boolean attached) {
+        PathIterator pathIterator = PathIterator.of(this, path);
         while (pathIterator.hasNext()) {
             if (pathIterator.isLast()) {
-                final Branch currentBranch = pathIterator.getCurrentBranch();
-                final FieldKey lastKey = pathIterator.getLastKey();
-
-                return lastKey.createScalar(currentBranch, value);
+                Branch currentBranch = pathIterator.getCurrentBranch();
+                FieldKey lastKey = pathIterator.getLastKey();
+                return lastKey.createScalar(currentBranch, value, attached);
             }
-            pathIterator.nextBranch();
+            pathIterator.nextBranch(attached);
         }
         throw new AssertionError();
+    }
+
+    private Section createSection(@NotNull String path, boolean attached) {
+        PathIterator iterator = PathIterator.of(this, path);
+        Branch currentBranch = this;
+        while (iterator.hasNext()) {
+            currentBranch = iterator.nextBranch(attached);
+        }
+        return currentBranch.convertToSection();
+    }
+
+    private Sequence createSequence(@NotNull String path, boolean attached) {
+        PathIterator iterator = PathIterator.of(this, path);
+        Branch currentBranch = this;
+        while (iterator.hasNext()) {
+            currentBranch = iterator.nextBranch(attached);
+        }
+        return currentBranch.convertToSequence();
     }
 
     @Override
@@ -729,31 +796,30 @@ public abstract class Section extends Branch implements ConfigSection {
         ConfigRoot root = getRoot();
         Configurator configurator = root.getConfigurator();
 
-        ConfigLoader<? extends T> loader = configurator.getLoader(classType);
+        ConfigLoader<T> loader = configurator.getLoader(classType);
         if (loader == null) {
             throw new IllegalArgumentException("No config loader found for class: " + classType.getSimpleName());
         }
 
-        try {
+        try (var scope = new LoaderScope(root, loader)) {
             return ConfigOptional.of(this, loader.loadFromSection(this));
         } catch (InvalidConfigException e) {
-            e.setError(loader.getErrorDescription());
             return ConfigOptional.invalid(e);
         }
     }
 
     @Override
-    public ConfigOptional<ConfigScalar> toScalar() {
+    public ConfigOptional<ConfigScalar> asScalar() {
         return ConfigOptional.invalid(this, "Expected a value but found a section");
     }
 
     @Override
-    public ConfigOptional<ConfigSection> toSection() {
+    public ConfigOptional<ConfigSection> asSection() {
         return ConfigOptional.of(this);
     }
 
     @Override
-    public ConfigOptional<ConfigSequence> toSequence() {
+    public ConfigOptional<ConfigSequence> asSequence() {
         return ConfigOptional.invalid(this, "Expected a list but found a section");
     }
 

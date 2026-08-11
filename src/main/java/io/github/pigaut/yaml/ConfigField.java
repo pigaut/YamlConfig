@@ -8,7 +8,7 @@ import org.snakeyaml.engine.v2.comments.*;
 
 import java.util.*;
 
-public interface ConfigField {
+public interface ConfigField extends ErrorCollector {
 
     void clear();
     boolean isRoot();
@@ -38,8 +38,8 @@ public interface ConfigField {
     void clearInlineComments();
     void addInlineComment(@NotNull String value);
 
-    ConfigOptional<ConfigScalar> toScalar();
-    ConfigOptional<ConfigSection> toSection();
-    ConfigOptional<ConfigSequence> toSequence();
+    ConfigOptional<ConfigScalar> asScalar();
+    ConfigOptional<ConfigSection> asSection();
+    ConfigOptional<ConfigSequence> asSequence();
 
 }

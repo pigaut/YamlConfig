@@ -2,6 +2,7 @@ package io.github.pigaut.yaml.node.sequence;
 
 import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.configurator.*;
+import io.github.pigaut.yaml.configurator.load.*;
 import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.section.*;
@@ -14,7 +15,7 @@ import org.snakeyaml.engine.v2.nodes.*;
 import java.io.*;
 import java.nio.charset.*;
 import java.util.*;
-import java.util.function.*;
+import java.util.concurrent.atomic.*;
 
 public class RootSequence extends Sequence implements ConfigRoot {
 
@@ -29,6 +30,8 @@ public class RootSequence extends Sequence implements ConfigRoot {
     private boolean multiDocument = false;
     private @Nullable String prefix;
 
+    private ConfigLoader<?> activeLoader = null;
+
     public RootSequence(@NotNull Configurator configurator) {
         this(null, configurator, null);
     }
@@ -41,7 +44,7 @@ public class RootSequence extends Sequence implements ConfigRoot {
         super(FlowStyle.BLOCK);
         Preconditions.checkNotNull(configurator, "Configurator cannot be null");
         this.file = file;
-        this.name = file != null ? YamlConfig.getFileName(file) : null;
+        this.name = file != null ? YamlConfig.getFileNameWithoutYamlExtension(file) : null;
         this.configurator = configurator;
         this.prefix = prefix;
     }
@@ -102,6 +105,11 @@ public class RootSequence extends Sequence implements ConfigRoot {
     }
 
     @Override
+    public boolean hasName() {
+        return name != null;
+    }
+
+    @Override
     public @Nullable String getName() {
         return name;
     }
@@ -123,11 +131,11 @@ public class RootSequence extends Sequence implements ConfigRoot {
     }
 
     @Override
-    public void load(@NotNull Consumer<ConfigLoadException> errorCollector) {
+    public void loadOrEmpty() {
         try {
             load();
         } catch (ConfigLoadException e) {
-            errorCollector.accept(e);
+            errors.add(e);
         }
     }
 
@@ -196,6 +204,16 @@ public class RootSequence extends Sequence implements ConfigRoot {
     }
 
     @Override
+    public @Nullable ConfigLoader<?> getActiveLoader() {
+        return activeLoader;
+    }
+
+    @Override
+    public void setActiveLoader(@Nullable ConfigLoader<?> loader) {
+        activeLoader = loader;
+    }
+
+    @Override
     public String saveToString() {
         if (isMultiDocument()) {
             String yaml = dumper.dumpAllToString(this.iterator());
@@ -216,6 +234,16 @@ public class RootSequence extends Sequence implements ConfigRoot {
     }
 
     @Override
+    public int getErrorCount() {
+        return errors.size();
+    }
+
+    @Override
+    public int getWarningCount() {
+        return warnings.size();
+    }
+
+    @Override
     public @NotNull List<ConfigException> getErrors() {
         return new ArrayList<>(errors);
     }
@@ -227,12 +255,28 @@ public class RootSequence extends Sequence implements ConfigRoot {
 
     @Override
     public void collectError(@NotNull ConfigException error) {
+        if (activeLoader != null && error instanceof InvalidConfigException exception) {
+            exception.setErrorIfMissing(activeLoader.getErrorDescription());
+        }
         errors.add(error);
     }
 
     @Override
     public void collectWarning(@NotNull ConfigException warning) {
+        if (activeLoader != null && warning instanceof InvalidConfigException exception) {
+            exception.setErrorIfMissing(activeLoader.getErrorDescription());
+        }
         warnings.add(warning);
+    }
+
+    @Override
+    public void collectAll(@NotNull ErrorCollector other) {
+        for (ConfigException error : other.getErrors()) {
+            collectError(error);
+        }
+        for (ConfigException warning : other.getWarnings()) {
+            collectWarning(warning);
+        }
     }
 
     @Override

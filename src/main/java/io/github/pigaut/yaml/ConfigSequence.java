@@ -14,6 +14,10 @@ import java.util.stream.*;
 public interface ConfigSequence extends ConfigBranch, Iterable<KeylessField> {
 
     boolean isSet(int index);
+    boolean isScalar(int index);
+    boolean isSection(int index);
+    boolean isSequence(int index);
+
     <T> void set(int index, @Nullable T value);
     void remove(int index);
 
@@ -76,6 +80,9 @@ public interface ConfigSequence extends ConfigBranch, Iterable<KeylessField> {
     ConfigList<Long> toLongList();
     ConfigList<Float> toFloatList();
     ConfigList<Double> toDoubleList();
+
+    @Nullable
+    Object getValue(int index);
 
     @NotNull
     ConfigSequence copy();

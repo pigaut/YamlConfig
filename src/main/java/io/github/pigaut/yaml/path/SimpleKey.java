@@ -26,7 +26,7 @@ public class SimpleKey implements FieldKey {
     }
 
     @Override
-    public Section createSection(@NotNull Branch branch) {
+    public Section createSection(@NotNull Branch branch, boolean attached) {
         Section section = branch.convertToSection();
         Object field = section.getNode(key);
 
@@ -35,12 +35,15 @@ public class SimpleKey implements FieldKey {
         }
 
         KeyedSection newSection = new KeyedSection(section, key);
-        section.addNode(newSection);
+        if (attached) {
+            section.addNode(newSection);
+        }
+
         return newSection;
     }
 
     @Override
-    public Sequence createSequence(@NotNull Branch branch) {
+    public Sequence createSequence(@NotNull Branch branch, boolean attached) {
         Section section = branch.convertToSection();
         Object field = section.getNode(key);
 
@@ -49,15 +52,21 @@ public class SimpleKey implements FieldKey {
         }
 
         KeyedSequence newSequence = new KeyedSequence(section, key);
-        section.addNode(newSequence);
+        if (attached) {
+            section.addNode(newSequence);
+        }
+
         return newSequence;
     }
 
     @Override
-    public Scalar createScalar(@NotNull Branch branch, @NotNull Object value) {
+    public Scalar createScalar(@NotNull Branch branch, @NotNull Object value, boolean attached) {
         Section section = branch.convertToSection();
         KeyedScalar newScalar = new KeyedScalar(section, key, value);
-        section.addNode(newScalar);
+        if (attached) {
+            section.addNode(newScalar);
+        }
+
         return newScalar;
     }
 

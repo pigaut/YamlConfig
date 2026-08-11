@@ -34,21 +34,24 @@ public class IndexKey implements FieldKey {
     }
 
     @Override
-    public Section createSection(@NotNull Branch branch) {
-        final Sequence sequence = branch.convertToSequence();
-        final ConfigField field = sequence.getNode(index);
+    public Section createSection(@NotNull Branch branch, boolean attached) {
+        Sequence sequence = branch.convertToSequence();
+        ConfigField field = sequence.getNode(index);
 
         if (field instanceof Section foundSection) {
             return foundSection;
         }
 
         KeylessSection newSection = new KeylessSection(sequence, index);
-        sequence.add(newSection);
+        if (attached) {
+            sequence.add(newSection);
+        }
+
         return newSection;
     }
 
     @Override
-    public Sequence createSequence(@NotNull Branch branch) {
+    public Sequence createSequence(@NotNull Branch branch, boolean attached) {
         final Sequence section = branch.convertToSequence();
         final ConfigField field = section.getNode(index);
 
@@ -57,15 +60,20 @@ public class IndexKey implements FieldKey {
         }
 
         KeylessSequence newSequence = new KeylessSequence(section, index);
-        section.addNode(newSequence);
+        if (attached) {
+            section.addNode(newSequence);
+        }
+
         return newSequence;
     }
 
     @Override
-    public Scalar createScalar(@NotNull Branch branch, @NotNull Object value) {
+    public Scalar createScalar(@NotNull Branch branch, @NotNull Object value, boolean attached) {
         Sequence sequence = branch.convertToSequence();
         KeylessScalar scalar = new KeylessScalar(sequence, index, value);
-        sequence.addNode(scalar);
+        if (attached) {
+            sequence.addNode(scalar);
+        }
         return scalar;
     }
 

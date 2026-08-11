@@ -11,7 +11,7 @@ public interface Deserializer<T> extends ConfigLoader.Scalar<T> {
     T deserialize(String string) throws StringParseException;
 
     @Override
-    default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigException {
+    default @NotNull T loadFromScalar(@NotNull ConfigScalar scalar) throws InvalidConfigException {
         try {
             return deserialize(scalar.toString());
         } catch (StringParseException e) {

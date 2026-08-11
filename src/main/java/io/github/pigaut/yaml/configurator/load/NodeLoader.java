@@ -12,7 +12,7 @@ import java.util.*;
 public class NodeLoader implements ConfigLoader<Node> {
 
     @Override
-    public @NotNull Node loadFromScalar(ConfigScalar scalar) throws InvalidConfigException {
+    public @NotNull Node loadFromScalar(@NotNull ConfigScalar scalar) throws InvalidConfigException {
         Tag tag = ScalarUtil.getTag(scalar.getValue());
         String value = scalar.toString();
 

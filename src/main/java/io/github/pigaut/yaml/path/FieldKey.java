@@ -14,11 +14,11 @@ public interface FieldKey {
 
     ConfigField getField(@NotNull Branch branch);
 
-    Section createSection(@NotNull Branch branch);
+    Section createSection(@NotNull Branch branch, boolean attached);
 
-    Sequence createSequence(@NotNull Branch branch);
+    Sequence createSequence(@NotNull Branch branch, boolean attached);
 
-    Scalar createScalar(@NotNull Branch branch, @NotNull Object value);
+    Scalar createScalar(@NotNull Branch branch, @NotNull Object value, boolean attached);
 
     void remove(@NotNull Branch branch);
 

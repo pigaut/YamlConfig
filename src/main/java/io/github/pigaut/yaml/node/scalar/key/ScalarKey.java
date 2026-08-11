@@ -21,6 +21,10 @@ public class ScalarKey extends Scalar {
         this.owner = owner;
     }
 
+    public @NotNull KeyedField getField() {
+        return owner;
+    }
+
     @Override
     public ConfigSequence split(@NotNull Pattern pattern) {
         throw new IllegalStateException("Cannot split a key scalar.");

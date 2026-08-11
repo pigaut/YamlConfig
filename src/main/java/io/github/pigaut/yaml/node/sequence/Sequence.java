@@ -192,6 +192,33 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     }
 
     @Override
+    public boolean isScalar(int index) {
+        if (!isSet(index)) {
+            return false;
+        }
+        KeylessField field = fields.get(index);
+        return field instanceof ConfigScalar;
+    }
+
+    @Override
+    public boolean isSection(int index) {
+        if (!isSet(index)) {
+            return false;
+        }
+        KeylessField field = fields.get(index);
+        return field instanceof ConfigSection;
+    }
+
+    @Override
+    public boolean isSequence(int index) {
+        if (!isSet(index)) {
+            return false;
+        }
+        KeylessField field = fields.get(index);
+        return field instanceof ConfigSequence;
+    }
+
+    @Override
     public <T> void set(int index, @Nullable T value) {
         if (index > 0 && index < size()) {
             throw new IndexOutOfBoundsException(index);
@@ -399,7 +426,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
 
     @Override
     public <T> @NotNull ConfigOptional<T> get(int index, Class<T> classType) {
-        return getField(index).flatMap(field -> field.get(classType));
+        return getField(index).flatMapIfValid(field -> field.get(classType));
     }
 
     @Override
@@ -412,67 +439,67 @@ public abstract class Sequence extends Branch implements ConfigSequence {
 
     @Override
     public ConfigOptional<ConfigScalar> getScalar(int index) {
-        return getField(index).flatMap(ConfigField::toScalar);
+        return getField(index).flatMapIfValid(ConfigField::asScalar);
     }
 
     @Override
     public ConfigOptional<ConfigSection> getSection(int index) {
-        return getField(index).flatMap(ConfigField::toSection);
+        return getField(index).flatMapIfValid(ConfigField::asSection);
     }
 
     @Override
     public ConfigOptional<ConfigSequence> getSequence(int index) {
-        return getField(index).flatMap(ConfigField::toSequence);
+        return getField(index).flatMapIfValid(ConfigField::asSequence);
     }
 
     @Override
     public ConfigOptional<ConfigLine> getLine(int index) {
-        return getScalar(index).map(ConfigScalar::toLine);
+        return getScalar(index).mapIfValid(ConfigScalar::toLine);
     }
 
     @Override
     public ConfigOptional<ConfigLine> getLine(int index, @NotNull LineStyle lineStyle) {
-        return getScalar(index).map(scalar -> scalar.toLine(lineStyle));
+        return getScalar(index).mapIfValid(scalar -> scalar.toLine(lineStyle));
     }
 
     @Override
     public ConfigOptional<Boolean> getBoolean(int index) {
-        return getScalar(index).flatMap(ConfigScalar::toBoolean);
+        return getScalar(index).flatMapIfValid(ConfigScalar::toBoolean);
     }
 
     @Override
     public ConfigOptional<Character> getCharacter(int index) {
-        return getScalar(index).flatMap(ConfigScalar::toCharacter);
+        return getScalar(index).flatMapIfValid(ConfigScalar::toCharacter);
     }
 
     @Override
     public ConfigOptional<String> getString(int index) {
-        return getScalar(index).map(ConfigScalar::toString);
+        return getScalar(index).mapIfValid(ConfigScalar::toString);
     }
 
     @Override
     public ConfigOptional<String> getString(int index, StringFormatter formatter) {
-        return getScalar(index).map(scalar -> scalar.toString(formatter));
+        return getScalar(index).mapIfValid(scalar -> scalar.toString(formatter));
     }
 
     @Override
     public ConfigOptional<Integer> getInteger(int index) {
-        return getScalar(index).flatMap(ConfigScalar::toInteger);
+        return getScalar(index).flatMapIfValid(ConfigScalar::toInteger);
     }
 
     @Override
     public ConfigOptional<Long> getLong(int index) {
-        return getScalar(index).flatMap(ConfigScalar::toLong);
+        return getScalar(index).flatMapIfValid(ConfigScalar::toLong);
     }
 
     @Override
     public ConfigOptional<Float> getFloat(int index) {
-        return getScalar(index).flatMap(ConfigScalar::toFloat);
+        return getScalar(index).flatMapIfValid(ConfigScalar::toFloat);
     }
 
     @Override
     public ConfigOptional<Double> getDouble(int index) {
-        return getScalar(index).flatMap(ConfigScalar::toDouble);
+        return getScalar(index).flatMapIfValid(ConfigScalar::toDouble);
     }
 
     @Override
@@ -487,57 +514,67 @@ public abstract class Sequence extends Branch implements ConfigSequence {
 
     @Override
     public ConfigList<ConfigScalar> toScalarList() {
-        return createList(field -> field.toScalar().orThrow());
+        return createList(field -> field.asScalar().orThrow());
     }
 
     @Override
     public ConfigList<ConfigSection> toSectionList() {
-        return createList(field -> field.toSection().orThrow());
+        return createList(field -> field.asSection().orThrow());
     }
 
     @Override
     public ConfigList<ConfigSequence> toSequenceList() {
-        return createList(field -> field.toSequence().orThrow());
+        return createList(field -> field.asSequence().orThrow());
     }
 
     @Override
     public ConfigList<Boolean> toBooleanList() {
-        return createList(field -> field.toScalar().flatMap(ConfigScalar::toBoolean).orThrow());
+        return createList(field -> field.asScalar().flatMapIfValid(ConfigScalar::toBoolean).orThrow());
     }
 
     @Override
     public ConfigList<Character> toCharacterList() {
-        return createList(field -> field.toScalar().flatMap(ConfigScalar::toCharacter).orThrow());
+        return createList(field -> field.asScalar().flatMapIfValid(ConfigScalar::toCharacter).orThrow());
     }
 
     @Override
     public ConfigList<String> toStringList() {
-        return createList(field -> field.toScalar().map(ConfigScalar::toString).orThrow());
+        return createList(field -> field.asScalar().mapIfValid(ConfigScalar::toString).orThrow());
     }
 
     @Override
     public ConfigList<String> toStringList(StringFormatter formatter) {
-        return createList(field -> field.toScalar().map(scalar -> scalar.toString(formatter)).orThrow());
+        return createList(field -> field.asScalar().mapIfValid(scalar -> scalar.toString(formatter)).orThrow());
     }
 
     @Override
     public ConfigList<Integer> toIntegerList() {
-        return createList(field -> field.toScalar().flatMap(ConfigScalar::toInteger).orThrow());
+        return createList(field -> field.asScalar().flatMapIfValid(ConfigScalar::toInteger).orThrow());
     }
 
     @Override
     public ConfigList<Long> toLongList() {
-        return createList(field -> field.toScalar().flatMap(ConfigScalar::toLong).orThrow());
+        return createList(field -> field.asScalar().flatMapIfValid(ConfigScalar::toLong).orThrow());
     }
 
     @Override
     public ConfigList<Float> toFloatList() {
-        return createList(field -> field.toScalar().flatMap(ConfigScalar::toFloat).orThrow());
+        return createList(field -> field.asScalar().flatMapIfValid(ConfigScalar::toFloat).orThrow());
     }
 
     @Override
     public ConfigList<Double> toDoubleList() {
-        return createList(field -> field.toScalar().flatMap(ConfigScalar::toDouble).orThrow());
+        return createList(field -> field.asScalar().flatMapIfValid(ConfigScalar::toDouble).orThrow());
+    }
+
+    @Override
+    public @Nullable Object getValue(int index) {
+        if (index >= fields.size()) {
+            return null;
+        }
+
+        ConfigField field = fields.get(index);
+        return field.getValue();
     }
 
     @Override
@@ -548,18 +585,12 @@ public abstract class Sequence extends Branch implements ConfigSequence {
         return sequence;
     }
 
-    @FunctionalInterface
-    private interface ListMapper<T> {
-        T apply(ConfigField field) throws InvalidConfigException;
-    }
-
     private <T> ConfigList<T> createList(ListMapper<T> mapper) {
         List<T> elements = new ArrayList<>();
         for (ConfigField field : this) {
             try {
                 elements.add(mapper.apply(field));
-            }
-            catch (InvalidConfigException e) {
+            } catch (InvalidConfigException e) {
                 return ConfigList.invalid(e);
             }
         }
@@ -582,6 +613,23 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     }
 
     @Override
+    public <T> ConfigOptional<T> get(@NotNull Class<T> classType) {
+        ConfigRoot root = getRoot();
+        Configurator configurator = root.getConfigurator();
+
+        ConfigLoader<T> loader = configurator.getLoader(classType);
+        if (loader == null) {
+            throw new IllegalArgumentException("No config loader found for class: " + classType.getSimpleName());
+        }
+
+        try (var scope = new LoaderScope(root, loader)) {
+            return ConfigOptional.of(this, loader.loadFromSequence(this));
+        } catch (InvalidConfigException e) {
+            return ConfigOptional.invalid(e);
+        }
+    }
+
+    @Override
     public void replaceAll(@NotNull CharSequence target, @NotNull CharSequence replacement) {
         for (ConfigField field : this) {
             field.replaceAll(target, replacement);
@@ -589,35 +637,17 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     }
 
     @Override
-    public <T> ConfigOptional<T> get(@NotNull Class<T> classType) {
-        ConfigRoot root = getRoot();
-        Configurator configurator = root.getConfigurator();
-
-        ConfigLoader<? extends T> loader = configurator.getLoader(classType);
-        if (loader == null) {
-            throw new IllegalArgumentException("No config loader found for class: " + classType.getSimpleName());
-        }
-
-        try {
-            return ConfigOptional.of(this, loader.loadFromSequence(this));
-        } catch (InvalidConfigException e) {
-            e.setError(loader.getErrorDescription());
-            return ConfigOptional.invalid(e);
-        }
-    }
-
-    @Override
-    public ConfigOptional<ConfigScalar> toScalar() {
+    public ConfigOptional<ConfigScalar> asScalar() {
         return ConfigOptional.invalid(this, "Expected a value but found a list");
     }
 
     @Override
-    public ConfigOptional<ConfigSection> toSection() {
+    public ConfigOptional<ConfigSection> asSection() {
         return ConfigOptional.invalid(this, "Expected a section but found a list");
     }
 
     @Override
-    public ConfigOptional<ConfigSequence> toSequence() {
+    public ConfigOptional<ConfigSequence> asSequence() {
         return ConfigOptional.of(this);
     }
 
@@ -638,6 +668,11 @@ public abstract class Sequence extends Branch implements ConfigSequence {
         }
 
         return builder.toString();
+    }
+
+    @FunctionalInterface
+    private interface ListMapper<T> {
+        T apply(ConfigField field) throws InvalidConfigException;
     }
 
 }

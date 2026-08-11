@@ -5,7 +5,6 @@ import io.github.pigaut.yaml.node.sequence.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.comments.*;
 
-import java.lang.runtime.*;
 import java.util.*;
 
 public abstract class Field implements ConfigField {
@@ -51,26 +50,6 @@ public abstract class Field implements ConfigField {
     }
 
     @Override
-    public List<CommentLine> getInLineComments() {
-        return inLineComments;
-    }
-
-    @Override
-    public void setInLineComments(@Nullable List<CommentLine> inLineComments) {
-        this.inLineComments = inLineComments != null ? new ArrayList<>(inLineComments) : new ArrayList<>();
-    }
-
-    @Override
-    public void clearInlineComments() {
-        inLineComments.clear();
-    }
-
-    @Override
-    public void addInlineComment(@NotNull String value) {
-        inLineComments.add(new CommentLine(Optional.empty(), Optional.empty(), value, CommentType.IN_LINE));
-    }
-
-    @Override
     public List<CommentLine> getBlockComments() {
         return blockComments;
     }
@@ -95,4 +74,78 @@ public abstract class Field implements ConfigField {
         blockComments.add(new CommentLine(Optional.empty(), Optional.empty(), "", CommentType.BLANK_LINE));
     }
 
+    @Override
+    public List<CommentLine> getInLineComments() {
+        return inLineComments;
+    }
+
+    @Override
+    public void setInLineComments(@Nullable List<CommentLine> inLineComments) {
+        this.inLineComments = inLineComments != null ? new ArrayList<>(inLineComments) : new ArrayList<>();
+    }
+
+    @Override
+    public void clearInlineComments() {
+        inLineComments.clear();
+    }
+
+    @Override
+    public void addInlineComment(@NotNull String value) {
+        inLineComments.add(new CommentLine(Optional.empty(), Optional.empty(), value, CommentType.IN_LINE));
+    }
+
+    @Override
+    public boolean hasErrors() {
+        return getRoot().hasErrors();
+    }
+
+    @Override
+    public boolean hasWarnings() {
+        return getRoot().hasWarnings();
+    }
+
+    @Override
+    public int getErrorCount() {
+        return getRoot().getErrorCount();
+    }
+
+    @Override
+    public int getWarningCount() {
+        return getRoot().getWarningCount();
+    }
+
+    @Override
+    public @NotNull List<ConfigException> getErrors() {
+        return getRoot().getErrors();
+    }
+
+    @Override
+    public @NotNull List<ConfigException> getWarnings() {
+        return getRoot().getWarnings();
+    }
+
+    @Override
+    public void collectError(@NotNull ConfigException error) {
+        getRoot().collectError(error);
+    }
+
+    @Override
+    public void collectWarning(@NotNull ConfigException warning) {
+        getRoot().collectWarning(warning);
+    }
+
+    @Override
+    public void collectAll(@NotNull ErrorCollector other) {
+        getRoot().collectAll(other);
+    }
+
+    @Override
+    public void clearErrors() {
+        getRoot().clearErrors();
+    }
+
+    @Override
+    public void clearWarnings() {
+        getRoot().clearWarnings();
+    }
 }

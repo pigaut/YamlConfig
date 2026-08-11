@@ -24,6 +24,7 @@ public class LineTokenizer {
         StringBuilder current = new StringBuilder();
         char[] chars = line.toCharArray();
 
+        boolean useCommaSeparator = lineStyle != LineStyle.COLON && lineStyle != LineStyle.SPACED;
         boolean foundLabel = lineStyle != LineStyle.LABELED;
         boolean foundFlag = false;
         for (int i = 0; i < chars.length; i++) {
@@ -37,7 +38,7 @@ public class LineTokenizer {
             }
 
             // End current token at comma
-            if (c == ',' && lineStyle != LineStyle.SPACED) {
+            if (c == ',' && useCommaSeparator) {
                 Token token = new Token(current.toString(), TokenType.VALUE);
                 flush(token, parts, current);
 
@@ -74,6 +75,15 @@ public class LineTokenizer {
 
             // End current token at empty space
             if (c == ' ' && !foundFlag && lineStyle == LineStyle.SPACED) {
+                if (!current.isEmpty()) {
+                    Token token = toToken(current.toString());
+                    flush(token, parts, current);
+                }
+                continue;
+            }
+
+            // End current token at colon char
+            if (c == ':' && !foundFlag && lineStyle == LineStyle.COLON) {
                 if (!current.isEmpty()) {
                     Token token = toToken(current.toString());
                     flush(token, parts, current);

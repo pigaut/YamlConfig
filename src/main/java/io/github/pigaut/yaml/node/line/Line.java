@@ -10,8 +10,6 @@ import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.comments.*;
 
 import java.util.*;
-import java.util.regex.*;
-import java.util.stream.*;
 
 public class Line implements ConfigLine {
 
@@ -129,18 +127,73 @@ public class Line implements ConfigLine {
     }
 
     @Override
-    public ConfigOptional<ConfigScalar> toScalar() {
+    public ConfigOptional<ConfigScalar> asScalar() {
         return ConfigOptional.of(scalar);
     }
 
     @Override
-    public ConfigOptional<ConfigSection> toSection() {
-        return scalar.toSection();
+    public ConfigOptional<ConfigSection> asSection() {
+        return scalar.asSection();
     }
 
     @Override
-    public ConfigOptional<ConfigSequence> toSequence() {
-        return scalar.toSequence();
+    public ConfigOptional<ConfigSequence> asSequence() {
+        return scalar.asSequence();
+    }
+
+    @Override
+    public boolean hasErrors() {
+        return scalar.hasErrors();
+    }
+
+    @Override
+    public boolean hasWarnings() {
+        return scalar.hasWarnings();
+    }
+
+    @Override
+    public int getErrorCount() {
+        return scalar.getErrorCount();
+    }
+
+    @Override
+    public int getWarningCount() {
+        return scalar.getWarningCount();
+    }
+
+    @Override
+    public @NotNull List<ConfigException> getErrors() {
+        return scalar.getErrors();
+    }
+
+    @Override
+    public @NotNull List<ConfigException> getWarnings() {
+        return scalar.getWarnings();
+    }
+
+    @Override
+    public void collectError(@NotNull ConfigException error) {
+        scalar.collectError(error);
+    }
+
+    @Override
+    public void collectWarning(@NotNull ConfigException warning) {
+        scalar.collectWarning(warning);
+    }
+
+    @Override
+    public void collectAll(@NotNull ErrorCollector other) {
+        scalar.collectAll(other);
+    }
+
+    @Override
+    public void clearErrors() {
+        scalar.clearErrors();
+    }
+
+    @Override
+    public void clearWarnings() {
+        scalar.clearWarnings();
     }
 
     @Override
@@ -231,7 +284,7 @@ public class Line implements ConfigLine {
     }
 
     @Override
-    public @NotNull ConfigScalar asScalar() {
+    public @NotNull ConfigScalar toScalar() {
         return scalar;
     }
 
@@ -285,7 +338,7 @@ public class Line implements ConfigLine {
 
     @Override
     public <T> ConfigOptional<T> get(int index, @NotNull Class<T> classType) {
-        return getScalar(index).flatMap(scalar -> scalar.get(classType));
+        return getScalar(index).flatMapIfValid(scalar -> scalar.get(classType));
     }
 
     @Override
@@ -329,7 +382,7 @@ public class Line implements ConfigLine {
 
     @Override
     public <T> ConfigOptional<T> get(@NotNull String key, @NotNull Class<T> classType) {
-        return getScalar(key).flatMap(scalar -> scalar.get(classType));
+        return getScalar(key).flatMapIfValid(scalar -> scalar.get(classType));
     }
 
     private ConfigOptional<ConfigScalar> getScalar(String flag) {
@@ -441,82 +494,82 @@ public class Line implements ConfigLine {
 
     @Override
     public ConfigOptional<Boolean> getBoolean(int index) {
-        return getScalar(index).flatMap(ConfigScalar::toBoolean);
+        return getScalar(index).flatMapIfValid(ConfigScalar::toBoolean);
     }
 
     @Override
     public ConfigOptional<Character> getCharacter(int index) {
-        return getScalar(index).flatMap(ConfigScalar::toCharacter);
+        return getScalar(index).flatMapIfValid(ConfigScalar::toCharacter);
     }
 
     @Override
     public ConfigOptional<String> getString(int index) {
-        return getScalar(index).map(ConfigScalar::toString);
+        return getScalar(index).mapIfValid(ConfigScalar::toString);
     }
 
     @Override
     public ConfigOptional<String> getString(int index, @NotNull StringFormatter formatter) {
-        return getScalar(index).map(scalar -> scalar.toString(formatter));
+        return getScalar(index).mapIfValid(scalar -> scalar.toString(formatter));
     }
 
     @Override
     public ConfigOptional<Integer> getInteger(int index) {
-        return getScalar(index).flatMap(ConfigScalar::toInteger);
+        return getScalar(index).flatMapIfValid(ConfigScalar::toInteger);
     }
 
     @Override
     public ConfigOptional<Long> getLong(int index) {
-        return getScalar(index).flatMap(ConfigScalar::toLong);
+        return getScalar(index).flatMapIfValid(ConfigScalar::toLong);
     }
 
     @Override
     public ConfigOptional<Float> getFloat(int index) {
-        return getScalar(index).flatMap(ConfigScalar::toFloat);
+        return getScalar(index).flatMapIfValid(ConfigScalar::toFloat);
     }
 
     @Override
     public ConfigOptional<Double> getDouble(int index) {
-        return getScalar(index).flatMap(ConfigScalar::toDouble);
+        return getScalar(index).flatMapIfValid(ConfigScalar::toDouble);
     }
 
     @Override
     public ConfigOptional<Boolean> getBoolean(@NotNull String key) {
-        return getScalar(key).flatMap(ConfigScalar::toBoolean);
+        return getScalar(key).flatMapIfValid(ConfigScalar::toBoolean);
     }
 
     @Override
     public ConfigOptional<Character> getCharacter(@NotNull String key) {
-        return getScalar(key).flatMap(ConfigScalar::toCharacter);
+        return getScalar(key).flatMapIfValid(ConfigScalar::toCharacter);
     }
 
     @Override
     public ConfigOptional<String> getString(@NotNull String key) {
-        return getScalar(key).map(ConfigScalar::toString);
+        return getScalar(key).mapIfValid(ConfigScalar::toString);
     }
 
     @Override
     public ConfigOptional<String> getString(@NotNull String key, @NotNull StringFormatter formatter) {
-        return getScalar(key).map(scalar -> scalar.toString(formatter));
+        return getScalar(key).mapIfValid(scalar -> scalar.toString(formatter));
     }
 
     @Override
     public ConfigOptional<Integer> getInteger(@NotNull String key) {
-        return getScalar(key).flatMap(ConfigScalar::toInteger);
+        return getScalar(key).flatMapIfValid(ConfigScalar::toInteger);
     }
 
     @Override
     public ConfigOptional<Long> getLong(@NotNull String key) {
-        return getScalar(key).flatMap(ConfigScalar::toLong);
+        return getScalar(key).flatMapIfValid(ConfigScalar::toLong);
     }
 
     @Override
     public ConfigOptional<Float> getFloat(@NotNull String key) {
-        return getScalar(key).flatMap(ConfigScalar::toFloat);
+        return getScalar(key).flatMapIfValid(ConfigScalar::toFloat);
     }
 
     @Override
     public ConfigOptional<Double> getDouble(@NotNull String key) {
-        return getScalar(key).flatMap(ConfigScalar::toDouble);
+        return getScalar(key).flatMapIfValid(ConfigScalar::toDouble);
     }
 
     private static final String SPLIT_LINE = "\u001F";

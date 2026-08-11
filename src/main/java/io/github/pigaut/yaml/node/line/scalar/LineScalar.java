@@ -71,12 +71,12 @@ public abstract class LineScalar implements ConfigScalar {
 
     @Override
     public @NotNull ScalarStyle getScalarStyle() {
-        return line.asScalar().getScalarStyle();
+        return line.toScalar().getScalarStyle();
     }
 
     @Override
     public void setScalarStyle(@NotNull ScalarStyle scalarStyle) {
-        line.asScalar().setScalarStyle(scalarStyle);
+        line.toScalar().setScalarStyle(scalarStyle);
     }
 
     @Override
@@ -101,7 +101,7 @@ public abstract class LineScalar implements ConfigScalar {
 
     @Override
     public ConfigSequence split(@NotNull Pattern pattern) {
-        return line.asScalar().split(pattern);
+        return line.toScalar().split(pattern);
     }
 
     @Override
@@ -149,16 +149,14 @@ public abstract class LineScalar implements ConfigScalar {
         ConfigRoot root = this.getRoot();
         Configurator configurator = root.getConfigurator();
 
-        ConfigLoader<? extends T> loader = configurator.getLoader(classType);
+        ConfigLoader<T> loader = configurator.getLoader(classType);
         if (loader == null) {
             throw new IllegalArgumentException("No config loader found for class type: " + classType.getSimpleName());
         }
 
-        try {
-            loader.loadFromScalar(this);
+        try (var scope = new LoaderScope(root, loader)) {
             return ConfigOptional.of(this, loader.loadFromScalar(this));
         } catch (InvalidConfigException e) {
-            e.setError(loader.getErrorDescription());
             return ConfigOptional.invalid(e);
         }
     }
@@ -169,18 +167,18 @@ public abstract class LineScalar implements ConfigScalar {
     }
 
     @Override
-    public ConfigOptional<ConfigScalar> toScalar() {
-        return line.toScalar();
+    public ConfigOptional<ConfigScalar> asScalar() {
+        return line.asScalar();
     }
 
     @Override
-    public ConfigOptional<ConfigSection> toSection() {
-        return line.toSection();
+    public ConfigOptional<ConfigSection> asSection() {
+        return line.asSection();
     }
 
     @Override
-    public ConfigOptional<ConfigSequence> toSequence() {
-        return line.toSequence();
+    public ConfigOptional<ConfigSequence> asSequence() {
+        return line.asSequence();
     }
 
     @Override

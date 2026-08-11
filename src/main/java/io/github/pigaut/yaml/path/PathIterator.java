@@ -46,7 +46,7 @@ public class PathIterator implements Iterator<Object> {
     }
 
     @NotNull
-    public Branch nextBranch() {
+    public Branch nextBranch(boolean attached) {
         if (!hasNext()) {
             throw new NoSuchElementException("No more keys in the path.");
         }
@@ -65,11 +65,11 @@ public class PathIterator implements Iterator<Object> {
         }
 
         if (!isLast() && getNextKey() instanceof IndexKey) {
-            currentBranch = currentKey.createSequence(currentBranch);
+            currentBranch = currentKey.createSequence(currentBranch, attached);
             return currentBranch;
         }
 
-        currentBranch = currentKey.createSection(currentBranch);
+        currentBranch = currentKey.createSection(currentBranch, attached);
         return currentBranch;
     }
 

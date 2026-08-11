@@ -14,8 +14,8 @@ import java.util.stream.*;
 public interface ConfigSection extends ConfigBranch, Iterable<KeyedField> {
 
     @NotNull Set<String> getKeys();
-    boolean contains(@NotNull String path);
     boolean isSet(@NotNull String path);
+    boolean isScalar(@NotNull String path);
     boolean isSection(@NotNull String path);
     boolean isSequence(@NotNull String path);
     <T> void set(@NotNull String path, @NotNull T value);
@@ -28,16 +28,20 @@ public interface ConfigSection extends ConfigBranch, Iterable<KeyedField> {
     ConfigSequence getSequenceOrCreate(@NotNull String path);
     ConfigScalar getScalarOrCreate(@NotNull String path);
 
+    ConfigSection getSectionOrEmpty(@NotNull String path);
+    ConfigSequence getSequenceOrEmpty(@NotNull String path);
+    ConfigScalar getScalarOrEmpty(@NotNull String path);
+
     Stream<KeyedField> stream();
     Set<KeyedField> getNestedFields();
     Set<KeyedScalar> getNestedScalars();
     Set<KeyedSection> getNestedSections();
     Set<KeyedSequence> getNestedSequences();
 
-    Set<KeyedField> getNestedFields(@NotNull String path);
-    Set<KeyedScalar> getNestedScalars(@NotNull String path);
-    Set<KeyedSection> getNestedSections(@NotNull String path);
-    Set<KeyedSequence> getNestedSequences(@NotNull String path);
+    Set<? extends ConfigField> getNestedFields(@NotNull String path);
+    Set<? extends ConfigScalar> getNestedScalars(@NotNull String path);
+    Set<? extends ConfigSection> getNestedSections(@NotNull String path);
+    Set<? extends ConfigSequence> getNestedSequences(@NotNull String path);
 
     <T> ConfigList<T> getAll(@NotNull String path, @NotNull Class<T> classType);
     <T> List<T> getAllRequired(@NotNull String path, @NotNull Class<T> classType) throws InvalidConfigException;
@@ -90,6 +94,9 @@ public interface ConfigSection extends ConfigBranch, Iterable<KeyedField> {
     ConfigList<Double> getDoubleList(@NotNull String path);
 
     String[][] getStringMatrix(@NotNull String path, int rows, int columns);
+
+    @Nullable
+    Object getValue(@NotNull String path);
 
     @NotNull
     ConfigSection copy();

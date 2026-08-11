@@ -40,38 +40,44 @@ public class MultiKey implements FieldKey {
     }
 
     @Override
-    public Section createSection(@NotNull Branch branch) {
-        final Section parent = branch.convertToSection();
-        final String key = getExistingKeyOrDefault(parent);
-        final Object field = parent.getNode(key);
+    public Section createSection(@NotNull Branch branch, boolean attached) {
+        Section parent = branch.convertToSection();
+        String key = getExistingKeyOrDefault(parent);
+        Object field = parent.getNode(key);
 
         if (field instanceof Section foundSection) {
             return foundSection;
         }
 
         KeyedSection newSection = new KeyedSection(parent, key);
-        parent.addNode(newSection);
+        if (attached) {
+            parent.addNode(newSection);
+        }
+
         return newSection;
     }
 
     @Override
-    public Sequence createSequence(@NotNull Branch branch) {
-        final Section parent = branch.convertToSection();
-        final String key = getExistingKeyOrDefault(parent);
-        final Object field = parent.getNode(key);
+    public Sequence createSequence(@NotNull Branch branch, boolean attached) {
+        Section parent = branch.convertToSection();
+        String key = getExistingKeyOrDefault(parent);
+        Object field = parent.getNode(key);
 
         if (field instanceof Sequence foundSequence) {
             return foundSequence;
         }
 
         KeyedSequence newSequence = new KeyedSequence(parent, key);
-        parent.addNode(newSequence);
+        if (attached) {
+            parent.addNode(newSequence);
+        }
+
         return newSequence;
     }
 
     @Override
-    public Scalar createScalar(@NotNull Branch branch, @NotNull Object value) {
-        final Section section = branch.convertToSection();
+    public Scalar createScalar(@NotNull Branch branch, @NotNull Object value, boolean attached) {
+        Section section = branch.convertToSection();
 
         String key = keys[0];
         for (String keyAlias : keys) {
@@ -82,13 +88,16 @@ public class MultiKey implements FieldKey {
         }
 
         KeyedScalar newScalar = new KeyedScalar(section, key, value);
-        section.addNode(newScalar);
+        if (attached) {
+            section.addNode(newScalar);
+        }
+
         return newScalar;
     }
 
     @Override
     public void remove(@NotNull Branch branch) {
-        final Section section = branch.convertToSection();
+        Section section = branch.convertToSection();
         for (String key : keys) {
             section.removeNode(key);
         }

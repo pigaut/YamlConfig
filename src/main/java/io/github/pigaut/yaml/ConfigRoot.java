@@ -1,6 +1,7 @@
 package io.github.pigaut.yaml;
 
 import io.github.pigaut.yaml.configurator.*;
+import io.github.pigaut.yaml.configurator.load.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
@@ -17,15 +18,16 @@ public interface ConfigRoot extends ConfigField, ErrorCollector {
     void setConfigurator(@NotNull Configurator configurator);
 
     boolean hasFile();
-
     @Nullable File getFile();
+
+    boolean hasName();
     @Nullable String getName();
 
     @NotNull String getHeader();
     void setHeader(@NotNull String... lines);
 
     void load() throws ConfigLoadException;
-    void load(@NotNull Consumer<ConfigLoadException> errorCollector);
+    void loadOrEmpty();
 
     void loadFromFile(@NotNull File file) throws ConfigLoadException;
     void loadFromStream(@NotNull InputStream inputStream) throws ConfigLoadException;
@@ -33,6 +35,9 @@ public interface ConfigRoot extends ConfigField, ErrorCollector {
 
     boolean save();
     boolean save(@NotNull File file);
+
+    @Nullable ConfigLoader<?> getActiveLoader();
+    void setActiveLoader(@Nullable ConfigLoader<?> activeLoader);
 
     @Nullable String saveToString();
 

@@ -12,7 +12,7 @@ public interface ConfigLoader<T> {
         return null;
     }
 
-    default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigException {
+    default @NotNull T loadFromScalar(@NotNull ConfigScalar scalar) throws InvalidConfigException {
         throw new InvalidConfigException(scalar, "Value is not supported here");
     }
 
@@ -28,7 +28,7 @@ public interface ConfigLoader<T> {
     interface Scalar<T> extends ConfigLoader<T> {
 
         @NotNull
-        T loadFromScalar(ConfigScalar line) throws InvalidConfigException;
+        T loadFromScalar(@NotNull ConfigScalar line) throws InvalidConfigException;
 
         @Override
         default @NotNull T loadFromSection(@NotNull ConfigSection section) throws InvalidConfigException {
@@ -52,7 +52,7 @@ public interface ConfigLoader<T> {
         }
 
         @Override
-        default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigException {
+        default @NotNull T loadFromScalar(@NotNull ConfigScalar scalar) throws InvalidConfigException {
             LineStyle lineStyle = getLineStyle();
             return loadFromLine(scalar.toLine(lineStyle));
         }
@@ -75,7 +75,7 @@ public interface ConfigLoader<T> {
         @NotNull T loadFromSection(@NotNull ConfigSection section) throws InvalidConfigException;
 
         @Override
-        default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigException {
+        default @NotNull T loadFromScalar(@NotNull ConfigScalar scalar) throws InvalidConfigException {
             throw new InvalidConfigException(scalar, "Expected a section but found a value");
         }
 
@@ -92,7 +92,7 @@ public interface ConfigLoader<T> {
         @NotNull T loadFromSequence(@NotNull ConfigSequence section) throws InvalidConfigException;
 
         @Override
-        default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigException {
+        default @NotNull T loadFromScalar(@NotNull ConfigScalar scalar) throws InvalidConfigException {
             throw new InvalidConfigException(scalar, "Expected a list but found a value");
         }
 
@@ -122,7 +122,7 @@ public interface ConfigLoader<T> {
         @NotNull T loadFromField(@NotNull ConfigField field) throws InvalidConfigException;
 
         @Override
-        default @NotNull T loadFromScalar(ConfigScalar scalar) throws InvalidConfigException {
+        default @NotNull T loadFromScalar(@NotNull ConfigScalar scalar) throws InvalidConfigException {
             return loadFromField(scalar);
         }
 

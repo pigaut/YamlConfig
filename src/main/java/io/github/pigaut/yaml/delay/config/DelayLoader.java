@@ -17,7 +17,7 @@ public class DelayLoader implements ConfigLoader<Delay> {
     }
 
     @Override
-    public @NotNull Delay loadFromScalar(ConfigScalar scalar) throws InvalidConfigException {
+    public @NotNull Delay loadFromScalar(@NotNull ConfigScalar scalar) throws InvalidConfigException {
         try {
             return ParseUtil.parseDelay(scalar.toString());
         } catch (StringParseException e) {

@@ -13,7 +13,7 @@ public class ChanceLoader implements ConfigLoader<Chance> {
     }
 
     @Override
-    public @NotNull Chance loadFromScalar(ConfigScalar scalar) throws InvalidConfigException {
+    public @NotNull Chance loadFromScalar(@NotNull ConfigScalar scalar) throws InvalidConfigException {
         try {
             return ParseUtil.parseChance(scalar.toString());
         } catch (StringParseException e) {

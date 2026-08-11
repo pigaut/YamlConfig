@@ -7,6 +7,8 @@ import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 
+import java.util.*;
+
 public class KeylessLineScalar extends LineScalar implements KeylessField {
 
     private int index;
@@ -39,6 +41,61 @@ public class KeylessLineScalar extends LineScalar implements KeylessField {
     @Override
     public @NotNull String getKey(@NotNull CaseStyle style) {
         return getKey();
+    }
+
+    @Override
+    public boolean hasErrors() {
+        return line.hasErrors();
+    }
+
+    @Override
+    public boolean hasWarnings() {
+        return line.hasWarnings();
+    }
+
+    @Override
+    public int getErrorCount() {
+        return line.getErrorCount();
+    }
+
+    @Override
+    public int getWarningCount() {
+        return line.getWarningCount();
+    }
+
+    @Override
+    public @NotNull List<ConfigException> getErrors() {
+        return line.getErrors();
+    }
+
+    @Override
+    public @NotNull List<ConfigException> getWarnings() {
+        return line.getWarnings();
+    }
+
+    @Override
+    public void collectError(@NotNull ConfigException error) {
+        line.collectError(error);
+    }
+
+    @Override
+    public void collectWarning(@NotNull ConfigException warning) {
+        line.collectWarning(warning);
+    }
+
+    @Override
+    public void collectAll(@NotNull ErrorCollector other) {
+        line.collectAll(other);
+    }
+
+    @Override
+    public void clearErrors() {
+        line.clearErrors();
+    }
+
+    @Override
+    public void clearWarnings() {
+        line.clearWarnings();
     }
 
     @Override

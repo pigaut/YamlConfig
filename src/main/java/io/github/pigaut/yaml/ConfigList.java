@@ -9,12 +9,16 @@ import java.util.stream.*;
 
 public class ConfigList<E> extends AbstractOptional<List<E>> {
 
-    protected ConfigList(@NotNull ConfigField field, @NotNull List<E> elements, boolean existsInConfig) {
+    protected ConfigList(ConfigField field, @Nullable List<E> elements, boolean existsInConfig) {
         super(field, elements, existsInConfig);
     }
 
-    protected ConfigList(@NotNull ConfigField field, @NotNull InvalidConfigException exception, boolean existsInConfig) {
-        super(field, exception, existsInConfig);
+    protected ConfigList(ConfigField field, @Nullable InvalidConfigException exception, boolean existsInConfig) {
+        super(field, exception, existsInConfig, false);
+    }
+
+    protected ConfigList(ConfigField field, @Nullable InvalidConfigException exception, boolean existsInConfig, boolean warning) {
+        super(field, exception, existsInConfig, warning);
     }
 
     public static <E> ConfigList<E> of(@NotNull ConfigField field, @NotNull List<E> elements) {
@@ -70,6 +74,24 @@ public class ConfigList<E> extends AbstractOptional<List<E>> {
         }
     }
 
+    public ConfigList<E> requireOrWarn(@NotNull Requirement<? super List<E>> requirement) {
+        return require(requirement, requirement.getErrorDetails());
+    }
+
+    public ConfigList<E> requireOrWarn(@NotNull Requirement<? super List<E>> requirement, @NotNull String errorDetails) {
+        Objects.requireNonNull(requirement);
+        Objects.requireNonNull(errorDetails);
+        if (isInvalid()) {
+            return this;
+        }
+        else {
+            if (requirement.test(value)) {
+                return this;
+            }
+            return new ConfigList<>(field, new InvalidConfigException(field, errorDetails), existsInConfig, true);
+        }
+    }
+
     public List<E> requireOrThrow(@NotNull Requirement<? super List<E>> requirement) throws InvalidConfigException {
         return requireOrThrow(requirement, requirement.getErrorDetails());
     }
@@ -101,6 +123,26 @@ public class ConfigList<E> extends AbstractOptional<List<E>> {
             for (E element : value) {
                 if (!requirement.test(element)) {
                     return new ConfigList<>(field, new InvalidConfigException(field, errorDetails), existsInConfig);
+                }
+            }
+            return this;
+        }
+    }
+
+    public ConfigList<E> requireEachOrWarn(@NotNull Requirement<? super E> requirement) {
+        return requireEach(requirement, requirement.getErrorDetails());
+    }
+
+    public ConfigList<E> requireEachOrWarn(@NotNull Requirement<? super E> requirement, @NotNull String errorDetails) {
+        Objects.requireNonNull(requirement);
+        Objects.requireNonNull(errorDetails);
+        if (isInvalid()) {
+            return this;
+        }
+        else {
+            for (E element : value) {
+                if (!requirement.test(element)) {
+                    return new ConfigList<>(field, new InvalidConfigException(field, errorDetails), existsInConfig, true);
                 }
             }
             return this;
@@ -161,27 +203,23 @@ public class ConfigList<E> extends AbstractOptional<List<E>> {
         }
     }
 
-    public <U> ConfigOptional<U> map(Function<? super List<E>, ? extends U> mapper) {
+    public <U> ConfigOptional<@Nullable U> mapIfValid(Function<? super List<E>, ? extends U> mapper) {
         Objects.requireNonNull(mapper);
-        if (exception != null) {
+        if (isInvalid()) {
             return new ConfigOptional<>(field, exception, existsInConfig);
         }
-        else {
-            U mappedValue = Objects.requireNonNull(mapper.apply(value));
-            return new ConfigOptional<>(field, mappedValue, existsInConfig);
-        }
+        U mappedValue = Objects.requireNonNull(mapper.apply(value));
+        return new ConfigOptional<>(field, mappedValue, existsInConfig);
     }
 
-    public <U> ConfigList<U> flatMap(Function<? super List<E>, ? extends ConfigList<? extends U>> mapper) {
+    public <U> ConfigList<@Nullable U> flatMapIfValid(Function<? super List<E>, ? extends ConfigList<? extends U>> mapper) {
         Objects.requireNonNull(mapper);
-        if (exception != null) {
+        if (isInvalid()) {
             return new ConfigList<>(field, exception, existsInConfig);
         }
-        else {
-            @SuppressWarnings("unchecked")
-            ConfigList<U> r = (ConfigList<U>) mapper.apply(value);
-            return Objects.requireNonNull(r);
-        }
+        @SuppressWarnings("unchecked")
+        ConfigList<U> r = (ConfigList<U>) mapper.apply(value);
+        return Objects.requireNonNull(r);
     }
 
 }

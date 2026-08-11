@@ -12,8 +12,6 @@ import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.common.*;
 
-import java.util.*;
-
 public abstract class Scalar extends Field implements ConfigScalar {
 
     private Object value;
@@ -195,17 +193,17 @@ public abstract class Scalar extends Field implements ConfigScalar {
         ConfigRoot root = this.getRoot();
         Configurator configurator = root.getConfigurator();
 
-        ConfigLoader<? extends T> loader = configurator.getLoader(classType);
+        ConfigLoader<T> loader = configurator.getLoader(classType);
         if (loader == null) {
             throw new IllegalArgumentException("No config loader found for class type: " + classType.getSimpleName());
         }
 
-        try {
+        try (var scope = new LoaderScope(root, loader)) {
             return ConfigOptional.of(this, loader.loadFromScalar(this));
         } catch (InvalidConfigException e) {
-            e.setError(loader.getErrorDescription());
             return ConfigOptional.invalid(e);
         }
+
     }
 
     @Override
@@ -220,17 +218,17 @@ public abstract class Scalar extends Field implements ConfigScalar {
     }
 
     @Override
-    public ConfigOptional<ConfigScalar> toScalar() {
+    public ConfigOptional<ConfigScalar> asScalar() {
         return ConfigOptional.of(this);
     }
 
     @Override
-    public ConfigOptional<ConfigSection> toSection() {
+    public ConfigOptional<ConfigSection> asSection() {
         return ConfigOptional.invalid(this, "Expected a section but found a value");
     }
 
     @Override
-    public ConfigOptional<ConfigSequence> toSequence() {
+    public ConfigOptional<ConfigSequence> asSequence() {
         return ConfigOptional.invalid(this, "Expected a sequence (list) but found a value");
     }
 
