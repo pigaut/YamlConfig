@@ -7,6 +7,7 @@ import io.github.pigaut.yaml.node.scalar.*;
 import io.github.pigaut.yaml.node.scalar.key.*;
 import io.github.pigaut.yaml.node.section.*;
 import io.github.pigaut.yaml.node.sequence.*;
+import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
@@ -108,85 +109,7 @@ public class InvalidConfigException extends ConfigException {
         }
 
         // Line
-        if (field instanceof KeyedScalar keyedScalar) {
-            String value = keyedScalar.toString();
-            if (value.length() > 25) {
-                value = value.substring(0, 25) + "...";
-            }
-            line = keyedScalar.getKey() + ": " + value;
-        }
-        else if (field instanceof ConfigSection section) {
-            StringBuilder builder = new StringBuilder();
-            if (key == null) {
-                if (section.isRoot()) {
-                    builder.append("{ ... }");
-                } else if (section instanceof KeyedSection keyedSection) {
-                    builder.append(keyedSection.getKey()).append(": { ... }");
-                } else if (section instanceof KeylessSection keylessSection) {
-                    if (keylessSection.getParent() instanceof KeyedSequence keyedParentSequence) {
-                        builder.append(keyedParentSequence.getKey()).append("[").append(keylessSection.getIndex() + 1).append("]: ");
-                    } else {
-                        builder.append("[").append(keylessSection.getIndex() + 1).append("]: ");
-                    }
-                }
-            } else if (section.isScalar(key.toString())) {
-                Object value = section.getValue(key.toString());
-                if (value != null) {
-                    String stringValue = value.toString();
-                    if (stringValue.length() > 25) {
-                        stringValue = stringValue.substring(0, 25) + "...";
-                    }
-                    builder.append(key).append(": ").append(stringValue);
-                } else if (section.isRoot()) {
-                    builder.append("{ ... }");
-                } else {
-                    builder.append(section.getKey()).append(": { ... }");
-                }
-            } else if (section.isRoot()) {
-                builder.append("{ ... }");
-            } else {
-                builder.append(section.getKey()).append(": { ... }");
-            }
-            line = builder.toString();
-        }
-        else if (field instanceof KeylessField keylessField) {
-            ConfigField parent = keylessField.getParent();
-            if (parent instanceof ConfigSequence parentSequence) {
-                if (key instanceof Integer index && parentSequence.isScalar(index)) {
-                    Object value = parentSequence.getValue(index);
-                    if (value != null) {
-                        StringBuilder lineBuilder = new StringBuilder();
-                        if (!parentSequence.isRoot()) {
-                            lineBuilder.append(parentSequence.getKey());
-                        }
-
-                        lineBuilder.append("[").append(index + 1).append("]: ");
-
-                        String string = value.toString();
-                        if (string.length() > 25) {
-                            string = string.substring(0, 25) + "...";
-                        }
-                        lineBuilder.append(string);
-
-                        line = lineBuilder.toString();
-                    }
-                    else {
-                        line = parentSequence.getKey() + ": [ ... ]";
-                    }
-                }
-                else {
-                    line = parentSequence.getKey() + ": [ ... ]";
-                }
-            } else {
-                line = null;
-            }
-        }
-        else if (field instanceof ConfigScalar configScalar) {
-            line = configScalar.toString();
-        }
-        else {
-            line = null;
-        }
+        line = ConfigFieldDescriber.describe(field, key);
 
         // Details
         if (field instanceof ConfigLine configLine && configLine.getFormat() != null) {
