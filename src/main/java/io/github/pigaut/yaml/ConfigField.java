@@ -7,6 +7,7 @@ import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.comments.*;
 
 import java.util.*;
+import java.util.regex.*;
 
 public interface ConfigField extends ErrorCollector {
 
@@ -26,6 +27,7 @@ public interface ConfigField extends ErrorCollector {
     <T> void map(T value);
 
     void replaceAll(@NotNull CharSequence target, @NotNull CharSequence replacement);
+    void replaceAll(@NotNull Pattern pattern, @NotNull Map<String, String> replacements);
 
     List<CommentLine> getBlockComments();
     void setBlockComments(@Nullable List<CommentLine> blockComments);

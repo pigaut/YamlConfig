@@ -96,6 +96,18 @@ public class KeyedScalar extends Scalar implements KeyedField {
     }
 
     @Override
+    public void replaceAll(@NotNull CharSequence target, @NotNull CharSequence replacement) {
+        super.replaceAll(target, replacement);
+        key.replaceAll(target, replacement);
+    }
+
+    @Override
+    public void replaceAll(@NotNull Pattern pattern, @NotNull Map<String, String> replacements) {
+        super.replaceAll(pattern, replacements);
+        key.replaceAll(pattern, replacements);
+    }
+
+    @Override
     public ConfigSequence split(@NotNull Pattern pattern) {
         ConfigSequence sequence = new KeyedSequence(parent, key);
         List<Object> parsedValues = ScalarUtil.parseAllAsScalars(pattern.split(toString()));

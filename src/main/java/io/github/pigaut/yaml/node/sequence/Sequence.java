@@ -15,6 +15,7 @@ import org.snakeyaml.engine.v2.comments.*;
 import org.snakeyaml.engine.v2.common.*;
 
 import java.util.*;
+import java.util.regex.*;
 import java.util.stream.*;
 
 public abstract class Sequence extends Branch implements ConfigSequence {
@@ -631,8 +632,15 @@ public abstract class Sequence extends Branch implements ConfigSequence {
 
     @Override
     public void replaceAll(@NotNull CharSequence target, @NotNull CharSequence replacement) {
-        for (ConfigField field : this) {
+        for (ConfigField field : getNestedFields()) {
             field.replaceAll(target, replacement);
+        }
+    }
+
+    @Override
+    public void replaceAll(@NotNull Pattern pattern, @NotNull Map<String, String> replacements) {
+        for (ConfigField field : getNestedFields()) {
+            field.replaceAll(pattern, replacements);
         }
     }
 

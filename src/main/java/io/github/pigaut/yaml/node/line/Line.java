@@ -10,6 +10,7 @@ import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.comments.*;
 
 import java.util.*;
+import java.util.regex.*;
 
 public class Line implements ConfigLine {
 
@@ -79,6 +80,11 @@ public class Line implements ConfigLine {
     @Override
     public void replaceAll(@NotNull CharSequence target, @NotNull CharSequence replacement) {
         scalar.replaceAll(target, replacement);
+    }
+
+    @Override
+    public void replaceAll(@NotNull Pattern pattern, @NotNull Map<String, String> replacements) {
+        scalar.replaceAll(pattern, replacements);
     }
 
     @Override

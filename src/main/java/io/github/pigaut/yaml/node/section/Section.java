@@ -389,6 +389,13 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     @Override
+    public void replaceAll(@NotNull Pattern pattern, @NotNull Map<String, String> replacements) {
+        for (ConfigField field : getNestedFields()) {
+            field.replaceAll(pattern, replacements);
+        }
+    }
+
+    @Override
     public @NotNull Section getSectionOrCreate(@NotNull String path) {
         PathIterator iterator = PathIterator.of(this, path);
         Branch currentBranch = this;
@@ -418,6 +425,18 @@ public abstract class Section extends Branch implements ConfigSection {
     public ConfigScalar getScalarOrEmpty(@NotNull String path) {
         ConfigScalar scalar = getScalar(path).orElse(null);
         return scalar != null ? scalar : createScalar(path, "", false);
+    }
+
+    @Override
+    public ConfigLine getLineOrEmpty(@NotNull String path) {
+        ConfigScalar scalar = getScalarOrEmpty(path);
+        return scalar.toLine();
+    }
+
+    @Override
+    public ConfigLine getLineOrEmpty(@NotNull String path, @NotNull LineStyle lineStyle) {
+        ConfigScalar scalar = getScalarOrEmpty(path);
+        return scalar.toLine(lineStyle);
     }
 
     @Override

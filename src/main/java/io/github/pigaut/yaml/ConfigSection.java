@@ -31,6 +31,8 @@ public interface ConfigSection extends ConfigBranch, Iterable<KeyedField> {
     ConfigSection getSectionOrEmpty(@NotNull String path);
     ConfigSequence getSequenceOrEmpty(@NotNull String path);
     ConfigScalar getScalarOrEmpty(@NotNull String path);
+    ConfigLine getLineOrEmpty(@NotNull String path);
+    ConfigLine getLineOrEmpty(@NotNull String path, @NotNull LineStyle lineStyle);
 
     Stream<KeyedField> stream();
     Set<KeyedField> getNestedFields();
