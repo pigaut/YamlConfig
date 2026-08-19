@@ -12,6 +12,9 @@ import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.common.*;
 
+import java.util.*;
+import java.util.regex.*;
+
 public abstract class Scalar extends Field implements ConfigScalar {
 
     private Object value;
@@ -95,9 +98,28 @@ public abstract class Scalar extends Field implements ConfigScalar {
     @Override
     public void replaceAll(@NotNull CharSequence target, @NotNull CharSequence replacement) {
         String string = toString();
-        if (string.contains(target)) {
-            setValue(string.replace(target, replacement));
+        String result = string.replace(target, replacement);
+        if (!result.equals(string)) {
+            setValue(result);
         }
+    }
+
+    @Override
+    public void replaceAll(@NotNull Pattern pattern, @NotNull Map<String, String> replacements) {
+        String string = toString();
+        Matcher matcher = pattern.matcher(string);
+
+        if (!matcher.find()) {
+            return;
+        }
+
+        StringBuilder result = new StringBuilder();
+        do {
+            matcher.appendReplacement(result, Matcher.quoteReplacement(replacements.get(matcher.group())));
+        } while (matcher.find());
+        matcher.appendTail(result);
+
+        setValue(result.toString());
     }
 
     @Override

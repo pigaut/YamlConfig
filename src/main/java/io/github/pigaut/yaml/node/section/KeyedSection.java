@@ -8,6 +8,9 @@ import io.github.pigaut.yaml.node.sequence.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.common.*;
 
+import java.util.*;
+import java.util.regex.*;
+
 public class KeyedSection extends Section implements KeyedField {
 
     private final Section parent;
@@ -96,6 +99,18 @@ public class KeyedSection extends Section implements KeyedField {
     @Override
     public ConfigOptional<Double> getDoubleKey() {
         return key.toDouble();
+    }
+
+    @Override
+    public void replaceAll(@NotNull CharSequence target, @NotNull CharSequence replacement) {
+        super.replaceAll(target, replacement);
+        key.replaceAll(target, replacement);
+    }
+
+    @Override
+    public void replaceAll(@NotNull Pattern pattern, @NotNull Map<String, String> replacements) {
+        super.replaceAll(pattern, replacements);
+        key.replaceAll(pattern, replacements);
     }
 
     @Override

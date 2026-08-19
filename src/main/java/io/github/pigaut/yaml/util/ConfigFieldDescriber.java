@@ -3,27 +3,21 @@ package io.github.pigaut.yaml.util;
 import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.scalar.*;
+import io.github.pigaut.yaml.node.section.*;
 import io.github.pigaut.yaml.node.sequence.*;
 import org.jetbrains.annotations.*;
 
 public final class ConfigFieldDescriber {
 
-    private static final int MAX_VALUE_LENGTH = 25;
+    private static final int MAX_VALUE_LENGTH = 35;
 
     private ConfigFieldDescriber() {
     }
 
-    /**
-     * Describes a field directly, e.g. {@code "some-key: value"} or {@code "some-key: { ... }"}.
-     */
     public static @Nullable String describe(@NotNull ConfigField field) {
         return describe(field, null);
     }
 
-    /**
-     * Describes a field, optionally in the context of a specific child {@code key}
-     * (used when the field is a {@link ConfigSection} and you want to describe one entry within it).
-     */
     public static @Nullable String describe(@NotNull ConfigField field, @Nullable Object key) {
         if (field instanceof KeyedScalar keyedScalar) {
             return keyedLine(keyedScalar.getKey(), truncate(keyedScalar.toString()));

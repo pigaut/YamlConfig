@@ -8,6 +8,7 @@ import io.github.pigaut.yaml.node.scalar.*;
 import io.github.pigaut.yaml.node.section.*;
 import org.jetbrains.annotations.*;
 
+import java.util.*;
 import java.util.regex.*;
 
 public class ScalarKey extends Scalar {
@@ -53,14 +54,6 @@ public class ScalarKey extends Scalar {
     @Override
     public @NotNull String getKey(@NotNull CaseStyle style) {
         return style.format(toString());
-    }
-
-    @Override
-    public void replaceAll(@NotNull CharSequence target, @NotNull CharSequence replacement) {
-        String string = toString();
-        if (string.contains(target)) {
-            setValue(string.replace(target, replacement));
-        }
     }
 
     @Override

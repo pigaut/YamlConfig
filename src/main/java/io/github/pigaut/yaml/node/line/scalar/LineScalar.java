@@ -110,6 +110,11 @@ public abstract class LineScalar implements ConfigScalar {
     }
 
     @Override
+    public void replaceAll(@NotNull Pattern pattern, @NotNull Map<String, String> replacements) {
+        line.replaceAll(pattern, replacements);
+    }
+
+    @Override
     public void clear() {
         line.clear();
     }
