@@ -2,14 +2,12 @@ package io.github.pigaut.yaml.node.scalar;
 
 import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.convert.format.*;
-import io.github.pigaut.yaml.convert.parse.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.scalar.key.*;
 import io.github.pigaut.yaml.node.section.*;
 import io.github.pigaut.yaml.node.sequence.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
-import org.snakeyaml.engine.v2.nodes.*;
 
 import java.util.*;
 import java.util.regex.*;

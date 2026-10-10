@@ -2,8 +2,7 @@ package io.github.pigaut.yaml.node.line;
 
 import org.jetbrains.annotations.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class LineTokenizer {
 
@@ -24,8 +23,8 @@ public class LineTokenizer {
         StringBuilder current = new StringBuilder();
         char[] chars = line.toCharArray();
 
-        boolean useCommaSeparator = lineStyle != LineStyle.COLON && lineStyle != LineStyle.SPACED;
-        boolean foundLabel = lineStyle != LineStyle.LABELED;
+        boolean useCommaSeparator = lineStyle.isCommaSeparated();
+        boolean foundLabel = !lineStyle.isLabeled();
         boolean foundFlag = false;
         for (int i = 0; i < chars.length; i++) {
             char c = chars[i];
@@ -65,7 +64,7 @@ public class LineTokenizer {
                 }
             }
 
-            // End current token at space followed by flag token
+            // End current token at space followed by flag
             if (c == ' ' && nextTokenFlag) {
                 Token token = toToken(current.toString());
                 flush(token, parts, current);
@@ -73,8 +72,9 @@ public class LineTokenizer {
                 continue;
             }
 
-            // End current token at empty space
-            if (c == ' ' && !foundFlag && lineStyle == LineStyle.SPACED) {
+            // End current token at empty space (Spaced line style) ignores trailing space after commas
+            boolean previousTokenUnescapedComma = i >= 2 ? (chars[i - 1] == ',' && chars[i - 2] != ',') : i == 1 && (chars[i - 1] == ',');
+            if (c == ' ' && !previousTokenUnescapedComma && !foundFlag && lineStyle == LineStyle.SPACED) {
                 if (!current.isEmpty()) {
                     Token token = toToken(current.toString());
                     flush(token, parts, current);
@@ -82,7 +82,7 @@ public class LineTokenizer {
                 continue;
             }
 
-            // End current token at colon char
+            // End current token at colon char (Colon line style)
             if (c == ':' && !foundFlag && lineStyle == LineStyle.COLON) {
                 if (!current.isEmpty()) {
                     Token token = toToken(current.toString());
@@ -90,6 +90,36 @@ public class LineTokenizer {
                 }
                 continue;
             }
+
+            // End current token at a math operator char (Math line style)
+            if (!foundFlag && lineStyle == LineStyle.MATH) {
+                int operatorLength = findMathOperatorLength(chars, i);
+                if (operatorLength > 0) {
+                    // Ignore a single leading space before the operator
+                    if (!current.isEmpty() && current.charAt(current.length() - 1) == ' ') {
+                        current.deleteCharAt(current.length() - 1);
+                    }
+
+                    if (!current.isEmpty()) {
+                        Token token = toToken(current.toString());
+                        flush(token, parts, current);
+                    }
+
+                    // The operator itself becomes a token
+                    String operator = new String(chars, i, operatorLength);
+                    parts.add(new Token(operator, TokenType.VALUE));
+
+                    int next = i + operatorLength;
+                    if (next < chars.length && chars[next] == ' ') {
+                        operatorLength++;
+                    }
+
+                    // -1 because the for-loop's i++ accounts for one of them
+                    i += operatorLength - 1;
+                    continue;
+                }
+            }
+
 
             current.append(c);
         }
@@ -101,6 +131,21 @@ public class LineTokenizer {
         }
 
         return parts;
+    }
+
+    /**
+     * Returns the length of the operator starting at index i (2 for "->", ">=", "<=", 1 for
+     * everything else), or 0 if there's no operator at this position.
+     */
+    private static int findMathOperatorLength(char[] chars, int i) {
+        char c = chars[i];
+        if (i + 1 < chars.length) {
+            char next = chars[i + 1];
+            if ((c == '-' && next == '>') || (c == '>' && next == '=') || (c == '<' && next == '=')) {
+                return 2;
+            }
+        }
+        return LineStyle.isMathOperator(c) ? 1 : 0;
     }
 
     private static void flush(@NotNull Token token, @NotNull List<Token> parts, @NotNull StringBuilder current) {

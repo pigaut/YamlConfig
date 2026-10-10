@@ -1,12 +1,8 @@
 package io.github.pigaut.yaml;
 
-import io.github.pigaut.yaml.configurator.load.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.line.scalar.*;
-import io.github.pigaut.yaml.node.scalar.*;
 import io.github.pigaut.yaml.node.scalar.key.*;
-import io.github.pigaut.yaml.node.section.*;
-import io.github.pigaut.yaml.node.sequence.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 
@@ -14,7 +10,7 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
-public class InvalidConfigException extends ConfigException {
+public abstract class InvalidConfigException extends ConfigException {
 
     private final ConfigField field;
     private final @Nullable String prefix;
@@ -29,19 +25,19 @@ public class InvalidConfigException extends ConfigException {
 
     private @Nullable String error;
 
-    public InvalidConfigException(@NotNull ConfigField field, @Nullable String details) {
+    protected InvalidConfigException(@NotNull ConfigField field, @Nullable String details) {
         this(field.getRoot(), field, null, details);
     }
 
-    public InvalidConfigException(@NotNull ConfigField field, @NotNull String key, @Nullable String details) {
+    protected InvalidConfigException(@NotNull ConfigField field, @NotNull String key, @Nullable String details) {
         this(field.getRoot(), field, key, details);
     }
 
-    public InvalidConfigException(@NotNull ConfigField field, int index, @Nullable String details) {
+    protected InvalidConfigException(@NotNull ConfigField field, int index, @Nullable String details) {
         this(field.getRoot(), field, index, details);
     }
 
-    public InvalidConfigException(@NotNull InvalidConfigException exception, @Nullable String details) {
+    protected InvalidConfigException(@NotNull InvalidConfigException exception, @Nullable String details) {
         this.field = exception.field;
         this.prefix = exception.prefix;
         this.file = exception.file;
@@ -62,14 +58,20 @@ public class InvalidConfigException extends ConfigException {
             field = scalarKey.getField();
         }
 
-        // in-line scalar to complete line
-        if (field instanceof LineScalar lineScalar) {
-            field = lineScalar.toLine();
+        // in-line scalar to full line
+        if (field instanceof InlineScalar inlineScalar) {
+            field = inlineScalar.getFullLine();
         }
 
         // Line to scalar
         if (field instanceof ConfigLine lineField) {
             field = lineField.toScalar();
+        }
+
+        // If toScalar() on a line created from an InlineScalar returned that InlineScalar,
+        // resolve it to the full line's scalar now
+        if (field instanceof InlineScalar inlineScalar) {
+            field = inlineScalar.getFullLine().toScalar();
         }
 
         if (!(field instanceof ConfigBranch)) {
@@ -98,14 +100,14 @@ public class InvalidConfigException extends ConfigException {
 
         // Top level key
         if (field.isRoot()) {
-            topLevelKey = key != null ? key.toString() : null;
+            topLevelKey = key != null ? key.toString().split(" ")[0] : null;
         }
         else {
             ConfigField topLevelField = field;
             while (!topLevelField.getParent().isRoot()) {
                 topLevelField = topLevelField.getParent();
             }
-            topLevelKey = topLevelField instanceof KeyedField keyedField ? keyedField.getKey() : null;
+            topLevelKey = topLevelField instanceof KeyedField keyedField ? keyedField.getKey().split(" ")[0] : null;
         }
 
         // Line

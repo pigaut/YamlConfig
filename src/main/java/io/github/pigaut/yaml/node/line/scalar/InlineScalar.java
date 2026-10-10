@@ -13,12 +13,13 @@ import org.snakeyaml.engine.v2.common.*;
 import java.util.*;
 import java.util.regex.*;
 
-public abstract class LineScalar implements ConfigScalar {
+public abstract class InlineScalar implements ConfigScalar {
 
-    protected final ConfigLine line;
+    protected final Line line;
     protected @NotNull Object value;
+    private Line subLine = null;
 
-    public LineScalar(@NotNull ConfigLine line, @NotNull Object value) {
+    public InlineScalar(@NotNull Line line, @NotNull Object value) {
         this.line = line;
         this.value = value;
     }
@@ -26,6 +27,18 @@ public abstract class LineScalar implements ConfigScalar {
     @Override
     public boolean isInLine() {
         return true;
+    }
+
+    public @NotNull ConfigLine getFullLine() {
+        ConfigScalar scalar = line.toScalar();
+        if (scalar instanceof InlineScalar inlineScalar) {
+            return inlineScalar.getFullLine();
+        }
+        return line;
+    }
+
+    public @NotNull ConfigLine getEnclosingLine() {
+        return line;
     }
 
     @Override
@@ -40,15 +53,12 @@ public abstract class LineScalar implements ConfigScalar {
     }
 
     @Override
-    public void setValue(@Nullable Object value) {
-        if (value != null) {
-            if (!YamlConfig.isScalarType(value.getClass())) {
-                throw new IllegalArgumentException("Value is not a scalar");
-            }
-            this.value = value;
-        } else {
-            this.value = "";
+    public void setValue(@NotNull Object value) {
+        if (!YamlConfig.isScalarType(value.getClass())) {
+            throw new IllegalArgumentException("Value is not a scalar");
         }
+        this.value = value;
+        line.updateOwningScalar();
     }
 
     @Override
@@ -86,17 +96,23 @@ public abstract class LineScalar implements ConfigScalar {
 
     @Override
     public ConfigLine toLine() {
-        return line;
+        return toLine(LineStyle.LABELED);
     }
 
     @Override
     public ConfigLine toLine(@NotNull LineStyle lineStyle) {
-        throw new UnsupportedOperationException("Line scalars cannot be converted to a line");
+        return subLine != null ? subLine : (subLine = new Line(this, lineStyle, null));
     }
 
     @Override
     public ConfigOptional<ConfigLine> toLine(@NotNull LineStyle lineStyle, @NotNull String format) {
-        throw new UnsupportedOperationException("Line scalars cannot be converted to a line");
+        if (subLine == null) {
+            subLine = new Line(this, lineStyle, format);
+        }
+        if (!subLine.matchesFormat(format)) {
+            return ConfigOptional.invalid(subLine, "Expected format: " + format);
+        }
+        return ConfigOptional.of(subLine);
     }
 
     @Override

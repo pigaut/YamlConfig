@@ -35,4 +35,6 @@ public interface ConfigBranch extends ConfigField {
     <T> ConfigList<T> getAll(@NotNull Class<T> classType);
     <T> List<T> getAllRequired(@NotNull Class<T> classType) throws InvalidConfigException;
 
+    @NotNull ConfigBranch copy();
+
 }

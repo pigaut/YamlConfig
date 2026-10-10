@@ -13,22 +13,19 @@ public class AbstractOptional<T> {
     protected final T value;
     protected final InvalidConfigException exception;
     protected final boolean existsInConfig;
-    protected final boolean warning;
 
     protected AbstractOptional(ConfigField field, @Nullable T value, boolean existsInConfig) {
         this.field = field;
         this.value = value;
         this.exception = null;
         this.existsInConfig = existsInConfig;
-        this.warning = false;
     }
 
-    protected AbstractOptional(ConfigField field, @Nullable InvalidConfigException exception, boolean existsInConfig, boolean warning) {
+    protected AbstractOptional(ConfigField field, @Nullable InvalidConfigException exception, boolean existsInConfig) {
         this.field = field;
         this.value = null;
         this.exception = exception;
         this.existsInConfig = existsInConfig;
-        this.warning = warning;
         ConfigRoot root = field.getRoot();
         ConfigLoader<?> activeLoader = root.getActiveLoader();
         if (activeLoader != null) {
@@ -182,7 +179,7 @@ public class AbstractOptional<T> {
     private void collectException() {
         assert exception != null;
         ConfigRoot root = field.getRoot();
-        if (warning) {
+        if (exception.isWarning()) {
             root.collectWarning(exception);
         } else {
             root.collectError(exception);

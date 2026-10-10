@@ -2,6 +2,7 @@ package io.github.pigaut.yaml;
 
 import org.jetbrains.annotations.*;
 
+import javax.print.attribute.standard.*;
 import java.io.*;
 import java.util.regex.*;
 
@@ -66,6 +67,11 @@ public class ConfigLoadException extends ConfigException {
                 "%s" +
                 " Details >> %s";
         return String.format(errorMessage, optionalPrefix, optionalFile, details);
+    }
+
+    @Override
+    public boolean isWarning() {
+        return false;
     }
 
 }

@@ -17,7 +17,7 @@ public class ChanceLoader implements ConfigLoader<Chance> {
         try {
             return ParseUtil.parseChance(scalar.toString());
         } catch (StringParseException e) {
-            throw new InvalidConfigException(scalar, e.getMessage());
+            throw new ConfigErrorException(scalar, e.getMessage());
         }
     }
 

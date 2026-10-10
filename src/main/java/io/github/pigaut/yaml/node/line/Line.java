@@ -5,6 +5,7 @@ import io.github.pigaut.yaml.configurator.*;
 import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.node.line.scalar.*;
+import io.github.pigaut.yaml.node.scalar.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.comments.*;
@@ -118,7 +119,7 @@ public class Line implements ConfigLine {
     }
 
     @Override
-    public void setInLineComments(@NotNull List<CommentLine> inLineComments) {
+    public void setInLineComments(@Nullable List<CommentLine> inLineComments) {
         scalar.setInLineComments(inLineComments);
     }
 
@@ -213,8 +214,8 @@ public class Line implements ConfigLine {
     }
 
     @Override
-    public boolean contains(@NotNull String value) {
-        return scalar.contains(value);
+    public boolean contains(@NotNull String string) {
+        return scalar.contains(string);
     }
 
     @Override
@@ -234,48 +235,17 @@ public class Line implements ConfigLine {
     }
 
     @Override
-    public boolean matchesFormat(@NotNull String line) {
-        String[] parts = line.split("\\s");
-
-        for (int i = 0; i < parts.length; i++) {
-            String part = parts[i];
-            if (part.startsWith("<") && part.endsWith(">")) {
-                // Required parameter (anything)
-                continue;
-            }
-
-            if (part.startsWith("(") && part.endsWith(")")) {
-                // Optional flag
-                continue;
-            }
-
-            ConfigOptional<String> foundString = getString(i);
-
-            if (part.contains("|")) {
-                String[] aliases = part.split("\\|");
-                boolean anyMatched = false;
-                for (String alias : aliases) {
-                    if (foundString.require(s -> s.equalsIgnoreCase(alias)).isValid()) {
-                        anyMatched = true;
-                        break;
-                    }
-                }
-                if (!anyMatched) {
-                    return false;
-                }
-                continue;
-            }
-
-            if (foundString.require(s -> s.equalsIgnoreCase(part)).isInvalid()) {
-                return false;
-            }
-        }
-
-        return true;
+    public boolean matchesFormat(@NotNull String format) {
+        return LineMatcher.matchesFormat(this, format);
     }
 
     @Override
     public int size() {
+        return valueCount() + flagCount();
+    }
+
+    @Override
+    public int valueCount() {
         return values.size();
     }
 
@@ -285,7 +255,18 @@ public class Line implements ConfigLine {
     }
 
     @Override
-    public Map<String, ConfigScalar> getAllFlags() {
+    public int indexOf(@NotNull Object value) {
+        for (int i = 0; i < valueCount(); i++) {
+            ConfigOptional<String> optional = getString(i);
+            if (optional.test(string -> string.equals(value.toString()))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    @Override
+    public @NotNull Map<String, ConfigScalar> getAllFlags() {
         return new HashMap<>(valuesByKey);
     }
 
@@ -295,29 +276,42 @@ public class Line implements ConfigLine {
     }
 
     @Override
-    public @NotNull String toString(@NotNull StringFormatter formatter) {
-        String string = this.toString();
-        return formatter.format(string);
-    }
-
-    @Override
-    public @NotNull String getValue() {
+    public @NotNull String toString() {
         return scalar.toString();
     }
 
     @Override
-    public void setValue(@NotNull String line) {
-        scalar.setValue(line);
+    public @NotNull String toString(@NotNull StringFormatter formatter) {
+        return scalar.toString(formatter);
     }
 
     @Override
-    public void set(int index, Object value) {
+    public @NotNull Object getValue() {
+        return scalar.getValue();
+    }
+
+    public void updateOwningScalar() {
+        if (scalar instanceof Scalar rawScalar) {
+            rawScalar.setValueQuietly(createString());
+        } else if (scalar instanceof InlineScalar inlineScalar) {
+            inlineScalar.setValue(createString());
+        }
+    }
+
+    @Override
+    public void set(@NotNull Object value) {
+        scalar.setValue(value);
+    }
+
+    @Override
+    public void setValue(int index, @NotNull Object value) {
         Preconditions.checkNotNull(value, "Value cannot be null");
         Preconditions.checkArgument(YamlConfig.isScalarType(value.getClass()), "Value is not a scalar");
         if (index < 0 || index >= values.size()) {
             throw new IndexOutOfBoundsException(index);
         }
-        values.set(index, new KeylessLineScalar(this, index, value));
+        values.set(index, new KeylessInlineScalar(this, index, value));
+        updateOwningScalar();
     }
 
     @Override
@@ -328,13 +322,15 @@ public class Line implements ConfigLine {
         String[] aliases = key.split("\\|");
         for (String alias : aliases) {
             if (valuesByKey.containsKey(alias)) {
-                valuesByKey.put(alias, new KeyedLineScalar(this, alias, value));
+                valuesByKey.put(alias, new KeyedInlineScalar(this, alias, value));
+                updateOwningScalar();
                 return;
             }
         }
 
         String primary = aliases[0];
-        valuesByKey.put(primary, new KeyedLineScalar(this, primary, value));
+        valuesByKey.put(primary, new KeyedInlineScalar(this, primary, value));
+        updateOwningScalar();
     }
 
     @Override
@@ -391,7 +387,8 @@ public class Line implements ConfigLine {
         return getScalar(key).flatMapIfValid(scalar -> scalar.get(classType));
     }
 
-    private ConfigOptional<ConfigScalar> getScalar(String flag) {
+    @Override
+    public ConfigOptional<ConfigScalar> getScalar(@NotNull String flag) {
         String[] aliases = flag.split("\\|");
         for (String alias : aliases) {
             if (valuesByKey.containsKey(alias)) {
@@ -401,7 +398,8 @@ public class Line implements ConfigLine {
         return ConfigOptional.notSet(this, "Missing a value with flag: " + aliases[0]);
     }
 
-    private ConfigOptional<ConfigScalar> getScalar(int index) {
+    @Override
+    public ConfigOptional<ConfigScalar> getScalar(int index) {
         if (index < 0) {
             throw new IndexOutOfBoundsException(index);
         }
@@ -416,6 +414,26 @@ public class Line implements ConfigLine {
     @Override
     public <T> T getRequired(@NotNull Class<T> classType) throws InvalidConfigException {
         return scalar.getRequired(classType);
+    }
+
+    @Override
+    public @NotNull ConfigScalar getRequiredScalar(@NotNull String key) throws InvalidConfigException {
+        return getScalar(key).orThrow();
+    }
+
+    @Override
+    public @NotNull ConfigLine getRequiredSubLine(@NotNull String key) throws InvalidConfigException {
+        return getSubLine(key).orThrow();
+    }
+
+    @Override
+    public @NotNull ConfigLine getRequiredSubLine(@NotNull String key, @NotNull LineStyle lineStyle) throws InvalidConfigException {
+        return getSubLine(key, lineStyle).orThrow();
+    }
+
+    @Override
+    public @NotNull ConfigLine getRequiredSubLine(@NotNull String key, @NotNull LineStyle lineStyle, @NotNull String format) throws InvalidConfigException {
+        return getSubLine(key, lineStyle, format).orThrow();
     }
 
     @Override
@@ -459,6 +477,26 @@ public class Line implements ConfigLine {
     }
 
     @Override
+    public @NotNull ConfigScalar getRequiredScalar(int index) throws InvalidConfigException {
+        return getScalar(index).orThrow();
+    }
+
+    @Override
+    public @NotNull ConfigLine getRequiredSubLine(int index) throws InvalidConfigException {
+        return getSubLine(index).orThrow();
+    }
+
+    @Override
+    public @NotNull ConfigLine getRequiredSubLine(int index, @NotNull LineStyle lineStyle) throws InvalidConfigException {
+        return getSubLine(index, lineStyle).orThrow();
+    }
+
+    @Override
+    public @NotNull ConfigLine getRequiredSubLine(int index, @NotNull LineStyle lineStyle, @NotNull String format) throws InvalidConfigException {
+        return getSubLine(index, lineStyle, format).orThrow();
+    }
+
+    @Override
     public @NotNull Boolean getRequiredBoolean(int index) throws InvalidConfigException {
         return getBoolean(index).orThrow();
     }
@@ -499,6 +537,21 @@ public class Line implements ConfigLine {
     }
 
     @Override
+    public ConfigOptional<ConfigLine> getSubLine(int index) {
+        return getScalar(index).mapIfValid(ConfigScalar::toLine);
+    }
+
+    @Override
+    public ConfigOptional<ConfigLine> getSubLine(int index, @NotNull LineStyle lineStyle) {
+        return getScalar(index).mapIfValid(scalar -> scalar.toLine(lineStyle));
+    }
+
+    @Override
+    public ConfigOptional<ConfigLine> getSubLine(int index, @NotNull LineStyle lineStyle, @NotNull String format) {
+        return getScalar(index).flatMapIfValid(scalar -> scalar.toLine(lineStyle, format));
+    }
+
+    @Override
     public ConfigOptional<Boolean> getBoolean(int index) {
         return getScalar(index).flatMapIfValid(ConfigScalar::toBoolean);
     }
@@ -536,6 +589,21 @@ public class Line implements ConfigLine {
     @Override
     public ConfigOptional<Double> getDouble(int index) {
         return getScalar(index).flatMapIfValid(ConfigScalar::toDouble);
+    }
+
+    @Override
+    public ConfigOptional<ConfigLine> getSubLine(@NotNull String key) {
+        return getScalar(key).mapIfValid(ConfigScalar::toLine);
+    }
+
+    @Override
+    public ConfigOptional<ConfigLine> getSubLine(@NotNull String key, @NotNull LineStyle lineStyle) {
+        return getScalar(key).mapIfValid(scalar -> scalar.toLine(lineStyle));
+    }
+
+    @Override
+    public ConfigOptional<ConfigLine> getSubLine(@NotNull String key, @NotNull LineStyle lineStyle, @NotNull String format) {
+        return getScalar(key).flatMapIfValid(scalar -> scalar.toLine(lineStyle, format));
     }
 
     @Override
@@ -599,20 +667,19 @@ public class Line implements ConfigLine {
                         parsedValue = existingScalar.getValue() + SPLIT_LINE + parsedValue;
                     }
 
-                    valuesByKey.put(key, new KeyedLineScalar(this, key, parsedValue));
+                    valuesByKey.put(key, new KeyedInlineScalar(this, key, parsedValue));
                 }
 
                 case VALUE -> {
                     Object parsedValue = ScalarUtil.parseAsScalar(token.raw());
-                    values.add(new KeylessLineScalar(this, values.size(), parsedValue));
+                    values.add(new KeylessInlineScalar(this, values.size(), parsedValue));
                 }
             }
         }
     }
 
-    @Override
-    public @NotNull String toString() {
-        StringJoiner valueJoiner = new StringJoiner(", ");
+    public @NotNull String createString() {
+        StringJoiner valueJoiner = new StringJoiner(lineStyle.getDelimiter());
         for (Object value : values) {
             valueJoiner.add(value.toString());
         }

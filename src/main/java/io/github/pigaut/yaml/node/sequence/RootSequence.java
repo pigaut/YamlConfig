@@ -15,12 +15,11 @@ import org.snakeyaml.engine.v2.nodes.*;
 import java.io.*;
 import java.nio.charset.*;
 import java.util.*;
-import java.util.concurrent.atomic.*;
 
 public class RootSequence extends Sequence implements ConfigRoot {
 
-    private final ConfigLoad loader = new ConfigLoad();
-    private final ConfigDump dumper = new ConfigDump();
+    private static final ConfigLoad loader = new ConfigLoad();
+    private static final ConfigDump dumper = new ConfigDump();
     private final @Nullable File file;
     private final @Nullable String name;
     private final List<ConfigException> errors = new ArrayList<>();
@@ -158,7 +157,7 @@ public class RootSequence extends Sequence implements ConfigRoot {
     public void loadFromStream(@NotNull InputStream inputStream) throws ConfigLoadException {
         List<Node> documents = new ArrayList<>();
         try {
-            loader.loadAllFromInputStream(inputStream).forEach(documents::add);
+            loader.loadAllNodesFromInputStream(inputStream).forEach(documents::add);
         } catch (YamlEngineException e) {
             throw new ConfigLoadException(this, e.getMessage());
         }
@@ -169,7 +168,7 @@ public class RootSequence extends Sequence implements ConfigRoot {
     public void loadFromReader(@NotNull Reader reader) throws ConfigLoadException {
         List<Node> documents = new ArrayList<>();
         try {
-            loader.loadAllFromReader(reader).forEach(documents::add);
+            loader.loadAllNodesFromReader(reader).forEach(documents::add);
         } catch (YamlEngineException e) {
             throw new ConfigLoadException(this, e.getMessage());
         }

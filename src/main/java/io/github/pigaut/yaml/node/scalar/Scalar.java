@@ -26,8 +26,8 @@ public abstract class Scalar extends Field implements ConfigScalar {
     }
 
     protected Scalar(@NotNull Object value, @NotNull ScalarStyle scalarStyle) {
-        setValueInternal(value);
         this.scalarStyle = scalarStyle;
+        setValueQuietly(value);
     }
 
     @Override
@@ -65,24 +65,18 @@ public abstract class Scalar extends Field implements ConfigScalar {
     }
 
     @Override
-    public void setValue(@Nullable Object value) {
-        setValueInternal(value);
+    public void setValue(@NotNull Object value) {
+        setValueQuietly(value);
+        if (line != null) {
+            line.updateLine(value.toString());
+        }
     }
 
-    private void setValueInternal(@Nullable Object value) {
-        if (value != null) {
-            if (!YamlConfig.isScalarType(value.getClass())) {
-                throw new IllegalArgumentException("Value is not a scalar");
-            }
-            this.value = value;
+    public void setValueQuietly(@NotNull Object value) {
+        if (!YamlConfig.isScalarType(value.getClass())) {
+            throw new IllegalArgumentException("Value is not a scalar");
         }
-        else {
-            this.value = "";
-        }
-
-        if (line != null) {
-            line.updateLine(this.value.toString());
-        }
+        this.value = value;
     }
 
     @Override
@@ -225,7 +219,6 @@ public abstract class Scalar extends Field implements ConfigScalar {
         } catch (InvalidConfigException e) {
             return ConfigOptional.invalid(e);
         }
-
     }
 
     @Override

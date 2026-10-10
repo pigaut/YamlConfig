@@ -7,7 +7,6 @@ import org.jetbrains.annotations.*;
 import org.snakeyaml.engine.v2.common.*;
 
 import java.util.*;
-import java.util.stream.*;
 
 public abstract class Branch extends Field implements ConfigBranch {
 

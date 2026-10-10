@@ -38,7 +38,7 @@ public class YamlConfig {
              InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, StandardCharsets.UTF_8);
              BufferedReader reader = new BufferedReader(inputStreamReader)) {
 
-            for (Node document : loader.loadAllFromReader(reader)) {
+            for (Node document : loader.loadAllNodesFromReader(reader)) {
                 documents.add(document);
             }
         } catch (IOException | YamlEngineException e) {
@@ -250,6 +250,8 @@ public class YamlConfig {
             Float.class, Double.class, BigInteger.class, BigDecimal.class
     );
 
+    private static final Set<Class<?>> SCALAR_TYPES = new HashSet<>(SCALARS);
+
     public static String getFileNameWithoutYamlExtension(@NotNull File file) {
         String fileName = file.getName();
         return removeYamlExtension(fileName);
@@ -260,7 +262,7 @@ public class YamlConfig {
     }
     
     public static boolean isScalarType(Class<?> classType) {
-        return SCALARS.contains(classType);
+        return SCALAR_TYPES.contains(classType);
     }
 
     public static boolean isScalar(Object value) {

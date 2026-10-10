@@ -4,16 +4,17 @@ import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.convert.format.*;
 import io.github.pigaut.yaml.convert.parse.*;
 import io.github.pigaut.yaml.node.*;
+import io.github.pigaut.yaml.node.line.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
 
-public class KeylessLineScalar extends LineScalar implements KeylessField {
+public class KeylessInlineScalar extends InlineScalar implements KeylessField {
 
     private int index;
 
-    public KeylessLineScalar(ConfigLine line, int index, Object value) {
+    public KeylessInlineScalar(@NotNull Line line, int index, @NotNull Object value) {
         super(line, value);
         this.index = index;
     }
@@ -103,7 +104,7 @@ public class KeylessLineScalar extends LineScalar implements KeylessField {
         if (ScalarUtil.isBoolean(value)) {
             return ConfigOptional.of(line, (Boolean) value);
         }
-        return ConfigOptional.invalid(line, "Missing a boolean value at position: " + getPosition());
+        return ConfigOptional.invalid(line, "Expected a boolean at " + NumberFormatter.toOrdinal(getPosition()) + " parameter but found: " + this);
     }
 
     @Override
@@ -111,7 +112,7 @@ public class KeylessLineScalar extends LineScalar implements KeylessField {
         if (ScalarUtil.isCharacter(value)) {
             return ConfigOptional.of(line, value.toString().charAt(0));
         }
-        return ConfigOptional.invalid(line, "Missing a character value at position: " + getPosition());
+        return ConfigOptional.invalid(line, "Expected a character at " + NumberFormatter.toOrdinal(getPosition()) + " parameter but found: " + this);
     }
 
     @Override
@@ -125,7 +126,7 @@ public class KeylessLineScalar extends LineScalar implements KeylessField {
                 return ConfigOptional.of(line, parsed);
             }
         }
-        return ConfigOptional.invalid(line, "Missing an integer value at position: " + getPosition());
+        return ConfigOptional.invalid(line, "Expected an integer at " + NumberFormatter.toOrdinal(getPosition()) + " parameter but found: " + this);
     }
 
     @Override
@@ -139,7 +140,7 @@ public class KeylessLineScalar extends LineScalar implements KeylessField {
                 return ConfigOptional.of(line, parsed);
             }
         }
-        return ConfigOptional.invalid(line, "Missing a long value at position: " + getPosition());
+        return ConfigOptional.invalid(line, "Expected a long at " + NumberFormatter.toOrdinal(getPosition()) + " parameter but found: " + this);
     }
 
     @Override
@@ -153,7 +154,7 @@ public class KeylessLineScalar extends LineScalar implements KeylessField {
                 return ConfigOptional.of(line, parsed);
             }
         }
-        return ConfigOptional.invalid(line, "Missing a double value at position: " + getPosition());
+        return ConfigOptional.invalid(line, "Expected a double at " + NumberFormatter.toOrdinal(getPosition()) + " parameter but found: " + this);
     }
 
     @Override
@@ -167,7 +168,7 @@ public class KeylessLineScalar extends LineScalar implements KeylessField {
                 return ConfigOptional.of(line, parsed.floatValue());
             }
         }
-        return ConfigOptional.invalid(line, "Missing a float value at position: " + getPosition());
+        return ConfigOptional.invalid(line, "Expected a float at " + NumberFormatter.toOrdinal(getPosition()) + " parameter but found: " + this);
     }
 
 }

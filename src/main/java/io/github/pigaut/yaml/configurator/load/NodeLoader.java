@@ -4,7 +4,6 @@ import io.github.pigaut.yaml.*;
 import io.github.pigaut.yaml.node.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
-import org.snakeyaml.engine.v2.common.*;
 import org.snakeyaml.engine.v2.nodes.*;
 
 import java.util.*;

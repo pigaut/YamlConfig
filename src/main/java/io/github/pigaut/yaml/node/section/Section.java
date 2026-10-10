@@ -19,27 +19,31 @@ import java.util.*;
 import java.util.regex.*;
 import java.util.stream.*;
 
-public abstract class Section extends Branch implements ConfigSection {
+public abstract class Section extends Branch implements ConfigSection, SectionMap {
 
     private final Map<String, KeyedField> fieldsByKey = new LinkedHashMap<>();
 
-    protected Section(FlowStyle flowStyle) {
+    protected Section(@NotNull FlowStyle flowStyle) {
         super(flowStyle);
     }
 
-    public KeyedField getNode(String key) {
+    @Override
+    public @Nullable KeyedField getNode(@NotNull String key) {
         return fieldsByKey.get(key);
     }
 
-    public void addNode(KeyedField keyedField) {
+    @Override
+    public void addNode(@NotNull KeyedField keyedField) {
         fieldsByKey.put(keyedField.getKey(), keyedField);
     }
 
-    public void removeNode(String key) {
+    @Override
+    public void removeNode(@NotNull String key) {
         fieldsByKey.remove(key);
     }
 
-    public void onKeyChanged(KeyedField field, String oldKey, String newKey) {
+    @Override
+    public void updateKey(@NotNull KeyedField field, @NotNull String oldKey, @NotNull String newKey) {
         if (fieldsByKey.get(oldKey) != field) {
             return;
         }
@@ -111,21 +115,21 @@ public abstract class Section extends Branch implements ConfigSection {
         try {
             switch (mapper.getDefaultMappingType(value)) {
                 case SCALAR -> {
-                    ConfigScalar scalar = getScalarOrCreate(key);
+                    ConfigScalar scalar = createScalarByKey(key, "");
                     if (mapper.clearExistingFields()) {
                         scalar.clear();
                     }
                     mapper.mapToScalar(scalar, value);
                 }
                 case SECTION -> {
-                    ConfigSection section = getSectionOrCreate(key);
+                    ConfigSection section = createSectionByKey(key);
                     if (mapper.clearExistingFields()) {
                         section.clear();
                     }
                     mapper.mapToSection(section, value);
                 }
                 case SEQUENCE -> {
-                    ConfigSequence sequence = getSequenceOrCreate(key);
+                    ConfigSequence sequence = createSequenceByKey(key);
                     if (mapper.clearExistingFields()) {
                         sequence.clear();
                     }
@@ -233,44 +237,25 @@ public abstract class Section extends Branch implements ConfigSection {
         return new LinkedHashSet<>(fieldsByKey.keySet());
     }
 
+
     @Override
     public boolean isSet(@NotNull String path) {
-        PathIterator iterator = PathIterator.of(this, path);
-        ConfigField field = null;
-        while (iterator.hasNext()) {
-            field = iterator.next();
-        }
-        return field != null;
+        return findField(path) != null;
     }
 
     @Override
     public boolean isScalar(@NotNull String path) {
-        PathIterator iterator = PathIterator.of(this, path);
-        ConfigField field = null;
-        while (iterator.hasNext()) {
-            field = iterator.next();
-        }
-        return field instanceof ConfigScalar;
+        return findField(path) instanceof ConfigScalar;
     }
 
     @Override
     public boolean isSection(@NotNull String path) {
-        PathIterator iterator = PathIterator.of(this, path);
-        ConfigField field = null;
-        while (iterator.hasNext()) {
-            field = iterator.next();
-        }
-        return field instanceof ConfigSection;
+        return findField(path) instanceof ConfigSection;
     }
 
     @Override
     public boolean isSequence(@NotNull String path) {
-        PathIterator iterator = PathIterator.of(this, path);
-        ConfigField field = null;
-        while (iterator.hasNext()) {
-            field = iterator.next();
-        }
-        return field instanceof ConfigSequence;
+        return findField(path) instanceof ConfigSequence;
     }
 
     @Override
@@ -341,16 +326,7 @@ public abstract class Section extends Branch implements ConfigSection {
 
     @Override
     public void remove(@NotNull String path) {
-        PathIterator iterator = PathIterator.of(this, path);
-        while (iterator.hasNext()) {
-            if (iterator.isLast()) {
-                Branch currentBranch = iterator.getCurrentBranch();
-                FieldKey lastKey = iterator.getLastKey();
-                lastKey.remove(currentBranch);
-                break;
-            }
-            iterator.nextBranch(true);
-        }
+        PathWalker.ofPath(this, path).remove();
     }
 
     @Override
@@ -397,22 +373,12 @@ public abstract class Section extends Branch implements ConfigSection {
 
     @Override
     public @NotNull Section getSectionOrCreate(@NotNull String path) {
-        PathIterator iterator = PathIterator.of(this, path);
-        Branch currentBranch = this;
-        while (iterator.hasNext()) {
-            currentBranch = iterator.nextBranch(true);
-        }
-        return currentBranch.convertToSection();
+        return PathWalker.ofPath(this, path).createSection(true);
     }
 
     @Override
     public @NotNull Sequence getSequenceOrCreate(@NotNull String path) {
-        PathIterator iterator = PathIterator.of(this, path);
-        Branch currentBranch = this;
-        while (iterator.hasNext()) {
-            currentBranch = iterator.nextBranch(true);
-        }
-        return currentBranch.convertToSequence();
+        return PathWalker.ofPath(this, path).createSequence(true);
     }
 
     @Override
@@ -547,18 +513,11 @@ public abstract class Section extends Branch implements ConfigSection {
     }
 
     public ConfigOptional<ConfigField> getField(@NotNull String path) {
-        PathIterator iterator = PathIterator.of(this, path);
-
-        ConfigField field = null;
-        while (iterator.hasNext()) {
-            field = iterator.next();
+        ConfigField field = findField(path);
+        if (field != null) {
+            return ConfigOptional.of(field);
         }
-
-        if (field == null) {
-            return ConfigOptional.notSet(this, path, "Field is not set");
-        }
-
-        return ConfigOptional.of(field);
+        return ConfigOptional.notSet(this, path, "Field is not set");
     }
 
     @Override
@@ -732,62 +691,45 @@ public abstract class Section extends Branch implements ConfigSection {
         return matrix;
     }
 
-    @Override
-    public @Nullable Object getValue(@NotNull String path) {
-        PathIterator iterator = PathIterator.of(this, path);
-
-        ConfigField field = null;
-        while (iterator.hasNext()) {
-            field = iterator.next();
-        }
-
-        return field != null ? field.getValue() : null;
+    private @Nullable ConfigField findField(@NotNull String path) {
+        return PathWalker.ofPath(this, path).find();
     }
 
     private ConfigOptional<ConfigBranch> getBranch(@NotNull String path) {
-        PathIterator iterator = PathIterator.of(this, path);
-
-        ConfigField field = null;
-        while (iterator.hasNext()) {
-            field = iterator.next();
-        }
-
-        if (field instanceof ConfigBranch branch) {
+        if (findField(path) instanceof ConfigBranch branch) {
             return ConfigOptional.of(branch);
         }
-
         return ConfigOptional.notSet(this, path, "Field is not set");
     }
 
-    private Scalar createScalar(@NotNull String path, @NotNull Object value, boolean attached) {
-        PathIterator pathIterator = PathIterator.of(this, path);
-        while (pathIterator.hasNext()) {
-            if (pathIterator.isLast()) {
-                Branch currentBranch = pathIterator.getCurrentBranch();
-                FieldKey lastKey = pathIterator.getLastKey();
-                return lastKey.createScalar(currentBranch, value, attached);
-            }
-            pathIterator.nextBranch(attached);
-        }
-        throw new AssertionError();
+    @Override
+    public @NotNull Scalar createScalar(@NotNull String path, @NotNull Object value, boolean attached) {
+        return PathWalker.ofPath(this, path).createScalar(value, attached);
     }
 
-    private Section createSection(@NotNull String path, boolean attached) {
-        PathIterator iterator = PathIterator.of(this, path);
-        Branch currentBranch = this;
-        while (iterator.hasNext()) {
-            currentBranch = iterator.nextBranch(attached);
-        }
-        return currentBranch.convertToSection();
+    @Override
+    public @NotNull Section createSection(@NotNull String path, boolean attached) {
+        return PathWalker.ofPath(this, path).createSection(attached);
     }
 
-    private Sequence createSequence(@NotNull String path, boolean attached) {
-        PathIterator iterator = PathIterator.of(this, path);
-        Branch currentBranch = this;
-        while (iterator.hasNext()) {
-            currentBranch = iterator.nextBranch(attached);
-        }
-        return currentBranch.convertToSequence();
+    @Override
+    public @NotNull Sequence createSequence(@NotNull String path, boolean attached) {
+        return PathWalker.ofPath(this, path).createSequence(attached);
+    }
+
+    @Override
+    public @NotNull Scalar createScalarByKey(@NotNull String key, @NotNull Object value) {
+        return PathWalker.ofKey(this, key).createScalar(value, true);
+    }
+
+    @Override
+    public @NotNull Section createSectionByKey(@NotNull String key) {
+        return PathWalker.ofKey(this, key).createSection(true);
+    }
+
+    @Override
+    public @NotNull Sequence createSequenceByKey(@NotNull String key) {
+        return PathWalker.ofKey(this, key).createSequence(true);
     }
 
     @Override
@@ -845,7 +787,7 @@ public abstract class Section extends Branch implements ConfigSection {
     @Override
     public @NotNull RootSection copy() {
         ConfigRoot root = getRoot();
-        RootSection section = new RootSection(null, root.getConfigurator(), root.getPrefix());
+        RootSection section = new RootSection(root.getFile(), root.getConfigurator(), root.getPrefix());
         section.map(toMap());
         return section;
     }

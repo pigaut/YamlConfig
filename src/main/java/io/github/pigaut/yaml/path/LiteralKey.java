@@ -8,17 +8,17 @@ import io.github.pigaut.yaml.node.sequence.*;
 import io.github.pigaut.yaml.util.*;
 import org.jetbrains.annotations.*;
 
-public class SimpleKey implements FieldKey {
+public class LiteralKey implements FieldKey {
 
     private final String key;
 
-    public SimpleKey(String key) {
+    public LiteralKey(@NotNull String key) {
         Preconditions.checkArgument(!key.isBlank(), "Key cannot be blank");
         this.key = key;
     }
 
     @Override
-    public ConfigField getField(@NotNull Branch branch) {
+    public @Nullable ConfigField getField(@NotNull Branch branch) {
         if (branch instanceof Section section) {
             return section.getNode(key);
         }
@@ -26,7 +26,7 @@ public class SimpleKey implements FieldKey {
     }
 
     @Override
-    public Section createSection(@NotNull Branch branch, boolean attached) {
+    public @NotNull Section createSection(@NotNull Branch branch, boolean attached) {
         Section section = branch.convertToSection();
         Object field = section.getNode(key);
 
@@ -43,7 +43,7 @@ public class SimpleKey implements FieldKey {
     }
 
     @Override
-    public Sequence createSequence(@NotNull Branch branch, boolean attached) {
+    public @NotNull Sequence createSequence(@NotNull Branch branch, boolean attached) {
         Section section = branch.convertToSection();
         Object field = section.getNode(key);
 
@@ -60,7 +60,7 @@ public class SimpleKey implements FieldKey {
     }
 
     @Override
-    public Scalar createScalar(@NotNull Branch branch, @NotNull Object value, boolean attached) {
+    public @NotNull Scalar createScalar(@NotNull Branch branch, @NotNull Object value, boolean attached) {
         Section section = branch.convertToSection();
         KeyedScalar newScalar = new KeyedScalar(section, key, value);
         if (attached) {
@@ -71,7 +71,7 @@ public class SimpleKey implements FieldKey {
     }
 
     @Override
-    public void remove(@NotNull Branch branch) {
+    public void removeField(@NotNull Branch branch) {
         Section section = branch.convertToSection();
         section.removeNode(key);
     }

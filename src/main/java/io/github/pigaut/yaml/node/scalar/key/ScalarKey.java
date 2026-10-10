@@ -8,7 +8,6 @@ import io.github.pigaut.yaml.node.scalar.*;
 import io.github.pigaut.yaml.node.section.*;
 import org.jetbrains.annotations.*;
 
-import java.util.*;
 import java.util.regex.*;
 
 public class ScalarKey extends Scalar {
@@ -57,10 +56,10 @@ public class ScalarKey extends Scalar {
     }
 
     @Override
-    public void setValue(@Nullable Object value) {
+    public void setValue(@NotNull Object value) {
         String oldKey = toString();
-        String newKey = value != null ? value.toString() : YamlConfig.generateRandomKey();
-        parent.onKeyChanged(owner, oldKey, newKey);
+        String newKey = value.toString();
+        parent.updateKey(owner, oldKey, newKey);
         super.setValue(value);
     }
 

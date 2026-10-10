@@ -9,11 +9,11 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 
-public class KeyedLineScalar extends LineScalar implements ConfigScalar {
+public class KeyedInlineScalar extends InlineScalar implements ConfigScalar {
 
     private final String flag;
 
-    public KeyedLineScalar(ConfigLine line, String key, Object value) {
+    public KeyedInlineScalar(@NotNull Line line, @NotNull String key, @NotNull Object value) {
         super(line, value);
         this.flag = key;
     }
@@ -88,7 +88,7 @@ public class KeyedLineScalar extends LineScalar implements ConfigScalar {
         if (ScalarUtil.isBoolean(value)) {
             return ConfigOptional.of(line, (Boolean) value);
         }
-        return ConfigOptional.invalid(line, "Missing a boolean value with flag: " + flag);
+        return ConfigOptional.invalid(this, "Expected a boolean at flag: '" + flag + "' but found: " + this);
     }
 
     @Override
@@ -96,7 +96,7 @@ public class KeyedLineScalar extends LineScalar implements ConfigScalar {
         if (ScalarUtil.isCharacter(value)) {
             return ConfigOptional.of(line, value.toString().charAt(0));
         }
-        return ConfigOptional.invalid(line, "Missing a character value with flag: " + flag);
+        return ConfigOptional.invalid(this, "Expected a character at flag: '" + flag + "' but found: " + this);
     }
 
     @Override
@@ -110,7 +110,7 @@ public class KeyedLineScalar extends LineScalar implements ConfigScalar {
                 return ConfigOptional.of(line, parsed);
             }
         }
-        return ConfigOptional.invalid(line, "Missing an integer value with flag: " + flag);
+        return ConfigOptional.invalid(this, "Expected an integer at flag: '" + flag + "' but found: " + this);
     }
 
     @Override
@@ -124,7 +124,7 @@ public class KeyedLineScalar extends LineScalar implements ConfigScalar {
                 return ConfigOptional.of(line, parsed);
             }
         }
-        return ConfigOptional.invalid(line, "Missing a long value with flag: " + flag);
+        return ConfigOptional.invalid(this, "Expected a long at flag: '" + flag + "' but found: " + this);
     }
 
     @Override
@@ -138,7 +138,7 @@ public class KeyedLineScalar extends LineScalar implements ConfigScalar {
                 return ConfigOptional.of(line, parsed);
             }
         }
-        return ConfigOptional.invalid(line, "Missing a double value with flag: " + flag);
+        return ConfigOptional.invalid(this, "Expected a double at flag: '" + flag + "' but found: " + this);
     }
 
     @Override
@@ -152,7 +152,7 @@ public class KeyedLineScalar extends LineScalar implements ConfigScalar {
                 return ConfigOptional.of(line, parsed.floatValue());
             }
         }
-        return ConfigOptional.invalid(line, "Missing a float value with flag: " + flag);
+        return ConfigOptional.invalid(this, "Expected a float at flag: '" + flag + "' but found: " + this);
     }
 
 }

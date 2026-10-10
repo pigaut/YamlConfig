@@ -12,38 +12,12 @@ import java.util.regex.*;
 
 public interface FieldKey {
 
+    @Nullable
     ConfigField getField(@NotNull Branch branch);
+    void removeField(@NotNull Branch branch);
 
-    Section createSection(@NotNull Branch branch, boolean attached);
-
-    Sequence createSequence(@NotNull Branch branch, boolean attached);
-
-    Scalar createScalar(@NotNull Branch branch, @NotNull Object value, boolean attached);
-
-    void remove(@NotNull Branch branch);
-
-    static List<FieldKey> keysOf(@NotNull String path) {
-        List<FieldKey> keys = new ArrayList<>();
-        final String[] rawKeys = path.split("\\.");
-        for (String rawKey : rawKeys) {
-            final Matcher indicesMatcher = PathFormatter.INDEX_PATTERN.matcher(rawKey);
-            if (indicesMatcher.matches()) {
-                keys.add(IndexKey.fromString(indicesMatcher.group(1)));
-                continue;
-            }
-
-            final String keyWithoutIndices = indicesMatcher.replaceAll("");
-            final String[] aliases = keyWithoutIndices.split("\\|");
-
-            keys.add(aliases.length > 1 ? new MultiKey(aliases) : new SimpleKey(keyWithoutIndices));
-
-            indicesMatcher.reset();
-            while (indicesMatcher.find()) {
-                keys.add(IndexKey.fromString(indicesMatcher.group(1)));
-            }
-        }
-
-        return keys;
-    }
+    @NotNull Scalar createScalar(@NotNull Branch branch, @NotNull Object value, boolean attached);
+    @NotNull Section createSection(@NotNull Branch branch, boolean attached);
+    @NotNull Sequence createSequence(@NotNull Branch branch, boolean attached);
 
 }

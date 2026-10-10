@@ -15,7 +15,7 @@ public interface Deserializer<T> extends ConfigLoader.Scalar<T> {
         try {
             return deserialize(scalar.toString());
         } catch (StringParseException e) {
-            throw new InvalidConfigException(scalar, e.getMessage());
+            throw new ConfigErrorException(scalar, e.getMessage());
         }
     }
 
@@ -23,7 +23,7 @@ public interface Deserializer<T> extends ConfigLoader.Scalar<T> {
         try {
             return deserialize(key);
         } catch (StringParseException e) {
-            throw new InvalidConfigException(section, e.getMessage());
+            throw new ConfigErrorException(section, e.getMessage());
         }
     }
 

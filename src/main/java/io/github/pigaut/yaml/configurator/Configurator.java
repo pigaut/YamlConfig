@@ -13,6 +13,7 @@ public abstract class Configurator {
 
     private final Map<Class<?>, ConfigLoader<?>> loadersByType = new HashMap<>();
     private final Map<Class<?>, ConfigMapper<?>> mappersByType = new HashMap<>();
+    private final Map<Class<?>, ConfigMapper<?>> resolvedMapperCache = new HashMap<>();
 
     public <T> void addLoader(Class<T> classType, ConfigLoader<T> loader) {
         loadersByType.put(classType, loader);
@@ -59,10 +60,17 @@ public abstract class Configurator {
             return Serializers.defaultSerializer();
         }
 
+        @SuppressWarnings("unchecked")
+        ConfigMapper<? super T> cached = (ConfigMapper<? super T>) resolvedMapperCache.get(classType);
+        if (cached != null) {
+            return cached;
+        }
+
         for (Class<?> mapperType : mappersByType.keySet()) {
             if (mapperType.isAssignableFrom(classType)) {
                 @SuppressWarnings("unchecked")
                 final ConfigMapper<? super T> parentMapper = (ConfigMapper<? super T>) mappersByType.get(mapperType);
+                resolvedMapperCache.put(classType, parentMapper);
                 return parentMapper;
             }
         }

@@ -18,7 +18,7 @@ import java.util.*;
 import java.util.regex.*;
 import java.util.stream.*;
 
-public abstract class Sequence extends Branch implements ConfigSequence {
+public abstract class Sequence extends Branch implements ConfigSequence, SequenceMap {
 
     private final List<@NotNull KeylessField> fields = new ArrayList<>();
 
@@ -26,13 +26,15 @@ public abstract class Sequence extends Branch implements ConfigSequence {
         super(flowStyle);
     }
 
-    public @Nullable ConfigField getNode(int index) {
+    @Override
+    public @Nullable KeylessField getNode(int index) {
         if (index < size()) {
             return fields.get(index);
         }
         return null;
     }
 
+    @Override
     public void addNode(KeylessField node) {
         int index = node.getIndex();
         while (index >= size()) {
@@ -581,7 +583,7 @@ public abstract class Sequence extends Branch implements ConfigSequence {
     @Override
     public @NotNull ConfigSequence copy() {
         ConfigRoot root = getRoot();
-        RootSequence sequence = new RootSequence(null, root.getConfigurator(), root.getPrefix());
+        RootSequence sequence = new RootSequence(root.getFile(), root.getConfigurator(), root.getPrefix());
         sequence.map(toList());
         return sequence;
     }

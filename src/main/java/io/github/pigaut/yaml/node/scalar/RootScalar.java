@@ -14,13 +14,12 @@ import org.snakeyaml.engine.v2.nodes.*;
 import java.io.*;
 import java.nio.charset.*;
 import java.util.*;
-import java.util.concurrent.atomic.*;
 import java.util.regex.*;
 
 public class RootScalar extends Scalar implements ConfigRoot {
 
-    private final ConfigLoad loader = new ConfigLoad();
-    private final ConfigDump dumper = new ConfigDump();
+    private static final ConfigLoad loader = new ConfigLoad();
+    private static final ConfigDump dumper = new ConfigDump();
     private final @Nullable File file;
     private final @Nullable String name;
     private final List<ConfigException> errors = new ArrayList<>();
@@ -157,7 +156,7 @@ public class RootScalar extends Scalar implements ConfigRoot {
     public void loadFromStream(@NotNull InputStream inputStream) throws ConfigLoadException {
         Node node;
         try {
-            node = loader.loadFromInputStream(inputStream);
+            node = loader.loadNodeFromInputStream(inputStream);
         } catch (YamlEngineException e) {
             throw new ConfigLoadException(this, e.getMessage());
         }
@@ -168,7 +167,7 @@ public class RootScalar extends Scalar implements ConfigRoot {
     public void loadFromReader(@NotNull Reader reader) throws ConfigLoadException {
         Node node;
         try {
-            node = loader.loadFromReader(reader);
+            node = loader.loadNodeFromReader(reader);
         } catch (YamlEngineException e) {
             throw new ConfigLoadException(this, e.getMessage());
         }

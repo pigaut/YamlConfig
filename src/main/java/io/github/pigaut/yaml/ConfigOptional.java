@@ -14,11 +14,7 @@ public class ConfigOptional<T> extends AbstractOptional<T> {
     }
 
     protected ConfigOptional(ConfigField field, @Nullable InvalidConfigException exception, boolean existsInConfig) {
-        super(field, exception, existsInConfig, false);
-    }
-
-    protected ConfigOptional(ConfigField field, @Nullable InvalidConfigException exception, boolean existsInConfig, boolean warning) {
-        super(field, exception, existsInConfig, warning);
+        super(field, exception, existsInConfig);
     }
 
     public static <T extends ConfigField> ConfigOptional<T> of(@NotNull T field) {
@@ -30,19 +26,19 @@ public class ConfigOptional<T> extends AbstractOptional<T> {
     }
 
     public static <T> ConfigOptional<T> notSet(@NotNull ConfigField field, @NotNull String cause) {
-        return new ConfigOptional<>(field, new InvalidConfigException(field, cause), false);
+        return new ConfigOptional<>(field, new ConfigErrorException(field, cause), false);
     }
 
     public static <T> ConfigOptional<T> notSet(@NotNull ConfigField field, @NotNull String key, @NotNull String cause) {
-        return new ConfigOptional<>(field, new InvalidConfigException(field, key, cause), false);
+        return new ConfigOptional<>(field, new ConfigErrorException(field, key, cause), false);
     }
 
     public static <T> ConfigOptional<T> notSet(@NotNull ConfigField field, int index, @NotNull String cause) {
-        return new ConfigOptional<>(field, new InvalidConfigException(field, index, cause), false);
+        return new ConfigOptional<>(field, new ConfigErrorException(field, index, cause), false);
     }
 
     public static <T> ConfigOptional<T> invalid(@NotNull ConfigField field, @NotNull String details) {
-        return new ConfigOptional<>(field, new InvalidConfigException(field, details), true);
+        return new ConfigOptional<>(field, new ConfigErrorException(field, details), true);
     }
 
     public static <T> ConfigOptional<T> invalid(@NotNull InvalidConfigException exception) {
@@ -78,7 +74,7 @@ public class ConfigOptional<T> extends AbstractOptional<T> {
             if (requirement.test(value)) {
                 return this;
             }
-            return new ConfigOptional<>(field, new InvalidConfigException(field, errorDetails), existsInConfig);
+            return new ConfigOptional<>(field, new ConfigErrorException(field, errorDetails), existsInConfig);
         }
     }
 
@@ -95,7 +91,7 @@ public class ConfigOptional<T> extends AbstractOptional<T> {
             if (requirement.test(value)) {
                 return this;
             }
-            return new ConfigOptional<>(field, new InvalidConfigException(field, errorDetails), existsInConfig, true);
+            return new ConfigOptional<>(field, new ConfigWarnException(field, errorDetails), existsInConfig);
         }
     }
 
@@ -112,7 +108,7 @@ public class ConfigOptional<T> extends AbstractOptional<T> {
             if (requirement.test(value)) {
                 return value;
             }
-            throw new InvalidConfigException(field, errorDetails);
+            throw new ConfigErrorException(field, errorDetails);
         }
     }
 
@@ -123,7 +119,7 @@ public class ConfigOptional<T> extends AbstractOptional<T> {
             if (condition) {
                 return this;
             }
-            return new ConfigOptional<>(field, new InvalidConfigException(field, errorMessage), existsInConfig);
+            return new ConfigOptional<>(field, new ConfigErrorException(field, errorMessage), existsInConfig);
         }
     }
 
@@ -134,8 +130,12 @@ public class ConfigOptional<T> extends AbstractOptional<T> {
             if (condition) {
                 return this;
             }
-            return new ConfigOptional<>(field, new InvalidConfigException(field, errorMessage), existsInConfig, true);
+            return new ConfigOptional<>(field, new ConfigWarnException(field, errorMessage), existsInConfig);
         }
+    }
+
+    public @Nullable T checkOrNull(boolean condition) {
+        return condition ? value : null;
     }
 
     public <U> ConfigOptional<@Nullable U> mapIfValid(Function<? super T, ? extends @Nullable U> mapper) {
@@ -143,8 +143,12 @@ public class ConfigOptional<T> extends AbstractOptional<T> {
         if (isInvalid()) {
             return new ConfigOptional<>(field, exception, existsInConfig);
         }
-        U mappedValue = Objects.requireNonNull(mapper.apply(value));
-        return new ConfigOptional<>(field, mappedValue, existsInConfig);
+        U mappedValue = mapper.apply(value);
+        if (mappedValue != null) {
+            return new ConfigOptional<>(field, mappedValue, existsInConfig);
+        } else {
+            return new ConfigOptional<>(field, new ConfigErrorException(field, "Config value was mapped to null manually by developer"), false);
+        }
     }
 
     public <U> ConfigOptional<@Nullable U> flatMapIfValid(Function<? super T, ? extends ConfigOptional<? extends U>> mapper) {

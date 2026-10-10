@@ -7,6 +7,8 @@ import io.github.pigaut.yaml.node.section.*;
 import io.github.pigaut.yaml.node.sequence.*;
 import org.jetbrains.annotations.*;
 
+import java.util.*;
+
 public final class ConfigFieldDescriber {
 
     private static final int MAX_VALUE_LENGTH = 35;
@@ -19,92 +21,93 @@ public final class ConfigFieldDescriber {
     }
 
     public static @Nullable String describe(@NotNull ConfigField field, @Nullable Object key) {
-        if (field instanceof KeyedScalar keyedScalar) {
-            return keyedLine(keyedScalar.getKey(), truncate(keyedScalar.toString()));
+        if (field instanceof Scalar scalar) {
+            return describeScalar(scalar);
         }
-
-        if (field instanceof ConfigSequence sequence) {
-            return containerPlaceholder(sequence, "[ ... ]");
+        if (field instanceof Sequence sequence) {
+            return describeSequence(sequence, key);
         }
-
-        if (field instanceof ConfigSection section) {
+        if (field instanceof Section section) {
             return describeSection(section, key);
         }
-
-        if (field instanceof KeylessField keylessField) {
-            return describeKeylessField(keylessField, key);
-        }
-
-        if (field instanceof ConfigScalar configScalar) {
-            return configScalar.toString();
-        }
-
         return null;
     }
 
-    private static @NotNull String describeSection(@NotNull ConfigSection section, @Nullable Object key) {
-        if (key == null) {
-            return containerPlaceholder(section, "{ ... }");
-        }
-
-        String keyString = key.toString();
-        if (!section.isScalar(keyString)) {
-            return containerPlaceholder(section, "{ ... }");
-        }
-
-        Object value = section.getValue(keyString);
-        return value != null
-                ? keyedLine(keyString, truncate(value.toString()))
-                : containerPlaceholder(section, "{ ... }");
+    private static @NotNull String describeScalar(@NotNull Scalar scalar) {
+        String label = labelFor(scalar);
+        String value = truncate(scalar.toString());
+        return label != null ? label + ": " + value : value;
     }
 
-    private static @Nullable String describeKeylessField(@NotNull KeylessField keylessField, @Nullable Object key) {
-        ConfigField parent = keylessField.getParent();
-        if (!(parent instanceof ConfigSequence parentSequence)) {
+    private static @NotNull String describeSequence(@NotNull Sequence sequence, @Nullable Object rawKey) {
+        if (rawKey instanceof Integer index) {
+            ConfigField element = sequence.getNode(index);
+            if (element != null) {
+                String described = describe(element);
+                if (described != null) {
+                    return described;
+                }
+            }
+        }
+        return describeEmptyBranch(sequence, "[ ... ]");
+    }
+
+    private static @NotNull String describeSection(@NotNull Section section, @Nullable Object rawKey) {
+        if (rawKey != null) {
+            String key = rawKey.toString();
+            if (section.isScalar(key)) {
+                Object value = section.getNode(key);
+                if (value != null) {
+                    return key + ": " + truncate(value.toString());
+                }
+            }
+        }
+        return describeEmptyBranch(section, "{ ... }");
+    }
+
+    private static @NotNull String describeEmptyBranch(@NotNull ConfigBranch branch, @NotNull String openClose) {
+        String label = labelFor(branch);
+        return label != null ? label + ": " + openClose : openClose;
+    }
+
+    // Computes this field's own label: its key if keyed, its index path if keyless
+    // (walking up through any nested keyless sequences), or null at the root.
+    private static @Nullable String labelFor(@NotNull ConfigField field) {
+        if (field.isRoot()) {
             return null;
         }
-
-        if (!(key instanceof Integer index) || !parentSequence.isScalar(index)) {
-            return containerPlaceholder(keylessField, "[ ... ]");
+        if (field instanceof KeyedField keyedField) {
+            return keyedField.getKey();
         }
-
-        Object value = parentSequence.getValue(index);
-        String prefix = sequencePrefix(parentSequence, index);
-
-        return value != null
-                ? prefix + ": " + truncate(value.toString())
-                : prefix + ": [ ... ]";
+        if (field instanceof KeylessField keylessField) {
+            return indexPath(keylessField);
+        }
+        return null;
     }
 
-    private static @NotNull String sequencePrefix(@NotNull ConfigSequence sequence, int index) {
-        String base = sequence.isRoot() ? "" : sequence.getKey();
-        return base + "[" + (index + 1) + "]";
+    // Walks up through consecutive keyless sequences collecting indices,
+    // then prefixes with whatever key (if any) sits above them.
+    private static @NotNull String indexPath(@NotNull KeylessField field) {
+        List<Integer> indices = new ArrayList<>();
+        ConfigField current = field;
+
+        while (current instanceof KeylessField klf) {
+            indices.add(0, klf.getIndex() + 1);
+            current = klf.getParent();
+        }
+
+        String base = current instanceof KeyedField keyedField ? keyedField.getKey() : "";
+        StringBuilder result = new StringBuilder(base);
+        for (int index : indices) {
+            result.append("[").append(index).append("]");
+        }
+        return result.toString();
     }
 
     private static @NotNull String truncate(@NotNull String value) {
         return value.length() > MAX_VALUE_LENGTH
                 ? value.substring(0, MAX_VALUE_LENGTH) + "..."
                 : value;
-    }
-
-    private static @NotNull String keyedLine(@Nullable String key, @NotNull String value) {
-        return key != null ? key + ": " + value : value;
-    }
-
-    private static @NotNull String containerPlaceholder(@NotNull ConfigField field, @NotNull String openClose) {
-        if (field instanceof ConfigSection section && section.isRoot()) {
-            return openClose;
-        }
-        if (field instanceof ConfigSequence sequence && sequence.isRoot()) {
-            return openClose;
-        }
-        if (field instanceof KeyedField keyedField) {
-            return keyedField.getKey() + ": " + openClose;
-        }
-        if (field instanceof KeylessField keylessField && keylessField.getParent() instanceof KeyedSequence parentSequence) {
-            return parentSequence.getKey() + "[" + (keylessField.getIndex() + 1) + "]: " + openClose;
-        }
-        return openClose;
     }
 
 }

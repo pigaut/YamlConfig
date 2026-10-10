@@ -18,14 +18,33 @@ public interface ErrorCollector {
     @NotNull List<ConfigException> getErrors();
     @NotNull List<ConfigException> getWarnings();
 
+    default void collect(@NotNull ConfigException exception) {
+        if (exception.isWarning()) {
+            collectWarning(exception);
+            return;
+        }
+        collectError(exception);
+    }
+
     void collectError(@NotNull ConfigException error);
+
     default void collectError(@NotNull ConfigField field, @NotNull String details) {
-        collectError(new InvalidConfigException(field, details));
+        collectError(new ConfigErrorException(field, details));
+    }
+    default void collectError(@NotNull ConfigField field, @NotNull String key, @NotNull String details) {
+        collectError(new ConfigErrorException(field, key, details));
+    }
+    default void collectError(@NotNull ConfigField field, int index, @NotNull String details) {
+        collectError(new ConfigErrorException(field, index, details));
     }
 
     void collectWarning(@NotNull ConfigException warning);
+
     default void collectWarning(@NotNull ConfigField field, @NotNull String details) {
-        collectWarning(new InvalidConfigException(field, details));
+        collectWarning(new ConfigWarnException(field, details));
+    }
+    default void collectWarning(@NotNull ConfigField field, int index, @NotNull String details) {
+        collectWarning(new ConfigWarnException(field, index, details));
     }
 
     void collectAll(@NotNull ErrorCollector other);

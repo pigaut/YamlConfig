@@ -19,7 +19,7 @@ public interface ConfigScalar extends ConfigField {
     @NotNull Object getValue();
     @NotNull ScalarStyle getScalarStyle();
 
-    void setValue(@Nullable Object value);
+    void setValue(@NotNull Object value);
     void setScalarStyle(@NotNull ScalarStyle scalarStyle);
 
     @NotNull String toString();

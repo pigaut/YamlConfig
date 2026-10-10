@@ -6,4 +6,8 @@ public enum FieldType {
     SECTION,
     SEQUENCE;
 
+    public boolean isBranch() {
+        return this == SECTION || this == SEQUENCE;
+    }
+
 }

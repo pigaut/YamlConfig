@@ -5,8 +5,6 @@ import io.github.pigaut.yaml.configurator.load.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
-import java.util.*;
-import java.util.function.*;
 
 public interface ConfigRoot extends ConfigField, ErrorCollector {
 

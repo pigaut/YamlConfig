@@ -40,7 +40,7 @@ public class MultiKey implements FieldKey {
     }
 
     @Override
-    public Section createSection(@NotNull Branch branch, boolean attached) {
+    public @NotNull Section createSection(@NotNull Branch branch, boolean attached) {
         Section parent = branch.convertToSection();
         String key = getExistingKeyOrDefault(parent);
         Object field = parent.getNode(key);
@@ -58,7 +58,7 @@ public class MultiKey implements FieldKey {
     }
 
     @Override
-    public Sequence createSequence(@NotNull Branch branch, boolean attached) {
+    public @NotNull Sequence createSequence(@NotNull Branch branch, boolean attached) {
         Section parent = branch.convertToSection();
         String key = getExistingKeyOrDefault(parent);
         Object field = parent.getNode(key);
@@ -76,7 +76,7 @@ public class MultiKey implements FieldKey {
     }
 
     @Override
-    public Scalar createScalar(@NotNull Branch branch, @NotNull Object value, boolean attached) {
+    public @NotNull Scalar createScalar(@NotNull Branch branch, @NotNull Object value, boolean attached) {
         Section section = branch.convertToSection();
 
         String key = keys[0];
@@ -96,7 +96,7 @@ public class MultiKey implements FieldKey {
     }
 
     @Override
-    public void remove(@NotNull Branch branch) {
+    public void removeField(@NotNull Branch branch) {
         Section section = branch.convertToSection();
         for (String key : keys) {
             section.removeNode(key);

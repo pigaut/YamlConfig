@@ -20,7 +20,7 @@ public class AmountLoader implements ConfigLoader<Amount> {
         try {
             return ParseUtil.parseAmount(scalar.toString());
         } catch (StringParseException e) {
-            throw new InvalidConfigException(scalar, e.getMessage());
+            throw new ConfigErrorException(scalar, e.getMessage());
         }
     }
 
@@ -38,7 +38,7 @@ public class AmountLoader implements ConfigLoader<Amount> {
         final List<Double> values = sequence.toDoubleList().orThrow();
 
         if (values.isEmpty()) {
-            throw new InvalidConfigException(sequence, "Casual amount needs at least two elements");
+            throw new ConfigErrorException(sequence, "Casual amount needs at least two elements");
         }
 
         return values.size() == 1 ? Amount.fixed(values.get(0)) : Amount.random(values);
